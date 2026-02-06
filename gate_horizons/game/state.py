@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os
+from importlib import resources
 from typing import Optional
 
 from .galaxy import GalaxyMap
@@ -22,8 +22,7 @@ SCHEMA_VERSION = 2
 
 # Default data paths (relative to gate_horizons package)
 def _get_data_path(*parts):
-    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, "data", *parts)
+    return resources.files("gate_horizons").joinpath("data", *parts)
 
 
 class GameState:

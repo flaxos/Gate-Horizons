@@ -12,7 +12,7 @@ from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
-from game.colonies import INFRASTRUCTURE_TYPES, BUILD_COSTS, BUILD_TURNS
+from gate_horizons.game.colonies import INFRASTRUCTURE_TYPES, BUILD_COSTS, BUILD_TURNS
 
 
 class ColonyScreen(Screen):

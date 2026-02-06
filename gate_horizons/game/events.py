@@ -6,7 +6,8 @@ import json
 import os
 import random
 from dataclasses import dataclass, field
-from typing import Optional
+from importlib.resources.abc import Traversable
+from typing import Optional, Union
 
 
 @dataclass
@@ -76,32 +77,45 @@ class EventEngine:
         self.triggered_events: list[str] = []  # IDs of one-time events already triggered
         self.event_queue: list[Event] = []  # Events waiting for player resolution
 
-    def load_events(self, directory: str) -> None:
+    def load_events(self, directory: Union[str, Traversable]) -> None:
         """Load all event JSON files from a directory."""
-        if not os.path.exists(directory):
+        if directory is None:
             return
 
-        for filename in os.listdir(directory):
-            if filename.endswith(".json"):
-                filepath = os.path.join(directory, filename)
-                try:
-                    with open(filepath, "r") as f:
+        if hasattr(directory, "iterdir"):
+            entries = [entry for entry in directory.iterdir() if entry.name.endswith(".json")]
+        else:
+            if not os.path.exists(directory):
+                return
+            entries = [
+                os.path.join(directory, filename)
+                for filename in os.listdir(directory)
+                if filename.endswith(".json")
+            ]
+
+        for entry in entries:
+            try:
+                if hasattr(entry, "open"):
+                    with entry.open("r", encoding="utf-8") as f:
+                        data = json.load(f)
+                else:
+                    with open(entry, "r", encoding="utf-8") as f:
                         data = json.load(f)
 
-                    # Handle wrapped format (e.g. {"exploration_events": [...]})
-                    if isinstance(data, dict):
-                        for key, value in data.items():
-                            if isinstance(value, list):
-                                data = value
-                                break
+                # Handle wrapped format (e.g. {"exploration_events": [...]})
+                if isinstance(data, dict):
+                    for key, value in data.items():
+                        if isinstance(value, list):
+                            data = value
+                            break
 
-                    if isinstance(data, list):
-                        for event_data in data:
-                            self.available_events.append(Event.from_dict(event_data))
-                    elif isinstance(data, dict):
-                        self.available_events.append(Event.from_dict(data))
-                except (json.JSONDecodeError, KeyError):
-                    continue
+                if isinstance(data, list):
+                    for event_data in data:
+                        self.available_events.append(Event.from_dict(event_data))
+                elif isinstance(data, dict):
+                    self.available_events.append(Event.from_dict(data))
+            except (json.JSONDecodeError, KeyError):
+                continue
 
     def check_triggers(self, game_state) -> list:
         """Evaluate which events can fire this turn. Returns 0-3 events."""
@@ -263,7 +277,7 @@ class EventEngine:
         }
 
     @classmethod
-    def from_dict(cls, data: dict, events_directory: str = None) -> "EventEngine":
+    def from_dict(cls, data: dict, events_directory: Union[str, Traversable] = None) -> "EventEngine":
         ee = cls()
         if events_directory:
             ee.load_events(events_directory)

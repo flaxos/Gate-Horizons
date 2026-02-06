@@ -3,16 +3,11 @@
 Runs 10 turns without UI and prints results to verify the engine works.
 """
 
-import os
-import sys
 import json
 import tempfile
 
-# Add parent to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from game.state import GameState
-from game.save_load import SaveManager
+from gate_horizons.game.state import GameState
+from gate_horizons.game.save_load import SaveManager
 
 
 def print_separator():

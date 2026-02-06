@@ -1,6 +1,8 @@
 """Star map graph system for Gate Horizons."""
 
 import json
+from importlib.resources.abc import Traversable
+from typing import Union
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
@@ -107,9 +109,12 @@ class GalaxyMap:
         self.systems: dict[str, StarSystem] = {}
         self._path_cache: dict[tuple, list] = {}
 
-    def load_from_json(self, filepath: str) -> None:
-        with open(filepath, "r") as f:
-            data = json.load(f)
+    def load_from_json(self, filepath: Union[str, Traversable]) -> None:
+        if hasattr(filepath, "read_text"):
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+        else:
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
         systems_data = data if isinstance(data, list) else data.get("systems", [])
         self.systems.clear()
