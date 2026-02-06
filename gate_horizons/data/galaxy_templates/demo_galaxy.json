@@ -1,0 +1,617 @@
+{
+  "template_id": "demo_galaxy",
+  "name": "Demo Galaxy",
+  "description": "A 12-system radial galaxy centered on Sol, designed to demonstrate gate network mechanics, exploration tiers, and dormant gate activation.",
+  "version": "1.0.0",
+  "systems": [
+    {
+      "id": "sol",
+      "name": "Sol",
+      "x": 0.50,
+      "y": 0.50,
+      "discovered": true,
+      "surveyed": true,
+      "tier": 1,
+      "gate_connections": [
+        { "target": "alpha_centauri", "status": "active" },
+        { "target": "tau_ceti", "status": "active" },
+        { "target": "barnards_star", "status": "dormant" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "sol_earth",
+          "name": "Earth",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "energy": 10,
+            "metals": 8,
+            "food": 12
+          },
+          "description": "Cradle of humanity. A lush, temperate world teeming with life and the heart of the gate network."
+        },
+        {
+          "id": "sol_mars",
+          "name": "Mars",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 6,
+            "energy": 3
+          },
+          "description": "The Red Planet. Dusty basins and ancient riverbeds hint at a warmer past. Early terraforming efforts are underway."
+        },
+        {
+          "id": "sol_jupiter",
+          "name": "Jupiter",
+          "type": "gas_giant",
+          "colonizable": false,
+          "resources": {
+            "fuel": 20,
+            "energy": 5
+          },
+          "description": "A colossal gas giant ringed by dozens of moons. Its radiation belts shelter vast fuel-harvesting platforms."
+        }
+      ],
+      "anomalies": [],
+      "stationed_ships": [],
+      "colony": {
+        "id": "colony_earth",
+        "name": "United Earth",
+        "planet_id": "sol_earth",
+        "population": 1000,
+        "morale": 80
+      }
+    },
+    {
+      "id": "alpha_centauri",
+      "name": "Alpha Centauri",
+      "x": 0.70,
+      "y": 0.35,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sol", "status": "active" },
+        { "target": "sirius", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "ac_haven",
+          "name": "Haven",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 7,
+            "energy": 4,
+            "food": 5
+          },
+          "description": "A windswept terrestrial world with shallow seas and fertile plains. The most promising colony site beyond Sol."
+        },
+        {
+          "id": "ac_dustfall",
+          "name": "Dustfall",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 10,
+            "energy": 2
+          },
+          "description": "Rust-colored deserts stretch beneath twin suns. Rich in accessible surface ores."
+        },
+        {
+          "id": "ac_shardring",
+          "name": "Shardring Belt",
+          "type": "asteroid_belt",
+          "colonizable": false,
+          "resources": {
+            "metals": 15,
+            "exotics": 2
+          },
+          "description": "A dense ring of shattered planetesimals. Mining operations here would yield significant metal output."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_ac_signal",
+          "type": "signal",
+          "description": "Faint repeating signal detected from within the Shardring Belt. Origin unknown.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "tau_ceti",
+      "name": "Tau Ceti",
+      "x": 0.35,
+      "y": 0.30,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sol", "status": "active" },
+        { "target": "epsilon_eridani", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "tc_pelagius",
+          "name": "Pelagius",
+          "type": "oceanic",
+          "colonizable": true,
+          "resources": {
+            "food": 18,
+            "energy": 6,
+            "exotics": 3
+          },
+          "description": "An oceanic paradise blanketed by warm, shallow seas. Bioluminescent organisms light the endless waves at night. Highly suitable for colonization."
+        },
+        {
+          "id": "tc_typhon",
+          "name": "Typhon",
+          "type": "gas_giant",
+          "colonizable": false,
+          "resources": {
+            "fuel": 14,
+            "energy": 4
+          },
+          "description": "A roiling blue-green gas giant with supersonic equatorial winds and a spectacular ring system."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_tc_ruins",
+          "type": "ruins",
+          "description": "Sonar mapping of Pelagius reveals geometric structures on the ocean floor. Pre-human construction suspected.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "barnards_star",
+      "name": "Barnard's Star",
+      "x": 0.50,
+      "y": 0.70,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sol", "status": "dormant" },
+        { "target": "luytens_star", "status": "active" }
+      ],
+      "gate_active": false,
+      "gate_activation_cost": {
+        "energy": 20,
+        "metals": 15
+      },
+      "planets": [
+        {
+          "id": "bs_cinder",
+          "name": "Cinder",
+          "type": "barren",
+          "colonizable": false,
+          "resources": {
+            "metals": 4
+          },
+          "description": "A scorched husk orbiting close to the dim red dwarf. No atmosphere remains."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_bs_asteroid_riches",
+          "type": "resource_cache",
+          "description": "Spectral analysis of the inner asteroid field reveals extraordinarily dense metallic concentrations. A miner's dream.",
+          "investigated": false,
+          "bonus_resources": {
+            "metals": 25,
+            "exotics": 4
+          }
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "sirius",
+      "name": "Sirius",
+      "x": 0.85,
+      "y": 0.25,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "alpha_centauri", "status": "active" },
+        { "target": "procyon", "status": "active" },
+        { "target": "vega", "status": "dormant" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "si_inferno",
+          "name": "Inferno",
+          "type": "volcanic",
+          "colonizable": false,
+          "resources": {
+            "exotics": 12,
+            "metals": 8,
+            "energy": 7
+          },
+          "description": "Rivers of magma crisscross this hellish world. Exotic crystalline deposits form in the cooling lava tubes, making it a prime harvesting target."
+        },
+        {
+          "id": "si_ashveil",
+          "name": "Ashveil",
+          "type": "barren",
+          "colonizable": false,
+          "resources": {
+            "metals": 3
+          },
+          "description": "A dead, cratered world permanently shrouded in fine silicate dust. Little of value remains on the surface."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_si_flare",
+          "type": "hazard",
+          "description": "Sirius A emits violent stellar flares at irregular intervals. Ships in-system risk radiation damage without proper shielding.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "epsilon_eridani",
+      "name": "Epsilon Eridani",
+      "x": 0.20,
+      "y": 0.20,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "tau_ceti", "status": "active" },
+        { "target": "sixty_one_cygni", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "ee_arcadia",
+          "name": "Arcadia",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "food": 10,
+            "energy": 5,
+            "metals": 6
+          },
+          "description": "Rolling grasslands and temperate forests cover most of this world. Thick atmosphere retains warmth despite the cooler star. An excellent colony candidate."
+        },
+        {
+          "id": "ee_ferros",
+          "name": "Ferros",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 14,
+            "energy": 3
+          },
+          "description": "A dense, iron-rich planet with towering mountain ranges. The heavy gravity is challenging but the mineral wealth is staggering."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_ee_debris",
+          "type": "debris_field",
+          "description": "Orbital debris of clearly artificial origin drifts between the two planets. Someone was here before us.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "luytens_star",
+      "name": "Luyten's Star",
+      "x": 0.60,
+      "y": 0.85,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "barnards_star", "status": "active" },
+        { "target": "ross_128", "status": "dormant" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "ls_frostholme",
+          "name": "Frostholme",
+          "type": "ice",
+          "colonizable": false,
+          "resources": {
+            "energy": 2,
+            "exotics": 5
+          },
+          "description": "A frozen world locked in eternal winter. Beneath kilometers of ice, thermal vents hint at a subsurface ocean and possible microbial life."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_ls_pulse",
+          "type": "energy_anomaly",
+          "description": "A rhythmic energy pulse emanates from deep within Frostholme's ice mantle. The pattern is too regular to be natural.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "procyon",
+      "name": "Procyon",
+      "x": 0.90,
+      "y": 0.45,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sirius", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "pr_goliath",
+          "name": "Goliath",
+          "type": "gas_giant",
+          "colonizable": false,
+          "resources": {
+            "fuel": 30,
+            "energy": 10
+          },
+          "description": "An enormous banded gas giant three times Jupiter's mass. Its upper atmosphere is a virtually limitless source of starship fuel."
+        },
+        {
+          "id": "pr_anchorage",
+          "name": "Anchorage",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 5,
+            "energy": 4
+          },
+          "description": "A small, airless moon of Goliath. Its stable orbit and low gravity make it an ideal site for a fuel depot and waystation."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_pr_storm",
+          "type": "atmospheric",
+          "description": "A continent-sized storm on Goliath emits unusual electromagnetic signatures that interfere with standard scanning equipment.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "vega",
+      "name": "Vega",
+      "x": 0.95,
+      "y": 0.10,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sirius", "status": "dormant" }
+      ],
+      "gate_active": false,
+      "gate_activation_cost": {
+        "energy": 30,
+        "exotics": 10
+      },
+      "planets": [
+        {
+          "id": "vg_luminara",
+          "name": "Luminara",
+          "type": "barren",
+          "colonizable": false,
+          "resources": {
+            "exotics": 18,
+            "energy": 8
+          },
+          "description": "A blindingly bright world bathed in Vega's intense radiation. Exotic matter crystallizes naturally on its surface in vast glittering fields."
+        },
+        {
+          "id": "vg_sentinel",
+          "name": "The Sentinel",
+          "type": "artificial",
+          "colonizable": false,
+          "resources": {
+            "exotics": 25
+          },
+          "description": "Not a planet at all, but an enormous ancient structure in stable orbit. Its purpose is unknown. Faint power readings suggest it is not entirely dead."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_vg_structure",
+          "type": "ancient_structure",
+          "description": "The Sentinel emits a low-frequency carrier wave on a bandwidth no human technology uses. Deep-pattern analysis suggests it may be a beacon or a warning.",
+          "investigated": false
+        },
+        {
+          "id": "anom_vg_artifact",
+          "type": "alien_artifact",
+          "description": "Surface probes on Luminara have detected a partially buried object of non-natural origin. Its material composition matches nothing in known databases.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "sixty_one_cygni",
+      "name": "61 Cygni",
+      "x": 0.10,
+      "y": 0.35,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "epsilon_eridani", "status": "active" },
+        { "target": "kapteyns_star", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "sc_geminus_a",
+          "name": "Geminus Alpha",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "metals": 7,
+            "energy": 6,
+            "food": 3
+          },
+          "description": "The larger world in a binary star system. Dual sunrises paint the sky in vivid oranges. Habitable but geologically unstable."
+        },
+        {
+          "id": "sc_geminus_b",
+          "name": "Geminus Beta",
+          "type": "rocky",
+          "colonizable": false,
+          "resources": {
+            "metals": 9,
+            "exotics": 3
+          },
+          "description": "Tidally locked between both stars, one hemisphere is molten slag while the other is frozen wasteland. Valuable minerals line the terminator zone."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_sc_readings",
+          "type": "gravitational_anomaly",
+          "description": "Instruments detect gravitational fluctuations inconsistent with the binary pair. A hidden mass or spatial distortion may exist in the outer system.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "ross_128",
+      "name": "Ross 128",
+      "x": 0.70,
+      "y": 0.95,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "luytens_star", "status": "dormant" }
+      ],
+      "gate_active": false,
+      "gate_activation_cost": {
+        "energy": 25,
+        "exotics": 8
+      },
+      "planets": [
+        {
+          "id": "r128_whisper",
+          "name": "Whisper",
+          "type": "rocky",
+          "colonizable": true,
+          "resources": {
+            "food": 6,
+            "energy": 5,
+            "exotics": 7
+          },
+          "description": "A quiet, temperate world orbiting a placid red dwarf. Atmospheric analysis reveals trace compounds of possible biological origin."
+        },
+        {
+          "id": "r128_echo",
+          "name": "Echo",
+          "type": "barren",
+          "colonizable": false,
+          "resources": {
+            "metals": 5
+          },
+          "description": "A barren outer planet. Its surface is scored with perfectly parallel grooves visible from orbit, stretching for thousands of kilometers."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_r128_contact",
+          "type": "alien_signal",
+          "description": "A complex, structured radio signal originates from somewhere within the Ross 128 system. It does not match any known natural phenomenon or human transmission protocol.",
+          "investigated": false
+        },
+        {
+          "id": "anom_r128_grooves",
+          "type": "surface_anomaly",
+          "description": "The parallel grooves on Echo are precisely 128 meters apart and exactly 12.8 meters deep. The mathematical regularity defies geological explanation.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    },
+    {
+      "id": "kapteyns_star",
+      "name": "Kapteyn's Star",
+      "x": 0.05,
+      "y": 0.50,
+      "discovered": false,
+      "surveyed": false,
+      "tier": 3,
+      "gate_connections": [
+        { "target": "sixty_one_cygni", "status": "active" }
+      ],
+      "gate_active": true,
+      "planets": [
+        {
+          "id": "ks_remnant",
+          "name": "Remnant",
+          "type": "rocky",
+          "colonizable": false,
+          "resources": {
+            "exotics": 15,
+            "metals": 10
+          },
+          "description": "An ancient, cratered world that may be older than Sol itself. Its rocks contain exotic isotopes not found elsewhere in the network."
+        },
+        {
+          "id": "ks_threshold",
+          "name": "Threshold",
+          "type": "barren",
+          "colonizable": false,
+          "resources": {
+            "exotics": 8
+          },
+          "description": "A small, dark body at the system's edge. Orbital analysis suggests it was deliberately placed in a Lagrange point eons ago."
+        }
+      ],
+      "anomalies": [
+        {
+          "id": "anom_ks_hub_ruins",
+          "type": "ancient_structure",
+          "description": "Scattered across Remnant's surface are the shattered remains of what appears to be a massive gate hub complex, far larger than any single gate. This system may once have been a nexus of an interstellar civilization.",
+          "investigated": false
+        },
+        {
+          "id": "anom_ks_edge",
+          "type": "spatial_anomaly",
+          "description": "Beyond the outermost orbit, sensors detect a faint boundary where the fabric of space seems to thin. The edge of the gate network, or something else entirely.",
+          "investigated": false
+        }
+      ],
+      "stationed_ships": [],
+      "colony": null
+    }
+  ]
+}
