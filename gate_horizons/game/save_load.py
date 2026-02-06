@@ -24,6 +24,19 @@ class SaveManager:
                     thumbnail_data TEXT
                 )
             """)
+            columns = {
+                row[1] for row in conn.execute("PRAGMA table_info(saves)").fetchall()
+            }
+            migrations = {
+                "save_name": "TEXT NOT NULL DEFAULT ''",
+                "timestamp": "TEXT NOT NULL DEFAULT ''",
+                "turn_number": "INTEGER NOT NULL DEFAULT 0",
+                "game_data": "TEXT NOT NULL DEFAULT '{}'",
+                "thumbnail_data": "TEXT",
+            }
+            for column, definition in migrations.items():
+                if column not in columns:
+                    conn.execute(f"ALTER TABLE saves ADD COLUMN {column} {definition}")
             conn.commit()
 
     def save_game(self, game_state, save_name: str) -> int:
@@ -63,10 +76,13 @@ class SaveManager:
                 (save_id,)
             ).fetchone()
 
-        if not row:
+        if not row or not row[0]:
             return None
 
-        data = json.loads(row[0])
+        try:
+            data = json.loads(row[0])
+        except (TypeError, json.JSONDecodeError):
+            return None
         if game_state_class:
             return game_state_class.from_dict(data)
         return data
@@ -79,10 +95,13 @@ class SaveManager:
                 (save_name,)
             ).fetchone()
 
-        if not row:
+        if not row or not row[0]:
             return None
 
-        data = json.loads(row[0])
+        try:
+            data = json.loads(row[0])
+        except (TypeError, json.JSONDecodeError):
+            return None
         if game_state_class:
             return game_state_class.from_dict(data)
         return data
