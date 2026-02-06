@@ -11,6 +11,9 @@ from kivy.uix.progressbar import ProgressBar
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
+from ..widgets.resource_bar import TopBar
+from ...game.colonies import INFRASTRUCTURE_TYPES, BUILD_COSTS, BUILD_TURNS
+
 
 class ColonyScreen(Screen):
     def __init__(self, **kwargs):
@@ -21,15 +24,21 @@ class ColonyScreen(Screen):
         self._build_ui()
 
     def _build_ui(self):
-        root = BoxLayout(orientation="horizontal")
+        outer = BoxLayout(orientation="vertical")
 
-        with root.canvas.before:
+        with outer.canvas.before:
             Color(0.02, 0.03, 0.08, 1)
-            self._bg = Rectangle(pos=root.pos, size=root.size)
-        root.bind(
+            self._bg = Rectangle(pos=outer.pos, size=outer.size)
+        outer.bind(
             size=lambda w, v: setattr(self._bg, 'size', v),
             pos=lambda w, v: setattr(self._bg, 'pos', v),
         )
+
+        # Top bar
+        self.top_bar = TopBar()
+        outer.add_widget(self.top_bar)
+
+        root = BoxLayout(orientation="horizontal")
 
         # Left: colony list
         left_panel = BoxLayout(
@@ -88,10 +97,12 @@ class ColonyScreen(Screen):
         )
 
         root.add_widget(self.detail_panel)
-        self.add_widget(root)
+        outer.add_widget(root)
+        self.add_widget(outer)
 
     def set_game_state(self, game_state):
         self.game_state = game_state
+        self.top_bar.update(game_state)
         self._update_colony_list()
 
     def _update_colony_list(self):
@@ -100,13 +111,14 @@ class ColonyScreen(Screen):
             return
 
         for sid, colony in self.game_state.colonies.colonies.items():
+            is_selected = sid == self.selected_colony
             btn = Button(
                 text=f"{colony.name}\nPop: {colony.population} | T{colony.get_tier()}",
                 size_hint_y=None,
                 height=dp(50),
                 font_size="12sp",
-                background_color=(0.12, 0.25, 0.4, 0.8),
-                color=(0.85, 0.95, 1, 1),
+                background_color=(0.2, 0.4, 0.6, 0.9) if is_selected else (0.12, 0.25, 0.4, 0.8),
+                color=(1, 1, 1, 1) if is_selected else (0.85, 0.95, 1, 1),
                 halign="left",
                 valign="middle",
             )
@@ -130,6 +142,7 @@ class ColonyScreen(Screen):
 
     def _select_colony(self, colony_id):
         self.selected_colony = colony_id
+        self._update_colony_list()
         self._update_detail()
 
     def _update_detail(self):
@@ -141,8 +154,18 @@ class ColonyScreen(Screen):
         if not colony:
             return
 
+        # Scrollable detail content
+        scroll = ScrollView(size_hint=(1, 1))
+        detail_content = BoxLayout(
+            orientation="vertical",
+            spacing=dp(6),
+            size_hint_y=None,
+            padding=[0, dp(4)],
+        )
+        detail_content.bind(minimum_height=detail_content.setter("height"))
+
         # Header
-        self.detail_panel.add_widget(Label(
+        detail_content.add_widget(Label(
             text=colony.name,
             font_size="18sp",
             bold=True,
@@ -152,7 +175,7 @@ class ColonyScreen(Screen):
         ))
 
         tier_names = {1: "Core World", 2: "Developing", 3: "Frontier Outpost"}
-        self.detail_panel.add_widget(Label(
+        detail_content.add_widget(Label(
             text=f"Tier {colony.get_tier()} - {tier_names.get(colony.get_tier(), 'Unknown')}",
             font_size="12sp",
             color=(0.5, 0.7, 0.9, 0.8),
@@ -167,8 +190,11 @@ class ColonyScreen(Screen):
             height=dp(40),
             spacing=dp(16),
         )
+
+        housing_level = colony.infrastructure.get("housing", {}).get("level", 0)
+        housing_cap = 100 + housing_level * 150
         stats.add_widget(Label(
-            text=f"Population: {colony.population}",
+            text=f"Population: {colony.population}/{housing_cap}",
             font_size="13sp",
             color=(0.8, 0.9, 1, 1),
         ))
@@ -179,10 +205,30 @@ class ColonyScreen(Screen):
             font_size="13sp",
             color=happy_color,
         ))
-        self.detail_panel.add_widget(stats)
+        detail_content.add_widget(stats)
+
+        # Warnings
+        warnings = []
+        if colony.population > housing_cap * 0.9:
+            warnings.append("Overcrowding! Build more housing.")
+        if colony.happiness < 40:
+            warnings.append("Low happiness - population growth reduced!")
+        if colony.happiness < 30:
+            warnings.append("Colony unrest! Immediate attention needed.")
+
+        for warning in warnings:
+            detail_content.add_widget(Label(
+                text=f"WARNING: {warning}",
+                font_size="11sp",
+                color=(1, 0.4, 0.2, 1),
+                size_hint_y=None,
+                height=dp(20),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
 
         # Infrastructure grid
-        self.detail_panel.add_widget(Label(
+        detail_content.add_widget(Label(
             text="Infrastructure",
             font_size="14sp",
             bold=True,
@@ -190,16 +236,8 @@ class ColonyScreen(Screen):
             size_hint_y=None,
             height=dp(28),
             halign="left",
-            text_size=(None, None),
+            text_size=(dp(500), None),
         ))
-
-        infra_grid = GridLayout(
-            cols=1,
-            size_hint_y=None,
-            spacing=dp(6),
-            padding=[0, dp(4)],
-        )
-        infra_grid.bind(minimum_height=infra_grid.setter("height"))
 
         infra_labels = {
             "housing": "Housing",
@@ -215,47 +253,102 @@ class ColonyScreen(Screen):
             building = infra.get("building", False)
             turns = infra.get("turns_remaining", 0)
 
-            row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(36))
+            row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(38))
 
             # Name and level
             status = f" (Building... {turns} turns)" if building else ""
             row.add_widget(Label(
-                text=f"{label}: Level {level}{status}",
+                text=f"{label}: Lv {level}{status}",
                 font_size="12sp",
-                color=(0.7, 0.85, 1, 1),
-                size_hint_x=0.5,
+                color=(1, 1, 0.3, 1) if building else (0.7, 0.85, 1, 1),
+                size_hint_x=0.4,
                 halign="left",
-                text_size=(None, None),
+                text_size=(dp(200), None),
             ))
 
             # Level bar
-            bar = ProgressBar(max=5, value=level, size_hint_x=0.25)
+            bar = ProgressBar(max=5, value=level, size_hint_x=0.2)
             row.add_widget(bar)
 
-            # Build button
+            # Cost display
             cost = colony.get_build_cost(infra_type)
+            cost_text = ", ".join(f"{v}{k[0].upper()}" for k, v in cost.items())
+            build_turns = max(1, BUILD_TURNS.get(infra_type, 3))
+            row.add_widget(Label(
+                text=f"{cost_text} | {build_turns}t",
+                font_size="10sp",
+                color=(0.5, 0.6, 0.7, 0.8),
+                size_hint_x=0.2,
+            ))
+
+            # Build / Queue button
             can_build = (
                 not building
                 and self.game_state.resources.can_afford(cost)
             )
-            build_btn = Button(
-                text="Build",
-                size_hint_x=0.25,
-                font_size="11sp",
-                background_color=(0.15, 0.4, 0.2, 0.9) if can_build else (0.2, 0.2, 0.2, 0.5),
-                color=(0.3, 1, 0.5, 1) if can_build else (0.4, 0.4, 0.4, 0.5),
-                disabled=not can_build,
-            )
-            build_btn.infra_type = infra_type
-            build_btn.bind(on_release=self._on_build)
-            row.add_widget(build_btn)
+            if building:
+                # Allow queuing
+                queue_btn = Button(
+                    text="Queue",
+                    size_hint_x=0.2,
+                    font_size="11sp",
+                    background_color=(0.2, 0.25, 0.4, 0.8),
+                    color=(0.6, 0.7, 0.9, 1),
+                )
+                queue_btn.infra_type = infra_type
+                queue_btn.bind(on_release=self._on_queue)
+                row.add_widget(queue_btn)
+            else:
+                build_btn = Button(
+                    text="Build",
+                    size_hint_x=0.2,
+                    font_size="11sp",
+                    background_color=(0.15, 0.4, 0.2, 0.9) if can_build else (0.2, 0.2, 0.2, 0.5),
+                    color=(0.3, 1, 0.5, 1) if can_build else (0.4, 0.4, 0.4, 0.5),
+                    disabled=not can_build,
+                )
+                build_btn.infra_type = infra_type
+                build_btn.bind(on_release=self._on_build)
+                row.add_widget(build_btn)
 
-            infra_grid.add_widget(row)
+            detail_content.add_widget(row)
 
-        self.detail_panel.add_widget(infra_grid)
+        # Build queue display
+        if colony.build_queue:
+            detail_content.add_widget(Label(
+                text="Build Queue:",
+                font_size="12sp",
+                bold=True,
+                color=(0.6, 0.8, 1, 1),
+                size_hint_y=None,
+                height=dp(24),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+            for i, item in enumerate(colony.build_queue):
+                q_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(28))
+                q_row.add_widget(Label(
+                    text=f"  {i+1}. {infra_labels.get(item['type'], item['type'])}",
+                    font_size="11sp",
+                    color=(0.6, 0.75, 0.9, 0.8),
+                    size_hint_x=0.7,
+                    halign="left",
+                    text_size=(dp(300), None),
+                ))
+                cancel_btn = Button(
+                    text="Cancel",
+                    size_hint_x=0.3,
+                    font_size="10sp",
+                    background_color=(0.3, 0.1, 0.1, 0.7),
+                    color=(1, 0.6, 0.6, 1),
+                )
+                cancel_btn.queue_index = i
+                cancel_btn.bind(on_release=self._on_cancel_queue)
+                q_row.add_widget(cancel_btn)
+                detail_content.add_widget(q_row)
 
         # Production summary
-        self.detail_panel.add_widget(Label(
+        detail_content.add_widget(Label(
             text="Production / Consumption",
             font_size="14sp",
             bold=True,
@@ -263,44 +356,72 @@ class ColonyScreen(Screen):
             size_hint_y=None,
             height=dp(28),
             halign="left",
-            text_size=(None, None),
+            text_size=(dp(500), None),
         ))
 
         prod = colony.calculate_production()
         cons = colony.calculate_consumption()
 
-        summary = BoxLayout(
-            orientation="vertical",
-            size_hint_y=None,
-            height=dp(80),
-        )
-
         prod_text = "  ".join(f"+{v} {k}" for k, v in prod.items() if v > 0)
         cons_text = "  ".join(f"-{v} {k}" for k, v in cons.items() if v > 0)
 
-        summary.add_widget(Label(
-            text=f"Produces: {prod_text}",
+        detail_content.add_widget(Label(
+            text=f"Produces: {prod_text or 'nothing'}",
             font_size="11sp",
             color=(0.3, 1, 0.5, 0.9),
             size_hint_y=None,
             height=dp(22),
             halign="left",
-            text_size=(None, None),
+            text_size=(dp(500), None),
         ))
-        summary.add_widget(Label(
-            text=f"Consumes: {cons_text}",
+        detail_content.add_widget(Label(
+            text=f"Consumes: {cons_text or 'nothing'}",
             font_size="11sp",
             color=(1, 0.5, 0.3, 0.9),
             size_hint_y=None,
             height=dp(22),
             halign="left",
-            text_size=(None, None),
+            text_size=(dp(500), None),
         ))
 
-        self.detail_panel.add_widget(summary)
+        # Net summary
+        net = {}
+        for r in set(list(prod.keys()) + list(cons.keys())):
+            net[r] = prod.get(r, 0) - cons.get(r, 0)
+        net_text = "  ".join(
+            f"{'+'if v>=0 else ''}{v} {k}" for k, v in net.items() if v != 0
+        )
+        detail_content.add_widget(Label(
+            text=f"Net: {net_text or 'balanced'}",
+            font_size="11sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(22),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
 
-        # Spacer
-        self.detail_panel.add_widget(Widget())
+        # Growth projection
+        growth_rate = 0.05
+        if colony.happiness >= 80:
+            growth_rate += 0.02
+        elif colony.happiness < 40:
+            growth_rate -= 0.03
+        projected_growth = max(1, int(colony.population * growth_rate))
+        if colony.population >= housing_cap:
+            projected_growth = 0
+        detail_content.add_widget(Label(
+            text=f"Growth: ~+{projected_growth} pop/turn",
+            font_size="11sp",
+            color=(0.5, 0.8, 1, 0.8),
+            size_hint_y=None,
+            height=dp(22),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
+
+        scroll.add_widget(detail_content)
+        self.detail_panel.add_widget(scroll)
 
     def _on_build(self, btn):
         if not self.game_state or not self.selected_colony:
@@ -314,6 +435,30 @@ class ColonyScreen(Screen):
         if self.game_state.resources.can_afford(cost):
             self.game_state.resources.spend_dict(cost)
             colony.start_construction(btn.infra_type)
+            self.top_bar.update(self.game_state)
+            self._update_detail()
+
+    def _on_queue(self, btn):
+        if not self.game_state or not self.selected_colony:
+            return
+
+        colony = self.game_state.colonies.colonies.get(self.selected_colony)
+        if not colony:
+            return
+
+        colony.queue_construction(btn.infra_type)
+        self._update_detail()
+
+    def _on_cancel_queue(self, btn):
+        if not self.game_state or not self.selected_colony:
+            return
+
+        colony = self.game_state.colonies.colonies.get(self.selected_colony)
+        if not colony:
+            return
+
+        if 0 <= btn.queue_index < len(colony.build_queue):
+            colony.build_queue.pop(btn.queue_index)
             self._update_detail()
 
     def _go_back(self, *args):
