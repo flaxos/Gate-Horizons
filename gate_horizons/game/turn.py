@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .clock import GameClock
+
 
 MONTHS = [
     "January", "February", "March", "April", "May", "June",
@@ -122,47 +124,65 @@ class TurnProcessor:
     def process_turn(self, game_state) -> TurnReport:
         """Execute a full turn. Returns TurnReport."""
         report = TurnReport()
-        game_state.turn_number += 1
-        report.turn_number = game_state.turn_number
-        report.game_date = turn_to_date(game_state.turn_number)
+        clock = getattr(game_state, "game_clock", None)
+        if clock is None:
+            clock = GameClock(current_tick=game_state.turn_number, turn_number=game_state.turn_number)
+            game_state.game_clock = clock
+
+        clock.advance_turn()
+        game_state.turn_number = clock.turn_number
+        report.turn_number = clock.turn_number
+        report.game_date = turn_to_date(clock.turn_number)
         game_state.game_time = report.game_date
 
         # 1. Process ship movements
-        self._process_movements(game_state, report)
+        if clock.mark_processed("movements"):
+            self._process_movements(game_state, report)
 
         # 2. Process mining operations
-        self._process_mining(game_state, report)
+        if clock.mark_processed("mining"):
+            self._process_mining(game_state, report)
 
         # 3. Process trade routes
-        self._process_trade(game_state, report)
+        if clock.mark_processed("trade"):
+            self._process_trade(game_state, report)
 
         # 4. Process colony production/consumption
         # 5. Process construction queues
-        self._process_colonies(game_state, report)
+        if clock.mark_processed("colonies"):
+            self._process_colonies(game_state, report)
 
         # 6. Process tech research
-        self._process_research(game_state, report)
+        if clock.mark_processed("research"):
+            self._process_research(game_state, report)
 
         # 7. Apply maintenance costs
-        self._process_maintenance(game_state, report)
+        if clock.mark_processed("maintenance"):
+            self._process_maintenance(game_state, report)
 
         # 8. Process resource economy
-        self._process_resources(game_state, report)
+        if clock.mark_processed("resources"):
+            self._process_resources(game_state, report)
 
         # 9. Check event triggers
-        self._process_events(game_state, report)
+        if clock.mark_processed("events"):
+            self._process_events(game_state, report)
 
         # 10. Update fog of war
-        self._update_fog_of_war(game_state, report)
+        if clock.mark_processed("fog_of_war"):
+            self._update_fog_of_war(game_state, report)
 
         # 11. Check warnings
-        self._check_warnings(game_state, report)
+        if clock.mark_processed("warnings"):
+            self._check_warnings(game_state, report)
 
         # 12. Check milestones
-        self._check_milestones(game_state, report)
+        if clock.mark_processed("milestones"):
+            self._check_milestones(game_state, report)
 
         # Add to log
-        game_state.log.append(f"Turn {report.turn_number}: {report.game_date}")
+        if clock.mark_processed("turn_log"):
+            game_state.log.append(f"Turn {report.turn_number}: {report.game_date}")
 
         return report
 
@@ -172,6 +192,8 @@ class TurnProcessor:
             if s.path
         ]
         for ship in ships_to_process:
+            if not game_state.game_clock.mark_processed("movements", ship.id):
+                continue
             result = game_state.fleet.process_movement(ship.id)
             report.ships_moved.append({
                 "ship_id": ship.id,

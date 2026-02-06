@@ -14,6 +14,10 @@ from .combat import CombatResolver
 from .events import EventEngine
 from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
+from .clock import GameClock
+
+
+SCHEMA_VERSION = 2
 
 
 # Default data paths (relative to gate_horizons package)
@@ -33,7 +37,8 @@ class GameState:
         self.events = EventEngine()
         self.tech = TechTree()
         self.turn_processor = TurnProcessor()
-        self.turn_number: int = 0
+        self.game_clock = GameClock()
+        self.turn_number: int = self.game_clock.turn_number
         self.game_time: str = "January 2157"
         self.difficulty: str = "normal"
         self.log: list[str] = []
@@ -96,7 +101,8 @@ class GameState:
         freighter = state.fleet.create_ship("freighter", "sol", "ISS Hauler")
 
         # Mark initial fog of war
-        state.turn_number = 0
+        state.game_clock = GameClock()
+        state.turn_number = state.game_clock.turn_number
         state.game_time = "January 2157"
         state.log.append("Game started — January 2157")
 
@@ -128,6 +134,7 @@ class GameState:
 
     def to_dict(self) -> dict:
         return {
+            "schema_version": SCHEMA_VERSION,
             "galaxy": self.galaxy.to_dict(),
             "fleet": self.fleet.to_dict(),
             "resources": self.resources.to_dict(),
@@ -136,6 +143,7 @@ class GameState:
             "combat": self.combat.to_dict(),
             "events": self.events.to_dict(),
             "tech": self.tech.to_dict(),
+            "game_clock": self.game_clock.to_dict(),
             "turn_number": self.turn_number,
             "game_time": self.game_time,
             "difficulty": self.difficulty,
@@ -145,6 +153,7 @@ class GameState:
     @classmethod
     def from_dict(cls, data: dict) -> "GameState":
         state = cls()
+        schema_version = data.get("schema_version", 1)
         state.galaxy = GalaxyMap.from_dict(data.get("galaxy", {}))
         state.fleet = FleetManager.from_dict(data.get("fleet", {}))
         state.resources = ResourceManager.from_dict(data.get("resources", {}))
@@ -156,7 +165,12 @@ class GameState:
             events_directory=_get_data_path("events"),
         )
         state.tech = TechTree.from_dict(data.get("tech", {}))
-        state.turn_number = data.get("turn_number", 0)
+        if schema_version >= 2 and "game_clock" in data:
+            state.game_clock = GameClock.from_dict(data.get("game_clock", {}))
+        else:
+            turn_number = data.get("turn_number", 0)
+            state.game_clock = GameClock(current_tick=turn_number, turn_number=turn_number)
+        state.turn_number = state.game_clock.turn_number
         state.game_time = data.get("game_time", "January 2157")
         state.difficulty = data.get("difficulty", "normal")
         state.log = data.get("log", [])
