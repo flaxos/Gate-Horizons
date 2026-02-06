@@ -200,7 +200,25 @@ class Colony:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Colony":
-        return cls(**data)
+        infrastructure = {
+            k: dict(v) for k, v in DEFAULT_INFRASTRUCTURE.items()
+        }
+        incoming_infra = data.get("infrastructure") or {}
+        for infra_type, infra_data in incoming_infra.items():
+            if infra_type not in infrastructure or not isinstance(infra_data, dict):
+                continue
+            merged = dict(infrastructure[infra_type])
+            merged.update(infra_data)
+            infrastructure[infra_type] = merged
+        return cls(
+            system_id=data.get("system_id", ""),
+            planet_id=data.get("planet_id", ""),
+            name=data.get("name", "New Colony"),
+            population=data.get("population", 100),
+            happiness=data.get("happiness", 70),
+            infrastructure=infrastructure,
+            build_queue=list(data.get("build_queue", [])),
+        )
 
 
 class ColonyManager:

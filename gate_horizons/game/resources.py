@@ -135,8 +135,20 @@ class ResourceManager:
     @classmethod
     def from_dict(cls, data: dict) -> "ResourceManager":
         rm = cls()
-        rm.global_resources = data.get("global_resources", {r: 0 for r in RESOURCE_TYPES})
-        rm.per_system_resources = data.get("per_system_resources", {})
-        rm._income_cache = data.get("income_cache", {})
-        rm._expense_cache = data.get("expense_cache", {})
+        global_resources = data.get("global_resources") or {}
+        rm.global_resources = {
+            r: int(global_resources.get(r, 0)) for r in RESOURCE_TYPES
+        }
+        per_system = data.get("per_system_resources") or {}
+        rm.per_system_resources = {}
+        for system_id, resources in per_system.items():
+            if not isinstance(resources, dict):
+                continue
+            rm.per_system_resources[system_id] = {
+                r: int(resources.get(r, 0)) for r in RESOURCE_TYPES
+            }
+        income_cache = data.get("income_cache") or {}
+        rm._income_cache = {r: int(income_cache.get(r, 0)) for r in RESOURCE_TYPES}
+        expense_cache = data.get("expense_cache") or {}
+        rm._expense_cache = {r: int(expense_cache.get(r, 0)) for r in RESOURCE_TYPES}
         return rm

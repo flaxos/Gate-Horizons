@@ -17,7 +17,7 @@ from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
 
 
-SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 2
 
 
 # Default data paths (relative to gate_horizons package)
@@ -133,7 +133,7 @@ class GameState:
 
     def to_dict(self) -> dict:
         return {
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": CURRENT_SCHEMA_VERSION,
             "galaxy": self.galaxy.to_dict(),
             "fleet": self.fleet.to_dict(),
             "resources": self.resources.to_dict(),
@@ -152,7 +152,12 @@ class GameState:
     @classmethod
     def from_dict(cls, data: dict) -> "GameState":
         state = cls()
-        schema_version = data.get("schema_version", 1)
+        schema_version = data.get("schema_version", 0)
+        if schema_version < 1:
+            data = dict(data)
+            data.setdefault("game_time", "January 2157")
+            data.setdefault("difficulty", "normal")
+            data.setdefault("log", [])
         state.galaxy = GalaxyMap.from_dict(data.get("galaxy", {}))
         state.fleet = FleetManager.from_dict(data.get("fleet", {}))
         state.resources = ResourceManager.from_dict(data.get("resources", {}))
@@ -172,5 +177,5 @@ class GameState:
         state.turn_number = state.game_clock.turn_number
         state.game_time = data.get("game_time", "January 2157")
         state.difficulty = data.get("difficulty", "normal")
-        state.log = data.get("log", [])
+        state.log = list(data.get("log", []))
         return state
