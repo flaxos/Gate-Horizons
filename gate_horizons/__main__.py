@@ -1,7 +1,13 @@
 """Module entry point for python -m gate_horizons."""
 
+import os
 import sys
 import traceback
+
+# Ensure the project root is on sys.path (needed for Pydroid / direct execution).
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 
 def main():
