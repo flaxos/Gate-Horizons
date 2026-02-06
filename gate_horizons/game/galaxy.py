@@ -29,7 +29,7 @@ class Planet:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Planet":
-        return cls(**data)
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 class StarSystem:
