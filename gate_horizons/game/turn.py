@@ -304,6 +304,7 @@ class TurnProcessor:
             summary = game_state.resources.process_turn(
                 colonies=game_state.colonies,
                 fleet=game_state.fleet,
+                include_maintenance=False,
             )
             report.resources_gained = summary.get("income", {})
             for k, v in summary.get("expenses", {}).items():

@@ -85,7 +85,7 @@ class ResourceManager:
         self._income_cache = dict(income)
         self._expense_cache = dict(expenses)
 
-    def process_turn(self, colonies=None, fleet=None) -> dict:
+    def process_turn(self, colonies=None, fleet=None, include_maintenance: bool = True) -> dict:
         """Calculate all production/consumption and apply. Returns summary."""
         income = {r: 0 for r in RESOURCE_TYPES}
         expenses = {r: 0 for r in RESOURCE_TYPES}
@@ -104,8 +104,8 @@ class ResourceManager:
                     if r in RESOURCE_TYPES:
                         expenses[r] += amount
 
-        # Ship maintenance
-        if fleet:
+        # Ship maintenance (optional when handled elsewhere)
+        if fleet and include_maintenance:
             maintenance = fleet.get_total_maintenance()
             expenses["credits"] += maintenance
 
