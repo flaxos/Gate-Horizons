@@ -15,6 +15,7 @@ from kivy.properties import ObjectProperty
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
 from ..widgets.notification import TurnReportPopup
+from ..widgets.save_load import SaveGamePopup, LoadGamePopup
 
 
 class NavButton(Button):
@@ -291,20 +292,45 @@ class GalaxyMapScreen(Screen):
             ("Fleet", "fleet_screen"),
             ("Tech", "tech_screen"),
             ("Colonies", "colony_screen"),
+            ("Trade", "trade_screen"),
         ]
 
         for text, screen_name in nav_buttons:
             btn = Button(
                 text=text,
                 size_hint=(None, 1),
-                width=dp(80),
-                font_size="13sp",
+                width=dp(72),
+                font_size="12sp",
                 background_color=(0.08, 0.15, 0.25, 0.6),
                 color=(0.7, 0.85, 1, 1),
             )
             btn.screen_name = screen_name
             btn.bind(on_release=self._on_nav)
             bottom_bar.add_widget(btn)
+
+        # Save button
+        save_btn = Button(
+            text="Save",
+            size_hint=(None, 1),
+            width=dp(64),
+            font_size="12sp",
+            background_color=(0.15, 0.15, 0.35, 0.8),
+            color=(0.7, 0.7, 1, 1),
+        )
+        save_btn.bind(on_release=self._on_save)
+        bottom_bar.add_widget(save_btn)
+
+        # Load button
+        load_btn = Button(
+            text="Load",
+            size_hint=(None, 1),
+            width=dp(64),
+            font_size="12sp",
+            background_color=(0.15, 0.15, 0.35, 0.8),
+            color=(0.7, 0.7, 1, 1),
+        )
+        load_btn.bind(on_release=self._on_load)
+        bottom_bar.add_widget(load_btn)
 
         # Spacer
         bottom_bar.add_widget(Widget())
@@ -502,6 +528,17 @@ class GalaxyMapScreen(Screen):
                 halign="left",
                 text_size=(dp(240), None),
             ))
+            view_colony_btn = Button(
+                text="View Colony",
+                size_hint_y=None,
+                height=dp(36),
+                font_size="12sp",
+                background_color=(0.15, 0.35, 0.2, 0.9),
+                color=(0.3, 1, 0.5, 1),
+            )
+            view_colony_btn.colony_id = system_id
+            view_colony_btn.bind(on_release=self._on_view_colony)
+            panel.add_widget(view_colony_btn)
 
         # Actions
         if not system.gate_active and system.gate_activation_cost:
@@ -697,6 +734,47 @@ class GalaxyMapScreen(Screen):
             app = App.get_running_app()
             if app and hasattr(app, "auto_save"):
                 app.auto_save()
+
+    def _on_view_colony(self, btn):
+        from kivy.app import App
+        app = App.get_running_app()
+        if app:
+            colony_screen = app.sm.get_screen("colony_screen")
+            colony_screen.selected_colony = btn.colony_id
+            app.switch_screen("colony_screen")
+
+    def _on_save(self, *args):
+        from kivy.app import App
+        app = App.get_running_app()
+        if app and hasattr(app, "save_manager") and self.game_state:
+            popup = SaveGamePopup(
+                save_manager=app.save_manager,
+                game_state=self.game_state,
+                on_saved=lambda: None,
+            )
+            popup.open()
+
+    def _on_load(self, *args):
+        from kivy.app import App
+        app = App.get_running_app()
+        if app and hasattr(app, "save_manager"):
+            popup = LoadGamePopup(
+                save_manager=app.save_manager,
+                on_load=self._do_load,
+            )
+            popup.open()
+
+    def _do_load(self, save_id):
+        from kivy.app import App
+        app = App.get_running_app()
+        if app and hasattr(app, "save_manager"):
+            from ...game.state import GameState
+            loaded = app.save_manager.load_game(save_id, GameState)
+            if loaded:
+                app.game_state = loaded
+                self.game_state = loaded
+                app._push_state_to_screens()
+                self.refresh()
 
     def _show_next_event(self):
         if not self._pending_events:

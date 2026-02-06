@@ -10,7 +10,8 @@ from kivy.uix.progressbar import ProgressBar
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
-from ..widgets.context_menu import ContextMenu
+from ..widgets.resource_bar import TopBar
+from ..widgets.context_menu import ContextMenu, DestinationMenu
 
 
 class FleetScreen(Screen):
@@ -30,6 +31,10 @@ class FleetScreen(Screen):
             size=lambda w, v: setattr(self._bg, 'size', v),
             pos=lambda w, v: setattr(self._bg, 'pos', v),
         )
+
+        # Top bar
+        self.top_bar = TopBar()
+        root.add_widget(self.top_bar)
 
         # Header
         header = BoxLayout(
@@ -87,6 +92,7 @@ class FleetScreen(Screen):
 
     def set_game_state(self, game_state):
         self.game_state = game_state
+        self.top_bar.update(game_state)
         self._update_list()
 
     def _update_list(self):
@@ -108,7 +114,7 @@ class FleetScreen(Screen):
             card = BoxLayout(
                 orientation="horizontal",
                 size_hint_y=None,
-                height=dp(56),
+                height=dp(64),
                 spacing=dp(8),
                 padding=[dp(8), dp(4)],
             )
@@ -133,7 +139,7 @@ class FleetScreen(Screen):
             card.add_widget(indicator)
 
             # Ship info
-            info = BoxLayout(orientation="vertical", size_hint_x=0.4)
+            info = BoxLayout(orientation="vertical", size_hint_x=0.3)
             info.add_widget(Label(
                 text=ship.name,
                 font_size="13sp",
@@ -144,6 +150,8 @@ class FleetScreen(Screen):
             ))
 
             mission = ship.mission or "Idle"
+            if ship.mining:
+                mission = "Mining"
             system = self.game_state.galaxy.systems.get(ship.location)
             loc_name = system.name if system else ship.location
             info.add_widget(Label(
@@ -156,7 +164,7 @@ class FleetScreen(Screen):
             card.add_widget(info)
 
             # Hull bar
-            hull_box = BoxLayout(orientation="vertical", size_hint_x=0.2)
+            hull_box = BoxLayout(orientation="vertical", size_hint_x=0.15)
             hull_box.add_widget(Label(
                 text=f"Hull: {ship.hull}/{ship.stats.max_hull}",
                 font_size="10sp",
@@ -183,28 +191,170 @@ class FleetScreen(Screen):
                 text=f"Cargo: {cargo_text}\n({ship.cargo_used}/{ship.stats.cargo_capacity})",
                 font_size="10sp",
                 color=(0.6, 0.75, 0.9, 0.8),
-                size_hint_x=0.2,
+                size_hint_x=0.15,
                 halign="left",
                 text_size=(None, None),
             ))
 
-            # Actions button
+            # Quick action buttons
+            quick_actions = BoxLayout(orientation="vertical", size_hint_x=0.25, spacing=dp(2))
+
+            # Top row: class-specific quick action
+            top_row = BoxLayout(orientation="horizontal", spacing=dp(2))
+
+            if ship.ship_class == "miner":
+                mine_text = "Stop Mining" if ship.mining else "Mine"
+                mine_btn = Button(
+                    text=mine_text,
+                    font_size="10sp",
+                    background_color=(0.5, 0.3, 0.1, 0.9) if ship.mining else (0.15, 0.35, 0.2, 0.9),
+                    color=(1, 0.8, 0.5, 1) if ship.mining else (0.3, 1, 0.5, 1),
+                )
+                mine_btn.ship_id = ship.id
+                mine_btn.bind(on_release=self._toggle_mining)
+                top_row.add_widget(mine_btn)
+
+                if ship.cargo_used > 0:
+                    deliver_btn = Button(
+                        text="Deliver",
+                        font_size="10sp",
+                        background_color=(0.2, 0.3, 0.5, 0.9),
+                        color=(0.7, 0.85, 1, 1),
+                    )
+                    deliver_btn.ship_id = ship.id
+                    deliver_btn.bind(on_release=self._deliver_cargo)
+                    top_row.add_widget(deliver_btn)
+
+            elif ship.ship_class == "freighter":
+                if ship.trade_route:
+                    route_btn = Button(
+                        text="Unassign",
+                        font_size="10sp",
+                        background_color=(0.4, 0.2, 0.1, 0.9),
+                        color=(1, 0.6, 0.4, 1),
+                    )
+                    route_btn.ship_id = ship.id
+                    route_btn.bind(on_release=self._unassign_trade)
+                    top_row.add_widget(route_btn)
+                if ship.cargo_used > 0:
+                    unload_btn = Button(
+                        text="Unload",
+                        font_size="10sp",
+                        background_color=(0.2, 0.3, 0.5, 0.9),
+                        color=(0.7, 0.85, 1, 1),
+                    )
+                    unload_btn.ship_id = ship.id
+                    unload_btn.bind(on_release=self._unload_cargo)
+                    top_row.add_widget(unload_btn)
+
+            # Move button (universal)
+            move_btn = Button(
+                text="Move",
+                font_size="10sp",
+                background_color=(0.12, 0.25, 0.4, 0.8),
+                color=(0.85, 0.95, 1, 1),
+            )
+            move_btn.ship_id = ship.id
+            move_btn.bind(on_release=self._on_move)
+            top_row.add_widget(move_btn)
+
+            quick_actions.add_widget(top_row)
+
+            # Bottom row: Actions menu
             action_btn = Button(
-                text="Actions",
-                size_hint=(None, 1),
-                width=dp(70),
-                font_size="11sp",
+                text="All Actions...",
+                font_size="10sp",
                 background_color=(0.12, 0.25, 0.4, 0.8),
                 color=(0.85, 0.95, 1, 1),
             )
             action_btn.ship_id = ship.id
             action_btn.bind(on_release=self._show_actions)
-            card.add_widget(action_btn)
+            quick_actions.add_widget(action_btn)
+
+            card.add_widget(quick_actions)
 
             self.ship_list.add_widget(card)
 
         total_maint = self.game_state.fleet.get_total_maintenance()
         self.maint_label.text = f"Total Maintenance: {total_maint} credits/turn | Ships: {len(self.game_state.fleet.ships)}"
+
+    def _toggle_mining(self, btn):
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(btn.ship_id)
+        if ship and ship.ship_class == "miner":
+            ship.mining = not ship.mining
+            ship.mission = "mining" if ship.mining else None
+            self._update_list()
+
+    def _deliver_cargo(self, btn):
+        """Deliver mined cargo to global resources."""
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(btn.ship_id)
+        if not ship:
+            return
+        for resource, amount in list(ship.cargo.items()):
+            self.game_state.resources.add(resource, amount, ship.location)
+        ship.cargo.clear()
+        self.top_bar.update(self.game_state)
+        self._update_list()
+
+    def _unload_cargo(self, btn):
+        """Unload freighter cargo to global resources."""
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(btn.ship_id)
+        if not ship:
+            return
+        for resource, amount in list(ship.cargo.items()):
+            self.game_state.resources.add(resource, amount, ship.location)
+        ship.cargo.clear()
+        self.top_bar.update(self.game_state)
+        self._update_list()
+
+    def _unassign_trade(self, btn):
+        """Unassign ship from trade route."""
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(btn.ship_id)
+        if not ship:
+            return
+        for route in self.game_state.trade.routes.values():
+            if ship.id in route.assigned_ships:
+                route.assigned_ships.remove(ship.id)
+        ship.trade_route = None
+        ship.mission = None
+        self._update_list()
+
+    def _on_move(self, btn):
+        """Show destination menu for ship."""
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(btn.ship_id)
+        if not ship:
+            return
+
+        reachable = []
+        for sid, system in self.game_state.galaxy.systems.items():
+            if sid == ship.location:
+                continue
+            if system.discovered and system.gate_active:
+                path = self.game_state.galaxy.get_path(ship.location, sid)
+                if path:
+                    reachable.append(system)
+
+        menu = DestinationMenu(
+            systems=reachable,
+            callback=lambda dest_id, sid=btn.ship_id: self._move_ship(sid, dest_id),
+        )
+        menu.open()
+
+    def _move_ship(self, ship_id, dest_id):
+        if not self.game_state:
+            return
+        self.game_state.fleet.move_ship(ship_id, dest_id, self.game_state.galaxy)
+        self._update_list()
 
     def _show_actions(self, btn):
         if not self.game_state:
@@ -232,6 +382,7 @@ class FleetScreen(Screen):
         app = App.get_running_app()
         if app and hasattr(app, "galaxy_map_screen"):
             app.galaxy_map_screen._execute_action(ship_id, action)
+            self.top_bar.update(self.game_state)
             self._update_list()
 
     def _go_back(self, *args):

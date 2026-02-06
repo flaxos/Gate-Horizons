@@ -24,7 +24,9 @@ from ui.screens.system_view import SystemViewScreen
 from ui.screens.colony_screen import ColonyScreen
 from ui.screens.fleet_screen import FleetScreen
 from ui.screens.tech_screen import TechScreen
+from ui.screens.trade_screen import TradeScreen
 from ui.screens.event_screen import EventPopup
+from ui.widgets.save_load import LoadGamePopup
 
 
 class GateHorizonsApp(App):
@@ -64,6 +66,7 @@ class GateHorizonsApp(App):
         self.colony_screen = ColonyScreen()
         self.fleet_screen = FleetScreen()
         self.tech_screen = TechScreen()
+        self.trade_screen = TradeScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -71,6 +74,7 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.colony_screen)
         self.sm.add_widget(self.fleet_screen)
         self.sm.add_widget(self.tech_screen)
+        self.sm.add_widget(self.trade_screen)
 
         self.sm.current = "main_menu"
         return self.sm
@@ -93,20 +97,20 @@ class GateHorizonsApp(App):
             self.start_new_game()
 
     def show_load_screen(self):
-        """Show save game list (simplified: load most recent)."""
-        saves = self.save_manager.list_saves()
-        if saves:
-            # Load most recent non-autosave, or autosave
-            for save in saves:
-                loaded = self.save_manager.load_game(save["id"], GameState)
-                if loaded:
-                    self.game_state = loaded
-                    self._push_state_to_screens()
-                    self.sm.current = "galaxy_map"
-                    return
+        """Show save game list with full UI."""
+        popup = LoadGamePopup(
+            save_manager=self.save_manager,
+            on_load=self._load_from_popup,
+        )
+        popup.open()
 
-        # No saves found
-        self.start_new_game()
+    def _load_from_popup(self, save_id):
+        """Load a game from the load popup."""
+        loaded = self.save_manager.load_game(save_id, GameState)
+        if loaded:
+            self.game_state = loaded
+            self._push_state_to_screens()
+            self.sm.current = "galaxy_map"
 
     def switch_screen(self, screen_name):
         """Navigate to a screen, refreshing its data."""
@@ -151,6 +155,7 @@ class GateHorizonsApp(App):
         self.colony_screen.set_game_state(self.game_state)
         self.fleet_screen.set_game_state(self.game_state)
         self.tech_screen.set_game_state(self.game_state)
+        self.trade_screen.set_game_state(self.game_state)
 
 
 def main():

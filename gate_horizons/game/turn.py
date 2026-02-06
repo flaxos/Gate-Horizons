@@ -219,6 +219,18 @@ class TurnProcessor:
                         added = ship.add_cargo(resource, amount)
                         mining_output[resource] = mining_output.get(resource, 0) + added
 
+        # Auto-deliver: transfer miner cargo to global resources at end of mining step
+        # Miners at a colony system auto-deliver, and miners with full cargo deliver anywhere
+        for ship in game_state.fleet.ships.values():
+            if ship.ship_class != "miner" or not ship.cargo:
+                continue
+            at_colony = ship.location in game_state.colonies.colonies if hasattr(game_state, "colonies") else False
+            cargo_full = ship.cargo_used >= ship.stats.cargo_capacity * 0.8
+            if at_colony or cargo_full:
+                for resource, amount in list(ship.cargo.items()):
+                    game_state.resources.add(resource, amount, ship.location)
+                ship.cargo.clear()
+
         report.mining_output = mining_output
 
     def _process_trade(self, game_state, report: TurnReport) -> None:
