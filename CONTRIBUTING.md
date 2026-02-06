@@ -215,10 +215,31 @@ python -m gate_horizons.tests.test_harness
 
 ---
 
-## 8. Common Mistakes That Have Crashed the Game
+## 8. Pydroid / Direct Execution
+
+The game runs on Android via **Pydroid 3**. Users launch it by opening
+`main.py` directly. Pydroid adds `gate_horizons/` (not the project root) to
+`sys.path`. Without a path fixup, `from gate_horizons.game.X` fails with
+`ModuleNotFoundError` — instant crash, no traceback visible.
+
+**Both `main.py` and `__main__.py` contain this fixup at the top:**
+
+```python
+import os, sys
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+```
+
+**NEVER remove this.** It is the only thing that makes the game start on Android.
+
+---
+
+## 9. Common Mistakes That Have Crashed the Game
 
 | Mistake | PR | Result |
 |---------|-----|--------|
+| Absolute imports without sys.path fixup | #11 | `ModuleNotFoundError` on Pydroid (instant crash) |
 | Triple-dot relative import (`from ...game.X`) | #6 | `ImportError` on startup |
 | Fixing only one symptom, not the root cause | #7 | Crash persisted |
 | Adding new system without wiring tech effects | #10 | Research had no effect |
@@ -228,8 +249,9 @@ python -m gate_horizons.tests.test_harness
 
 ---
 
-## 9. Checklist for Code Changes
+## 10. Checklist for Code Changes
 
+- [ ] `sys.path` fixup is still at the top of `main.py` and `__main__.py`
 - [ ] All imports are absolute (`gate_horizons.X`) or single-dot relative within the same sub-package
 - [ ] Data loaders handle both `str` and `Traversable` paths
 - [ ] `from_dict()` filters dict keys to `_INIT_FIELDS`

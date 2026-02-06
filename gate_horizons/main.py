@@ -1,6 +1,16 @@
 """Gate Horizons — Main Application Entry Point."""
 
 import os
+import sys
+
+# Ensure the project root is on sys.path so that `from gate_horizons.game.X`
+# works even when this file is executed directly (e.g. Pydroid on Android).
+# Without this, Pydroid adds gate_horizons/ to the path instead of its parent,
+# which makes `import gate_horizons` fail with ModuleNotFoundError.
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 from importlib import resources
 
 # Kivy configuration must be set before importing any kivy modules
