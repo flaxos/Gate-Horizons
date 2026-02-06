@@ -65,9 +65,14 @@ class TradeRoute:
             "efficiency": self.efficiency,
         }
 
+    _INIT_FIELDS = {
+        "id", "source_system", "destination_system", "assigned_ships",
+        "resource_manifest", "active", "efficiency",
+    }
+
     @classmethod
     def from_dict(cls, data: dict) -> "TradeRoute":
-        return cls(**data)
+        return cls(**{k: v for k, v in data.items() if k in cls._INIT_FIELDS})
 
 
 class TradeManager:

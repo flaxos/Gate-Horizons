@@ -3,7 +3,8 @@
 import json
 import uuid
 from dataclasses import dataclass, field
-from typing import Optional
+from importlib.resources.abc import Traversable
+from typing import Optional, Union
 
 
 @dataclass
@@ -53,7 +54,7 @@ class TradeRoute:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TradeRoute":
-        return cls(**data)
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 @dataclass
@@ -139,11 +140,15 @@ class Ship:
             "mining": self.mining,
         }
 
+    _INIT_FIELDS = {
+        "id", "name", "ship_class", "location", "destination", "path",
+        "stats", "cargo", "fuel", "hull", "morale", "mission",
+        "trade_route", "mining",
+    }
+
     @classmethod
     def from_dict(cls, data: dict) -> "Ship":
-        d = dict(data)
-        if "stats" in d and isinstance(d["stats"], dict):
-            pass  # Will be handled in __init__
+        d = {k: v for k, v in data.items() if k in cls._INIT_FIELDS}
         return cls(**d)
 
     @property
@@ -183,9 +188,12 @@ class FleetManager:
         self.ships: dict[str, Ship] = {}
         self._ship_templates: dict[str, dict] = {}
 
-    def load_templates(self, filepath: str) -> None:
-        with open(filepath, "r") as f:
-            self._ship_templates = json.load(f)
+    def load_templates(self, filepath: Union[str, Traversable]) -> None:
+        if hasattr(filepath, "read_text"):
+            self._ship_templates = json.loads(filepath.read_text(encoding="utf-8"))
+        else:
+            with open(filepath, "r", encoding="utf-8") as f:
+                self._ship_templates = json.load(f)
 
     def create_ship(self, ship_class: str, location: str, name: str = None) -> Optional[Ship]:
         template = self._ship_templates.get(ship_class)

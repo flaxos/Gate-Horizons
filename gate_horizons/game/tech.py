@@ -47,9 +47,14 @@ class TechNode:
             "turns_remaining": self.turns_remaining,
         }
 
+    _INIT_FIELDS = {
+        "id", "name", "description", "cost", "effect", "prerequisites",
+        "branch", "tier", "researched", "researching", "turns_remaining",
+    }
+
     @classmethod
     def from_dict(cls, data: dict) -> "TechNode":
-        return cls(**data)
+        return cls(**{k: v for k, v in data.items() if k in cls._INIT_FIELDS})
 
 
 class TechTree:
