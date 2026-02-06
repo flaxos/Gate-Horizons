@@ -768,7 +768,7 @@ class GalaxyMapScreen(Screen):
         from kivy.app import App
         app = App.get_running_app()
         if app and hasattr(app, "save_manager"):
-            from ...game.state import GameState
+            from game.state import GameState
             loaded = app.save_manager.load_game(save_id, GameState)
             if loaded:
                 app.game_state = loaded
