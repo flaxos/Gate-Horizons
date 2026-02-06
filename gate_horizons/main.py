@@ -1,7 +1,7 @@
 """Gate Horizons — Main Application Entry Point."""
 
 import os
-import sys
+from importlib import resources
 
 # Kivy configuration must be set before importing any kivy modules
 os.environ["KIVY_NO_CONSOLELOG"] = "1"
@@ -19,20 +19,18 @@ from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.metrics import dp
-from kivy.resources import resource_add_path
+from gate_horizons.game.state import GameState
+from gate_horizons.game.save_load import SaveManager
 
-from game.state import GameState
-from game.save_load import SaveManager
-
-from ui.screens.main_menu import MainMenuScreen
-from ui.screens.galaxy_map import GalaxyMapScreen
-from ui.screens.system_view import SystemViewScreen
-from ui.screens.colony_screen import ColonyScreen
-from ui.screens.fleet_screen import FleetScreen
-from ui.screens.tech_screen import TechScreen
-from ui.screens.trade_screen import TradeScreen
-from ui.screens.event_screen import EventPopup
-from ui.widgets.save_load import LoadGamePopup
+from gate_horizons.ui.screens.main_menu import MainMenuScreen
+from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
+from gate_horizons.ui.screens.system_view import SystemViewScreen
+from gate_horizons.ui.screens.colony_screen import ColonyScreen
+from gate_horizons.ui.screens.fleet_screen import FleetScreen
+from gate_horizons.ui.screens.tech_screen import TechScreen
+from gate_horizons.ui.screens.trade_screen import TradeScreen
+from gate_horizons.ui.screens.event_screen import EventPopup
+from gate_horizons.ui.widgets.save_load import LoadGamePopup
 
 
 class ExitConfirmPopup(Popup):
@@ -115,13 +113,16 @@ class GateHorizonsApp(App):
 
     def build(self):
         # Load theme
-        theme_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+        theme_resource = resources.files("gate_horizons").joinpath(
             "ui", "styles", "theme.kv",
         )
-        if os.path.exists(theme_path):
-            from kivy.lang import Builder
-            Builder.load_file(theme_path)
+        try:
+            with resources.as_file(theme_resource) as theme_path:
+                if theme_path.exists():
+                    from kivy.lang import Builder
+                    Builder.load_file(str(theme_path))
+        except FileNotFoundError:
+            pass
 
         # Initialize save manager
         save_dir = os.path.join(

@@ -1,7 +1,8 @@
 """Tech tree system for Gate Horizons."""
 
 import json
-from typing import Optional
+from importlib.resources.abc import Traversable
+from typing import Optional, Union
 
 
 class TechNode:
@@ -56,9 +57,12 @@ class TechTree:
         self.techs: dict[str, TechNode] = {}
         self.active_research: str = None  # Currently researching tech ID
 
-    def load_from_json(self, filepath: str) -> None:
-        with open(filepath, "r") as f:
-            data = json.load(f)
+    def load_from_json(self, filepath: Union[str, Traversable]) -> None:
+        if hasattr(filepath, "read_text"):
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+        else:
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
         self.techs.clear()
         for branch_name, tiers in data.items():
