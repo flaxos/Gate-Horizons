@@ -123,8 +123,13 @@ class Colony:
     def queue_construction(self, infra_type: str) -> None:
         self.build_queue.append({"type": infra_type})
 
-    def process_turn(self) -> dict:
-        """Process one turn for this colony. Returns summary of changes."""
+    def process_turn(self, build_time_reduction: int = 0) -> dict:
+        """Process one turn for this colony. Returns summary of changes.
+
+        Args:
+            build_time_reduction: Turns to subtract from new construction
+                (from tech effects like Rapid Construction).
+        """
         report = {
             "construction_completed": [],
             "population_growth": 0,
@@ -152,7 +157,7 @@ class Colony:
                     # Find queued item for this type
                     for i, item in enumerate(self.build_queue):
                         if item["type"] == infra_type:
-                            self.start_construction(infra_type)
+                            self.start_construction(infra_type, build_time_reduction)
                             self.build_queue.pop(i)
                             break
 
@@ -263,10 +268,10 @@ class ColonyManager:
                 total[r] = total.get(r, 0) + amount
         return total
 
-    def process_all_turns(self) -> list:
+    def process_all_turns(self, build_time_reduction: int = 0) -> list:
         reports = []
         for system_id, colony in self.colonies.items():
-            report = colony.process_turn()
+            report = colony.process_turn(build_time_reduction=build_time_reduction)
             report["system_id"] = system_id
             report["colony_name"] = colony.name
             reports.append(report)

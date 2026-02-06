@@ -4,6 +4,7 @@ Runs 10 turns without UI and prints results to verify the engine works.
 """
 
 import json
+import os
 import tempfile
 
 from gate_horizons.game.state import GameState
