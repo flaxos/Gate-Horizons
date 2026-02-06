@@ -220,12 +220,17 @@ class FleetManager:
         ship = self.ships.get(ship_id)
         if not ship:
             return False
+        if destination_id == ship.location:
+            return False
 
         if galaxy:
             path = galaxy.get_path(ship.location, destination_id)
             if not path:
                 return False
-            ship.path = path[1:]  # Remove current location
+            path = path[1:]  # Remove current location
+            if not path:
+                return False
+            ship.path = path
         else:
             ship.path = [destination_id]
 
