@@ -1,0 +1,96 @@
+{
+  "propulsion": {
+    "tier1": {
+      "efficient_drives": {
+        "name": "Efficient Drives",
+        "description": "Improve fuel efficiency for all ships by 20%",
+        "cost": {"intel": 10, "turns": 3},
+        "effect": {"fuel_efficiency": 1.2},
+        "prerequisites": []
+      },
+      "gate_resonance": {
+        "name": "Gate Resonance Tuning",
+        "description": "Reduce gate activation energy cost by 30%",
+        "cost": {"intel": 15, "turns": 4},
+        "effect": {"gate_cost_reduction": 0.3},
+        "prerequisites": []
+      }
+    },
+    "tier2": {
+      "burst_drives": {
+        "name": "Burst Acceleration",
+        "description": "+1 speed for Scout and Corvette classes",
+        "cost": {"intel": 25, "exotics": 5, "turns": 5},
+        "effect": {"speed_bonus": {"scout": 1, "corvette": 1}},
+        "prerequisites": ["efficient_drives"]
+      }
+    }
+  },
+  "engineering": {
+    "tier1": {
+      "reinforced_hulls": {
+        "name": "Reinforced Hulls",
+        "description": "+20% hull points for all ships",
+        "cost": {"intel": 10, "turns": 3},
+        "effect": {"hull_bonus": 1.2},
+        "prerequisites": []
+      },
+      "rapid_construction": {
+        "name": "Rapid Construction",
+        "description": "-1 turn for all ship and building construction",
+        "cost": {"intel": 12, "turns": 3},
+        "effect": {"build_time_reduction": 1},
+        "prerequisites": []
+      }
+    },
+    "tier2": {
+      "advanced_mining": {
+        "name": "Advanced Mining Rigs",
+        "description": "+50% mining yield for Miner-class ships",
+        "cost": {"intel": 20, "exotics": 3, "turns": 4},
+        "effect": {"mining_yield": 1.5},
+        "prerequisites": ["reinforced_hulls"]
+      }
+    }
+  },
+  "sensors": {
+    "tier1": {
+      "deep_scan": {
+        "name": "Deep Scanning Arrays",
+        "description": "+1 sensor range for all ships, reveal hidden anomalies",
+        "cost": {"intel": 10, "turns": 3},
+        "effect": {"sensor_bonus": 1, "reveal_hidden": true},
+        "prerequisites": []
+      }
+    },
+    "tier2": {
+      "predictive_analysis": {
+        "name": "Predictive Threat Analysis",
+        "description": "+15% combat auto-resolve accuracy",
+        "cost": {"intel": 20, "turns": 4},
+        "effect": {"combat_accuracy_bonus": 0.15},
+        "prerequisites": ["deep_scan"]
+      }
+    }
+  },
+  "xenology": {
+    "tier1": {
+      "signal_decryption": {
+        "name": "Signal Decryption",
+        "description": "Can decode alien transmissions, unlocking diplomacy events",
+        "cost": {"intel": 15, "turns": 4},
+        "effect": {"unlock_diplomacy": true},
+        "prerequisites": []
+      }
+    },
+    "tier2": {
+      "cultural_exchange": {
+        "name": "Cultural Exchange Protocols",
+        "description": "+30% favorable diplomacy outcomes",
+        "cost": {"intel": 25, "exotics": 5, "turns": 5},
+        "effect": {"diplomacy_bonus": 0.3},
+        "prerequisites": ["signal_decryption"]
+      }
+    }
+  }
+}

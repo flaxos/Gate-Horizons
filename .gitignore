@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+.buildozer/
+bin/
+*.egg-info/
+dist/
+build/
+.env
+*.log
+gate_horizons/saves/

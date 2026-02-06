@@ -1,0 +1,508 @@
+{
+  "exploration_events": [
+    {
+      "id": "exp_001",
+      "title": "Derelict Station",
+      "description": "Long-range sensors detect a massive alien station tumbling silently through the void. Its hull is pocked with micro-meteor impacts and streaked with age, yet faint power signatures still flicker deep within its core. No known species has claimed this architecture -- the sweeping arcs and bioluminescent paneling suggest a civilization lost to time.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Send a boarding party to explore the station interior",
+          "outcomes": [
+            {"probability": 0.5, "result": "success", "description": "Your team breaches the airlock and discovers a treasure trove of alien technology still humming with residual power. Data cores yield centuries of astronomical observations, and sealed cargo bays contain exotic materials unlike anything in known catalogs.", "rewards": {"exotics": 8, "intel": 12, "credits": 200}},
+            {"probability": 0.3, "result": "partial", "description": "The boarding party gains entry but triggers a decaying security system. They retrieve some useful data before being forced to evacuate under a hail of automated plasma fire.", "rewards": {"intel": 5, "exotics": 2}, "costs": {"hull_damage": 15}},
+            {"probability": 0.2, "result": "failure", "description": "A catastrophic structural collapse traps the forward team for hours. By the time they are extracted, the station has begun breaking apart, and the rescue shuttle sustains heavy damage docking under debris.", "rewards": {}, "costs": {"hull_damage": 30}}
+          ]
+        },
+        {
+          "text": "Perform a comprehensive remote scan from a safe distance",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "High-resolution scans map the station's interior in exquisite detail. Your science team reconstructs partial schematics of alien engineering and identifies the station's origin sector -- invaluable intelligence for future expeditions.", "rewards": {"intel": 10, "credits": 80}},
+            {"probability": 0.4, "result": "partial", "description": "Electromagnetic interference from the station's failing reactor corrupts much of the scan data. Still, fragments of navigational charts and material composition readings prove useful.", "rewards": {"intel": 4}}
+          ]
+        },
+        {
+          "text": "Mark the location and move on -- this is beyond our current capability",
+          "outcomes": [
+            {"probability": 0.8, "result": "success", "description": "You log the station's precise coordinates and drift vector into the galactic database. Command awards a modest finder's fee and flags the site for a dedicated recovery fleet.", "rewards": {"credits": 50, "intel": 2}},
+            {"probability": 0.2, "result": "partial", "description": "As you pull away, the station's power signature spikes briefly, and your passive sensors capture a burst of encoded data before it goes dark forever. Analysts extract marginal intelligence from the transmission.", "rewards": {"intel": 3}}
+          ]
+        }
+      ],
+      "tags": ["derelict", "alien_tech", "anomaly"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_002",
+      "title": "Ancient Probe",
+      "description": "A small object tumbles end over end against the star-scattered backdrop, its surface etched with geometric patterns that glow faintly in ultraviolet. Analysis confirms it is artificial -- a probe of alien manufacture, possibly thousands of years old, still emitting a weak telemetry signal into the cosmic silence.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Deploy grappling arms and capture the probe for full analysis",
+          "outcomes": [
+            {"probability": 0.5, "result": "success", "description": "The probe is secured in your cargo bay without incident. Your engineers carefully disassemble it, revealing a miniaturized power source of extraordinary efficiency and a data crystal containing star maps of uncharted regions.", "rewards": {"exotics": 6, "intel": 10, "energy": 15}},
+            {"probability": 0.3, "result": "partial", "description": "The capture triggers a defensive pulse from the probe, scorching your hull plating. Once subdued, it yields partial data -- corrupted star charts and a depleted but analyzable power cell.", "rewards": {"intel": 4, "energy": 5}, "costs": {"hull_damage": 12}},
+            {"probability": 0.2, "result": "failure", "description": "The probe detonates a containment charge the moment your grapples make contact, showering your ship with superheated fragments. The artifact is destroyed, and your hull bears the scars.", "rewards": {}, "costs": {"hull_damage": 25}}
+          ]
+        },
+        {
+          "text": "Scan the probe with passive instruments while matching its trajectory",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Patient observation pays off. Over several hours you decode its telemetry broadcast, extracting detailed spectral analyses of three previously unknown planetary systems and the chemical signature of its fuel -- a blueprint for exotic energy research.", "rewards": {"intel": 8, "energy": 8}},
+            {"probability": 0.3, "result": "partial", "description": "The probe's signal degrades and falls silent before you can complete the scan. What data you captured is fragmentary but includes intriguing references to a nearby gate corridor.", "rewards": {"intel": 3}}
+          ]
+        },
+        {
+          "text": "Log the sighting and continue on mission -- the probe is not a priority",
+          "outcomes": [
+            {"probability": 0.9, "result": "success", "description": "You transmit the probe's coordinates and trajectory to central command. The data is flagged for follow-up, and you receive a routine acknowledgment credit for the discovery.", "rewards": {"credits": 30, "intel": 1}},
+            {"probability": 0.1, "result": "partial", "description": "As you maneuver away, the probe alters its own course to follow briefly before veering off. The behavioral data alone is worth a note in the xenotech journals.", "rewards": {"intel": 2}}
+          ]
+        }
+      ],
+      "tags": ["alien_tech", "artifact", "deep_space"],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_003",
+      "title": "Gas Giant Energy Signature",
+      "description": "The swirling amber and violet bands of an uncharted gas giant fill your viewport. Deep within the roiling atmosphere, instruments detect rhythmic energy pulses -- too regular to be natural, too powerful to ignore. Lightning arcs between cloud layers hundreds of kilometers tall, but the signal persists beneath it all, patient and deliberate.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Launch an armored probe into the atmosphere to investigate the source",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "The probe survives the crushing descent and transmits breathtaking data: a vast energy-harvesting lattice woven through the gas layers, siphoning power from the planet's magnetosphere. The technology is centuries beyond your own -- the schematics alone are revolutionary.", "rewards": {"intel": 15, "energy": 20, "exotics": 4}},
+            {"probability": 0.4, "result": "partial", "description": "Extreme pressure destroys the probe at depth, but not before it relays partial readings of the energy structure. Engineers estimate the data is enough to improve your ship's power systems marginally.", "rewards": {"intel": 5, "energy": 8}, "costs": {"fuel_cost": 10}},
+            {"probability": 0.2, "result": "failure", "description": "The probe is crushed within seconds. A sympathetic energy discharge from the planet's atmosphere lashes your ship in orbit, overloading shield emitters and scorching sensor arrays.", "rewards": {}, "costs": {"hull_damage": 20, "fuel_cost": 15}}
+          ]
+        },
+        {
+          "text": "Observe and record from a stable orbit, compiling long-term data",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Over forty-eight hours of meticulous observation, you chart the energy pulse patterns and correlate them with atmospheric dynamics. The resulting dataset is invaluable to astrophysicists and fetches a premium from research guilds.", "rewards": {"intel": 10, "credits": 120}},
+            {"probability": 0.4, "result": "partial", "description": "Atmospheric interference degrades your readings intermittently. The data is incomplete but still contributes meaningfully to the galactic survey database.", "rewards": {"intel": 4, "credits": 40}}
+          ]
+        },
+        {
+          "text": "Mark the gas giant for a dedicated science fleet and move on",
+          "outcomes": [
+            {"probability": 0.8, "result": "success", "description": "You file a detailed preliminary report with the Exploration Bureau. The anomaly classification alone earns your crew a discovery stipend, and the coordinates are encrypted for priority follow-up.", "rewards": {"credits": 60, "intel": 3}},
+            {"probability": 0.2, "result": "partial", "description": "Your report is logged among dozens of similar filings. A modest credit is issued, though you suspect this particular find may languish in bureaucratic backlog.", "rewards": {"credits": 25}}
+          ]
+        }
+      ],
+      "tags": ["anomaly", "gas_giant", "energy"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_004",
+      "title": "Abandoned Mining Colony",
+      "description": "Carved into the face of a barren asteroid, a sprawling mining complex sits in perfect vacuum silence. The architecture is unmistakably non-human -- tunnels bored with molecular precision, ore processors shaped like spiraling shells. Whatever species built this left in haste; equipment lies scattered, and cargo containers sit half-loaded on motionless conveyors.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Send a team inside to explore the deeper tunnels and control center",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "The expedition reaches the central control hub, where crystalline data tablets remain intact. Translation algorithms crack enough of the alien language to reveal rich mineral vein maps and processing techniques far superior to human methods.", "rewards": {"intel": 12, "metals": 15, "exotics": 5}},
+            {"probability": 0.35, "result": "partial", "description": "Exploration proceeds well until a tunnel collapse blocks the deepest passages. Your team extracts with crates of unprocessed ore and partial facility schematics before further instability makes the site unsafe.", "rewards": {"metals": 10, "intel": 4}, "costs": {"hull_damage": 8}},
+            {"probability": 0.25, "result": "failure", "description": "Residual automated defenses activate without warning, filling corridors with kinetic projectiles. Your team barely escapes, dragging wounded through collapsing shafts. The shuttle takes damage on the frantic extraction.", "rewards": {"metals": 2}, "costs": {"hull_damage": 22}}
+          ]
+        },
+        {
+          "text": "Salvage accessible surface equipment and materials",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Your crew strips the loading docks and surface facilities efficiently. Alien mining drills, refined metal stockpiles, and power cells are ferried back to your hold. The haul exceeds expectations.", "rewards": {"metals": 18, "energy": 6, "credits": 80}},
+            {"probability": 0.3, "result": "partial", "description": "Much of the surface equipment has degraded beyond recovery, but raw ore stockpiles and a few intact tools make the trip worthwhile.", "rewards": {"metals": 8, "credits": 30}},
+            {"probability": 0.1, "result": "failure", "description": "A booby-trapped cargo container detonates during loading, damaging your shuttle's cargo crane and scattering debris across the landing zone. The operation is scrubbed for safety.", "rewards": {}, "costs": {"hull_damage": 15}}
+          ]
+        },
+        {
+          "text": "Conduct a thorough remote scan to catalog the site without risk",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Ground-penetrating radar and spectral analysis reveal the full extent of the mine complex -- seventeen levels deep, with ore veins still rich in rare metals. The survey data is worth a fortune to prospecting corporations.", "rewards": {"intel": 8, "credits": 100}},
+            {"probability": 0.3, "result": "partial", "description": "Dense metallic deposits interfere with deep scans. Surface-level data is still valuable, cataloging alien construction methods and basic geological composition.", "rewards": {"intel": 3, "credits": 35}}
+          ]
+        }
+      ],
+      "tags": ["derelict", "mining", "alien_tech"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_005",
+      "title": "Distress Signal",
+      "description": "A repeating distress signal cuts through the static on emergency frequencies -- stuttering, fractured, and encoded in no known protocol. Triangulation places the source near a dense asteroid cluster where sensor shadows could hide anything. The signal is growing weaker. Whatever sent it is running out of time, or power, or both.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Navigate into the asteroid cluster to investigate the signal source",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "Threading through tumbling rock, you discover an alien escape pod wedged between two asteroids. Inside, stasis chambers hold dormant alien organisms and a wealth of cultural artifacts. The diplomatic and scientific value is immeasurable.", "rewards": {"intel": 18, "exotics": 7, "credits": 250}},
+            {"probability": 0.35, "result": "partial", "description": "You locate the source -- an automated buoy broadcasting on loop. It contains encrypted navigational warnings and partial system charts. The asteroid field batters your ship on the way out.", "rewards": {"intel": 6, "credits": 50}, "costs": {"hull_damage": 18}},
+            {"probability": 0.25, "result": "failure", "description": "The signal was a lure. An asteroid collision forces emergency maneuvers that tear through your port hull plating. You limp out of the cluster with nothing but damage reports and hard-earned caution.", "rewards": {}, "costs": {"hull_damage": 35}}
+          ]
+        },
+        {
+          "text": "Broadcast a response signal and wait for a reply at safe distance",
+          "outcomes": [
+            {"probability": 0.5, "result": "success", "description": "After a tense hour, the signal modulates in response to yours. Automated translation slowly bridges the gap, and the alien system transmits a data package -- star charts, resource locations, and what appears to be a formal greeting protocol.", "rewards": {"intel": 10, "credits": 80}},
+            {"probability": 0.3, "result": "partial", "description": "Your broadcast draws no intelligent response, but the signal's encoding pattern reveals useful information about alien communication technology when analyzed.", "rewards": {"intel": 4}},
+            {"probability": 0.2, "result": "failure", "description": "Your broadcast attracts the attention of a debris field that was gravitationally unstable. A cascade of rock fragments pelts your position, forcing a hasty retreat.", "rewards": {}, "costs": {"hull_damage": 12}}
+          ]
+        },
+        {
+          "text": "Log the signal's frequency and coordinates, then continue the mission",
+          "outcomes": [
+            {"probability": 0.8, "result": "success", "description": "You record the full signal for analysts back at base. The frequency data alone helps cryptographers working on alien communication ciphers, and your diligence earns a commendation.", "rewards": {"intel": 3, "credits": 40}},
+            {"probability": 0.2, "result": "partial", "description": "The signal cuts out moments after you begin recording. You capture only a fragment, but it is enough to confirm non-human origin for the archives.", "rewards": {"intel": 1, "credits": 15}}
+          ]
+        }
+      ],
+      "tags": ["distress", "anomaly", "deep_space"],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_006",
+      "title": "Crystalline Asteroid",
+      "description": "It catches the starlight like a chandelier adrift in the void -- an asteroid composed almost entirely of crystalline structures that refract light into prismatic cascades. Spectral analysis reveals compounds unknown to standard chemistry, lattices that should not be stable at any temperature. Whether grown or manufactured, the crystals pulse with a faint internal luminescence.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Mine carefully using precision laser cutters to preserve crystal integrity",
+          "outcomes": [
+            {"probability": 0.5, "result": "success", "description": "Hours of painstaking extraction yield dozens of flawless crystal specimens. Laboratory analysis reveals they possess extraordinary energy storage capacity and unique refractive properties. Exotic materials traders will pay a fortune.", "rewards": {"exotics": 15, "credits": 180, "energy": 10}},
+            {"probability": 0.35, "result": "partial", "description": "Vibrations from the cutting process shatter several of the largest formations. You recover a modest collection of intact smaller crystals and a considerable quantity of crystalline dust with industrial applications.", "rewards": {"exotics": 6, "credits": 60}},
+            {"probability": 0.15, "result": "failure", "description": "A resonance cascade propagates through the asteroid as your lasers activate. The entire surface fractures violently, sending crystalline shrapnel into your ship's hull at tremendous velocity.", "rewards": {"exotics": 1}, "costs": {"hull_damage": 25}}
+          ]
+        },
+        {
+          "text": "Use explosive charges for rapid bulk extraction",
+          "outcomes": [
+            {"probability": 0.3, "result": "success", "description": "The controlled detonations break the asteroid into manageable chunks. Though many crystals shatter, the sheer volume compensates -- your cargo bay fills with raw crystalline material and metallic fragments.", "rewards": {"exotics": 8, "metals": 12, "credits": 100}},
+            {"probability": 0.4, "result": "partial", "description": "The explosions are too effective. Crystal fragments scatter in every direction, and you recover only a fraction of the material. What you do gather is mostly fractured, reducing its exotic value.", "rewards": {"exotics": 3, "metals": 6}},
+            {"probability": 0.3, "result": "failure", "description": "The crystals react violently to the explosive shockwave, amplifying and redirecting the energy back at your ship in a devastating feedback pulse. Critical systems overload.", "rewards": {}, "costs": {"hull_damage": 30, "fuel_cost": 10}}
+          ]
+        },
+        {
+          "text": "Study the crystal formations with scientific instruments without disturbing them",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Non-invasive analysis produces a comprehensive catalog of the crystal structures, their impossible chemistry, and the energy patterns within. The published research earns accolades and licensing fees from materials science consortiums.", "rewards": {"intel": 14, "credits": 90}},
+            {"probability": 0.3, "result": "partial", "description": "The crystals' luminescence intensifies during scanning, suggesting a reactive property. Your instruments capture useful data before the interference becomes too strong for reliable readings.", "rewards": {"intel": 6, "credits": 30}}
+          ]
+        }
+      ],
+      "tags": ["anomaly", "mining", "exotic_materials"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_007",
+      "title": "Dormant Alien Vessel",
+      "description": "It dwarfs your ship by an order of magnitude -- a vessel of sweeping organic curves and dark metallic skin, drifting without power or thrust. No running lights, no emissions, no life signs. The hull is intact, unblemished by time or combat, as if the ship simply stopped and its crew vanished between one heartbeat and the next. Your crew exchanges uneasy glances across the bridge.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Board the alien vessel with a full armed expedition",
+          "outcomes": [
+            {"probability": 0.35, "result": "success", "description": "The interior is a cathedral of alien engineering -- vaulted corridors, bioluminescent walls, and technology that seems to grow from the ship itself. Your team recovers intact power cells, navigational data spanning galaxies, and samples of self-repairing hull material.", "rewards": {"exotics": 12, "intel": 20, "energy": 15, "credits": 300}},
+            {"probability": 0.35, "result": "partial", "description": "The ship's dormant immune system reactivates upon entry, sealing corridors and flooding sections with inert gas. Your team retreats with armfuls of loose artifacts and a partial download of the navigation database.", "rewards": {"exotics": 5, "intel": 8}, "costs": {"hull_damage": 10}},
+            {"probability": 0.3, "result": "failure", "description": "Boarding triggers a full system awakening. The alien ship powers up and emits a massive electromagnetic pulse before going dark again. Your ship's electronics are devastated, and the boarding party barely returns alive.", "rewards": {"intel": 2}, "costs": {"hull_damage": 40}}
+          ]
+        },
+        {
+          "text": "Attempt to tow the vessel back to a starbase for thorough study",
+          "outcomes": [
+            {"probability": 0.3, "result": "success", "description": "Magnetic grapples hold firm, and the tow proceeds smoothly. Delivering an intact alien capital ship to the research division triggers the largest discovery bonus in your career. Scientists will study it for decades.", "rewards": {"credits": 500, "intel": 15}},
+            {"probability": 0.4, "result": "partial", "description": "The vessel's mass strains your engines to their limits. You manage to tow it to a nearby waypoint before your fuel reserves run critically low. A partial salvage team extracts what they can.", "rewards": {"credits": 150, "intel": 5}, "costs": {"fuel_cost": 25}},
+            {"probability": 0.3, "result": "failure", "description": "The alien ship resists the grapples with an unseen force. Your engines burn through fuel fighting the resistance before you abandon the attempt, drives overheated and reserves depleted.", "rewards": {}, "costs": {"fuel_cost": 30, "hull_damage": 15}}
+          ]
+        },
+        {
+          "text": "Maintain distance and observe for any signs of activity",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Patience reveals patterns -- the ship emits micro-pulses at precise intervals, a heartbeat of sorts. Cross-referencing with known alien signals yields a breakthrough in xenolinguistic research. Your detailed observation logs become a key reference document.", "rewards": {"intel": 12, "credits": 70}},
+            {"probability": 0.4, "result": "partial", "description": "Hours of observation yield little beyond hull composition readings and dimensional data. Still, confirming the existence of such a vessel is significant in itself.", "rewards": {"intel": 5, "credits": 30}}
+          ]
+        }
+      ],
+      "tags": ["derelict", "alien_tech", "capital_ship"],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_008",
+      "title": "Planetary Surface Ruins",
+      "description": "Orbital imaging reveals geometric patterns beneath millennia of overgrowth on the third planet -- too precise for geology, too vast for anything humanity has built. Towers of fused stone and metal rise above a canopy of bioluminescent vegetation, and thermal scans show residual heat deep underground, as though ancient furnaces still smolder in forgotten halls.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Deploy a landing party to explore the ruins on foot",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "The ground team navigates crumbling plazas and descends into subterranean vaults. They discover a library of sorts -- crystalline rods that project holographic records of a lost civilization, star maps, and technological diagrams. The cultural and strategic value is staggering.", "rewards": {"intel": 22, "exotics": 6, "credits": 200}},
+            {"probability": 0.35, "result": "partial", "description": "Hostile native fauna and unstable structures limit exploration to the outer districts. The team recovers carved tablets, metallic artifacts, and soil samples rich in exotic compounds before retreating to orbit.", "rewards": {"intel": 7, "exotics": 3, "credits": 60}, "costs": {"hull_damage": 5}},
+            {"probability": 0.25, "result": "failure", "description": "A seismic event -- perhaps triggered by the team's presence -- collapses the primary structures. The landing shuttle is damaged by falling debris during emergency extraction, and the ruins are buried under tons of rubble.", "rewards": {"intel": 2}, "costs": {"hull_damage": 28, "fuel_cost": 8}}
+          ]
+        },
+        {
+          "text": "Conduct a comprehensive orbital survey using high-resolution scanners",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Multi-spectrum orbital imaging produces a complete three-dimensional model of the ruins, revealing underground complexes, material compositions, and energy signatures. Archaeologists and military analysts alike bid aggressively for the dataset.", "rewards": {"intel": 14, "credits": 140}},
+            {"probability": 0.4, "result": "partial", "description": "Atmospheric distortion and the planet's magnetic field degrade scan quality. You capture enough for a preliminary survey report, useful but not groundbreaking.", "rewards": {"intel": 5, "credits": 45}}
+          ]
+        },
+        {
+          "text": "Plant a long-term monitoring beacon in orbit and flag for future expedition",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "The beacon locks into a stable orbit and begins continuous data collection. Before you depart, it captures a sudden energy flare from the ruins' core -- evidence of active systems. The discovery priority rating soars, and your finder's credit multiplies.", "rewards": {"credits": 90, "intel": 6}},
+            {"probability": 0.3, "result": "partial", "description": "The beacon deploys successfully but the planet's magnetic field interferes with long-range transmission. Only periodic data bursts will reach the network. Modest discovery credit is awarded.", "rewards": {"credits": 35, "intel": 2}}
+          ]
+        }
+      ],
+      "tags": ["ruins", "alien_tech", "planetary"],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_009",
+      "title": "Unstable Wormhole Fragment",
+      "description": "Space itself is wounded here. Near the corroded remains of an ancient gate, a shard of warped space-time shimmers like heat haze, bending starlight into spirals. Instruments scream contradictions -- readings of negative energy density, temporal echoes, and spatial dimensions folding in on themselves. It is beautiful and deeply wrong, a crack in the fabric of reality.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Launch an instrumented probe into the wormhole fragment",
+          "outcomes": [
+            {"probability": 0.35, "result": "success", "description": "The probe enters the distortion and, impossibly, transmits data from the other side -- a region of space thousands of light-years distant. The transit data revolutionizes understanding of gate technology and opens theoretical pathways to new construction methods.", "rewards": {"intel": 25, "exotics": 10, "energy": 12}},
+            {"probability": 0.35, "result": "partial", "description": "The probe is stretched beyond recovery, but its telemetry during the approach reveals critical information about the energy dynamics sustaining the fragment. Theoretical physicists will feast on this data for years.", "rewards": {"intel": 10, "energy": 5}, "costs": {"fuel_cost": 8}},
+            {"probability": 0.3, "result": "failure", "description": "The probe's entry destabilizes the fragment, which lashes out with a tendril of warped gravity. Your ship is caught in the distortion, hull plates buckling under impossible tidal forces before you claw free.", "rewards": {}, "costs": {"hull_damage": 35, "fuel_cost": 15}}
+          ]
+        },
+        {
+          "text": "Maintain a safe distance and deploy a sensor perimeter around the anomaly",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "The sensor net captures months' worth of baseline data in hours as the fragment fluctuates. Energy signatures, spatial distortion metrics, and temporal displacement readings form the most complete wormhole dataset ever assembled.", "rewards": {"intel": 16, "credits": 110}},
+            {"probability": 0.4, "result": "partial", "description": "Several sensors are consumed by expanding micro-distortions, but the survivors transmit valuable readings. The data is incomplete yet sufficient for preliminary theoretical models.", "rewards": {"intel": 7, "credits": 40}}
+          ]
+        },
+        {
+          "text": "Attempt to stabilize the fragment using your ship's energy systems",
+          "outcomes": [
+            {"probability": 0.25, "result": "success", "description": "Against all probability, your modulated energy beam resonates with the fragment's own frequency. It stabilizes into a shimmering disc -- a functional micro-wormhole. The achievement is epoch-defining, a potential new gate connection worth more than your ship a thousandfold.", "rewards": {"intel": 30, "exotics": 15, "credits": 500, "energy": 20}},
+            {"probability": 0.4, "result": "partial", "description": "The stabilization partially succeeds before your energy reserves are exhausted. The fragment settles into a slower oscillation, buying time for future missions. The energy expenditure was enormous but the data gathered is extraordinary.", "rewards": {"intel": 12, "exotics": 4}, "costs": {"fuel_cost": 20}},
+            {"probability": 0.35, "result": "failure", "description": "The energy interaction triggers a violent collapse. The fragment detonates in a burst of exotic radiation, slamming your ship with gravitational shear that warps hull plating and fries delicate instruments.", "rewards": {}, "costs": {"hull_damage": 40, "fuel_cost": 25}}
+          ]
+        }
+      ],
+      "tags": ["anomaly", "wormhole", "gate_tech"],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_010",
+      "title": "Biological Anomaly",
+      "description": "The ice moon's surface is cracked with veins of turquoise light. Beneath the frozen crust, sonar reveals vast liquid oceans teeming with movement. Life signs register in the billions -- complex, multicellular, and organized in patterns that suggest collective intelligence. Something beneath the ice knows you are here; the movement patterns shift as your orbit passes overhead.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Land on the surface and drill through the ice to make direct contact",
+          "outcomes": [
+            {"probability": 0.3, "result": "success", "description": "The drill breaks through into a cathedral of bioluminescent ocean. Organisms cluster around the bore hole, seemingly curious. Biological samples reveal a biochemistry based on exotic compounds, and the behavioral data suggests a distributed intelligence of extraordinary complexity.", "rewards": {"intel": 18, "exotics": 12, "credits": 200}},
+            {"probability": 0.4, "result": "partial", "description": "Contact is made but the organisms react defensively, flooding the bore hole with a corrosive bioluminescent fluid. Your team retreats with contaminated equipment but viable samples. Decontamination costs are significant.", "rewards": {"intel": 8, "exotics": 4}, "costs": {"hull_damage": 15}},
+            {"probability": 0.3, "result": "failure", "description": "The ice proves unstable. Your drilling rig breaks through into a pressurized cavity that erupts violently, hurling the landing craft into a tumble. Emergency thrusters fire to prevent a crash, but the ship sustains serious structural damage.", "rewards": {"intel": 2}, "costs": {"hull_damage": 32, "fuel_cost": 12}}
+          ]
+        },
+        {
+          "text": "Perform deep orbital scans and sonar mapping without landing",
+          "outcomes": [
+            {"probability": 0.65, "result": "success", "description": "Extended sonar profiling maps the subsurface ocean in extraordinary detail. You identify migration patterns, population clusters, and structures that appear to be constructed -- possible evidence of a submarine civilization. Xenobiologists will study this for generations.", "rewards": {"intel": 14, "credits": 120}},
+            {"probability": 0.35, "result": "partial", "description": "The ice layer scatters much of your sonar energy. You confirm the presence of complex life and map the rough ocean geography, but fine detail eludes your instruments.", "rewards": {"intel": 5, "credits": 40}}
+          ]
+        },
+        {
+          "text": "Establish a quarantine perimeter and report the discovery",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Automated quarantine buoys are deployed in a protective shell around the moon. Your first-contact protocol report is flagged as highest priority by command. Discovery credit and hazard bonuses are substantial.", "rewards": {"credits": 100, "intel": 8}},
+            {"probability": 0.3, "result": "partial", "description": "The quarantine buoys are deployed, but one is pulled beneath the ice by an unseen force before it can anchor. The loss is noted, and your report earns standard discovery acknowledgment.", "rewards": {"credits": 45, "intel": 3}}
+          ]
+        }
+      ],
+      "tags": ["biological", "anomaly", "first_contact"],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_011",
+      "title": "Encrypted Data Beacon",
+      "description": "Floating in the electromagnetic shadow of a dead star, a small cylindrical beacon broadcasts a dense stream of encrypted data on a rotating frequency. Its construction is utilitarian -- no markings, no identifiable origin, just raw functionality. The encryption is layered and aggressive, suggesting whoever placed it did not want the contents casually accessed. The data stream has been running for a very long time.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Attempt to decrypt the data stream using your ship's computational resources",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "After burning through enormous computational cycles, the encryption yields. The data contains detailed intelligence on gate network vulnerabilities, patrol routes of an unknown faction, and coordinates of hidden supply caches. The strategic value is immense.", "rewards": {"intel": 22, "credits": 180}},
+            {"probability": 0.35, "result": "partial", "description": "You crack the outer encryption layers but the core data remains locked behind quantum-entangled ciphers beyond your capability. The metadata alone reveals communication protocols and approximate locations of similar beacons.", "rewards": {"intel": 9, "credits": 50}},
+            {"probability": 0.25, "result": "failure", "description": "The decryption attempt triggers a purge protocol. The beacon wipes its data stores in a cascade of thermite charges and broadcasts a warning signal before self-destructing. You may have announced your presence to whoever placed it.", "rewards": {}, "costs": {"hull_damage": 8}}
+          ]
+        },
+        {
+          "text": "Download the raw encrypted data for analysis back at base",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "You mirror the entire data stream without triggering any defensive measures. Back at base, dedicated cryptographic teams will have months to work on the decryption. Even the raw encrypted format reveals useful signals intelligence about the beacon's creators.", "rewards": {"intel": 12, "credits": 70}},
+            {"probability": 0.4, "result": "partial", "description": "The download is interrupted when the beacon detects the mirroring and shifts frequencies. You capture approximately forty percent of the data stream before losing lock.", "rewards": {"intel": 5, "credits": 25}}
+          ]
+        },
+        {
+          "text": "Destroy the beacon to prevent its intelligence from reaching hostile parties",
+          "outcomes": [
+            {"probability": 0.5, "result": "success", "description": "A precision strike vaporizes the beacon. Debris analysis yields fragments of advanced circuitry and material samples of the casing -- constructed from alloys of significant exotic value. Command commends your tactical thinking.", "rewards": {"exotics": 4, "metals": 6, "credits": 60}},
+            {"probability": 0.3, "result": "partial", "description": "The beacon detonates violently when hit, suggesting a self-destruct mechanism. You recover minimal debris, but the electromagnetic signature of the explosion is itself useful intelligence.", "rewards": {"intel": 3, "credits": 20}},
+            {"probability": 0.2, "result": "failure", "description": "The beacon is shielded more heavily than expected. Your weapons fire is reflected back, and the beacon responds with a focused jamming pulse that disrupts your navigation systems.", "rewards": {}, "costs": {"hull_damage": 14, "fuel_cost": 5}}
+          ]
+        }
+      ],
+      "tags": ["intelligence", "anomaly", "espionage"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_012",
+      "title": "Gravitational Anomaly",
+      "description": "Empty space should not behave this way. An invisible point in the void exerts gravitational influence without any visible source -- no star, no black hole, no mass of any kind. Nearby debris orbits the anomaly in precise ellipses, and light bends around it in patterns that defy conventional physics. Your ship's inertial dampeners strain against subtle tidal forces even at this distance.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Move in closer to investigate the anomaly's core",
+          "outcomes": [
+            {"probability": 0.35, "result": "success", "description": "At close range, your instruments detect something extraordinary -- a stable pocket of compressed dark matter, theorized but never observed. The readings rewrite physics textbooks and the contained energy readings suggest applications for revolutionary propulsion technology.", "rewards": {"intel": 20, "exotics": 8, "energy": 18}},
+            {"probability": 0.35, "result": "partial", "description": "Tidal forces increase sharply as you approach. You gather valuable gravitometric data before the hull stress alarms force a retreat. The data is partial but represents a genuine breakthrough in gravity research.", "rewards": {"intel": 10, "energy": 5}, "costs": {"hull_damage": 18}},
+            {"probability": 0.3, "result": "failure", "description": "The anomaly fluctuates without warning, catching your ship in a gravity well that spins you like a leaf in a hurricane. Emergency thrust barely tears you free, but the structural damage is severe.", "rewards": {"intel": 3}, "costs": {"hull_damage": 35, "fuel_cost": 15}}
+          ]
+        },
+        {
+          "text": "Deploy a ring of gravity sensors and study the anomaly from safe distance",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "The sensor array captures the anomaly's gravitational signature in exquisite detail over several hours. The data reveals oscillation patterns that suggest the anomaly is artificial -- engineered by a civilization that could sculpt gravity itself. Theoretical physics departments across known space compete for access to your readings.", "rewards": {"intel": 15, "credits": 130}},
+            {"probability": 0.4, "result": "partial", "description": "Several sensors are pulled into the anomaly before you can retrieve them, but the surviving array transmits enough data to confirm the anomaly's non-natural origin. A solid contribution to the galactic survey.", "rewards": {"intel": 6, "credits": 45}}
+          ]
+        },
+        {
+          "text": "Chart the anomaly's boundaries and leave -- some things are best left alone",
+          "outcomes": [
+            {"probability": 0.8, "result": "success", "description": "You plot the anomaly's influence sphere with meticulous care, establishing safe navigation corridors for future traffic. The hazard data alone earns a navigation authority bonus, and your caution is noted approvingly by command.", "rewards": {"credits": 75, "intel": 4}},
+            {"probability": 0.2, "result": "partial", "description": "As you chart the boundary, a micro-fluctuation nudges your ship off course, requiring fuel-intensive corrections. The chart is completed but at greater cost than expected.", "rewards": {"credits": 40, "intel": 2}, "costs": {"fuel_cost": 8}}
+          ]
+        }
+      ],
+      "tags": ["anomaly", "gravity", "dark_matter"],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_013",
+      "title": "Unusual Comet",
+      "description": "A comet blazes through the system trailing twin tails of violet and gold -- colors that spectral analysis cannot explain with known chemistry. Its nucleus is impossibly dense for its size, and its trajectory curves in ways that solar gravity alone cannot account for. Most disturbing of all, the comet appears to be decelerating.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Match velocity and intercept the comet to extract core samples",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "You ride alongside the comet's blazing tail and dispatch a mining drone to the nucleus. The samples retrieved are extraordinary -- materials that exist in a state between matter and energy, thrumming with latent power. This single find could fuel a decade of exotic materials research.", "rewards": {"exotics": 14, "energy": 12, "intel": 8}},
+            {"probability": 0.35, "result": "partial", "description": "The comet's outgassing intensifies as you approach, bombarding your ship with superheated particulate. You snatch a surface sample before the conditions become untenable. Even this small sample contains compounds of significant interest.", "rewards": {"exotics": 5, "intel": 4}, "costs": {"hull_damage": 14, "fuel_cost": 8}},
+            {"probability": 0.25, "result": "failure", "description": "A sudden flare from the comet's nucleus catches your ship broadside. Thermal shielding holds but barely, and the approach vector becomes impossible to maintain safely. You break off with scorched hull plates and empty sample containers.", "rewards": {}, "costs": {"hull_damage": 22, "fuel_cost": 12}}
+          ]
+        },
+        {
+          "text": "Track the comet's trajectory to determine its origin and destination",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Days of careful tracking and orbital mechanics calculations reveal the comet's path -- it originated from outside the galactic plane and is aimed with precision at a specific system deep in unexplored space. This is not a natural body; it is a vessel or a message. The trajectory data is priceless.", "rewards": {"intel": 16, "credits": 100}},
+            {"probability": 0.4, "result": "partial", "description": "The comet's erratic deceleration makes trajectory prediction difficult. You narrow its origin to a sector of space and confirm its artificial nature, but the precise destination remains uncertain.", "rewards": {"intel": 6, "credits": 35}}
+          ]
+        },
+        {
+          "text": "Observe from a safe distance and catalog its unique properties",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Your spectral analysis and visual documentation creates the definitive record of this unique object. The unusual chemistry data attracts immediate interest from research institutions, and the observation logs are purchased by multiple academic bodies.", "rewards": {"intel": 8, "credits": 80}},
+            {"probability": 0.3, "result": "partial", "description": "The comet accelerates unexpectedly and passes beyond effective sensor range sooner than anticipated. Your partial observations are still valuable but lack the completeness to command premium prices.", "rewards": {"intel": 3, "credits": 30}}
+          ]
+        }
+      ],
+      "tags": ["anomaly", "interstellar", "exotic_materials"],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_014",
+      "title": "Evidence of Recent Alien Activity",
+      "description": "The signs are unmistakable and fresh. Ionized particle trails hang in the void like ghostly contrails, less than hours old. Residual heat signatures bloom on a nearby asteroid where something landed and departed. Molecular analysis of ejected waste material reveals a biology utterly unlike anything in known databases. Someone -- something -- was here very recently, and they were busy.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Follow the particle trail and attempt to locate the alien vessel",
+          "outcomes": [
+            {"probability": 0.3, "result": "success", "description": "The trail leads to a hidden anchorage in the shadow of a rogue planet. You observe an alien fleet at rest -- dozens of vessels of unfamiliar design. Passive scans at extreme range capture fleet composition, technology signatures, and behavioral patterns. Intelligence command classifies this as the most significant reconnaissance find in a generation.", "rewards": {"intel": 28, "credits": 300}},
+            {"probability": 0.4, "result": "partial", "description": "You follow the trail for hours before it dissipates in the solar wind. Along the way, you catalog residual emissions data and debris traces that paint a partial picture of the alien vessel's capabilities and heading.", "rewards": {"intel": 10, "credits": 60}, "costs": {"fuel_cost": 12}},
+            {"probability": 0.3, "result": "failure", "description": "You follow the trail directly into an automated sensor net. Countermeasure drones activate and pursue your ship, scoring hits on your aft section before you manage to outrun them into an asteroid field.", "rewards": {"intel": 3}, "costs": {"hull_damage": 28, "fuel_cost": 18}}
+          ]
+        },
+        {
+          "text": "Set up a concealed observation post and wait for the aliens to return",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "Patience is rewarded. After thirty-six hours of silent running, an alien vessel returns to the landing site. You observe its operations for hours -- cargo transfer, surface sampling, and what appears to be a communication ritual. The behavioral and technological intelligence gathered is extraordinary.", "rewards": {"intel": 20, "credits": 150}},
+            {"probability": 0.4, "result": "partial", "description": "You wait for days without a return visit, but your concealed sensors capture ambient data that reveals the aliens' scanning frequencies and operational patterns. Useful for future encounters.", "rewards": {"intel": 8, "credits": 40}, "costs": {"fuel_cost": 10}},
+            {"probability": 0.2, "result": "failure", "description": "Your concealment fails when a routine alien sensor sweep detects your ship's thermal signature. A warning shot across your bow forces a hasty and fuel-expensive retreat from the system.", "rewards": {"intel": 2}, "costs": {"fuel_cost": 20, "hull_damage": 5}}
+          ]
+        },
+        {
+          "text": "Collect samples from the landing site and withdraw before the aliens return",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "A rapid landing at the asteroid site yields soil disturbed by alien machinery, discarded material fragments, and chemical residue from their propulsion system. Each sample is a puzzle piece revealing alien technology and biology.", "rewards": {"intel": 12, "exotics": 6, "credits": 80}},
+            {"probability": 0.3, "result": "partial", "description": "The landing site has been deliberately sanitized -- the aliens are thorough. You recover trace amounts of material and environmental data, enough to confirm alien biology but little more.", "rewards": {"intel": 5, "credits": 25}},
+            {"probability": 0.1, "result": "failure", "description": "A concealed device at the landing site activates when disturbed, emitting a disorienting sonic pulse and a locator beacon. You abandon the samples and flee, hoping the beacon was not received.", "rewards": {}, "costs": {"hull_damage": 10, "fuel_cost": 8}}
+          ]
+        }
+      ],
+      "tags": ["alien_activity", "intelligence", "recon"],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_015",
+      "title": "Hidden Gate Fragment",
+      "description": "Wedged in the gravitational null point between twin asteroids, a massive fragment of a destroyed gate hangs motionless in space. Its surface still bears the characteristic circuitry patterns of gate technology, and faint energy readings suggest the fragment retains residual charge from the network it once belonged to. How it came to be here -- and what destroyed its parent gate -- are questions that send a chill through your crew.",
+      "requirements": {"ship_class": "scout", "system_surveyed": false},
+      "choices": [
+        {
+          "text": "Recover the gate fragment and secure it in your cargo hold",
+          "outcomes": [
+            {"probability": 0.4, "result": "success", "description": "A delicate extraction operation frees the fragment from its gravitational cradle. In your cargo bay, engineers marvel at the intact circuitry -- genuine gate technology, the most coveted material in known space. This single piece could advance gate construction research by decades.", "rewards": {"exotics": 18, "intel": 15, "credits": 350, "energy": 10}},
+            {"probability": 0.35, "result": "partial", "description": "The fragment is larger than estimated and must be cut to fit your hold. Severing it triggers energy discharges that damage your loading equipment. You secure a substantial piece, but the lost material and repair costs dampen the triumph.", "rewards": {"exotics": 8, "intel": 7, "credits": 120}, "costs": {"hull_damage": 16}},
+            {"probability": 0.25, "result": "failure", "description": "Disturbing the fragment destabilizes the gravitational equilibrium. The twin asteroids begin drifting inward, and the fragment's residual energy arcs violently. You abandon the recovery and burn hard to escape the collapsing null point.", "rewards": {"intel": 2}, "costs": {"hull_damage": 30, "fuel_cost": 18}}
+          ]
+        },
+        {
+          "text": "Study the fragment in situ without disturbing its position",
+          "outcomes": [
+            {"probability": 0.6, "result": "success", "description": "Non-invasive analysis over several days produces a comprehensive scan of the gate circuitry, energy flow patterns, and material composition. For the first time, researchers can study gate technology without the interference of an active network. The data fills critical gaps in gate construction theory.", "rewards": {"intel": 20, "exotics": 5, "credits": 160}},
+            {"probability": 0.3, "result": "partial", "description": "The fragment's residual energy field interferes with close-range instruments. You gather useful but incomplete readings from a greater distance, enough to contribute to gate research without being definitive.", "rewards": {"intel": 9, "credits": 55}},
+            {"probability": 0.1, "result": "failure", "description": "Your scanning beam resonates with the fragment's latent circuitry, triggering an uncontrolled energy release that washes over your ship with exotic radiation. Systems scramble and hull plating crystallizes in patches.", "rewards": {"intel": 3}, "costs": {"hull_damage": 20}}
+          ]
+        },
+        {
+          "text": "Report the coordinates and mark the site for a specialized recovery fleet",
+          "outcomes": [
+            {"probability": 0.7, "result": "success", "description": "Your encrypted report reaches gate authority command within hours. A priority recovery mission is dispatched immediately. As the discoverer, you are awarded a substantial percentage of the fragment's assessed value and permanent recognition in the Gate Registry.", "rewards": {"credits": 200, "intel": 6}},
+            {"probability": 0.3, "result": "partial", "description": "Bureaucratic channels delay the report's escalation. By the time a recovery team is assigned, the gravitational dynamics have shifted, and the fragment may be harder to extract. Your discovery credit is awarded at standard rates.", "rewards": {"credits": 80, "intel": 3}}
+          ]
+        }
+      ],
+      "tags": ["gate_tech", "artifact", "recovery"],
+      "tier_requirement": 4,
+      "one_time": true
+    }
+  ]
+}

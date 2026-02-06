@@ -1,0 +1,54 @@
+{
+  "scout": {
+    "name": "Pathfinder-class Scout",
+    "max_hull": 30,
+    "speed": 3,
+    "cargo_capacity": 10,
+    "sensor_range": 3,
+    "fuel_capacity": 12,
+    "combat_power": 5,
+    "maintenance_cost": 3,
+    "build_cost": {"credits": 50, "metals": 20},
+    "build_turns": 2,
+    "abilities": ["scan", "probe_deploy", "investigate", "retreat_boost"]
+  },
+  "freighter": {
+    "name": "Hauler-class Freighter",
+    "max_hull": 50,
+    "speed": 1,
+    "cargo_capacity": 100,
+    "sensor_range": 1,
+    "fuel_capacity": 8,
+    "combat_power": 2,
+    "maintenance_cost": 5,
+    "build_cost": {"credits": 80, "metals": 40},
+    "build_turns": 3,
+    "abilities": ["load_cargo", "unload_cargo", "set_trade_route", "emergency_jettison"]
+  },
+  "miner": {
+    "name": "Excavator-class Miner",
+    "max_hull": 40,
+    "speed": 1,
+    "cargo_capacity": 60,
+    "sensor_range": 1,
+    "fuel_capacity": 10,
+    "combat_power": 3,
+    "maintenance_cost": 4,
+    "build_cost": {"credits": 60, "metals": 35},
+    "build_turns": 3,
+    "abilities": ["prospect", "extract", "basic_refine", "auto_mine"]
+  },
+  "corvette": {
+    "name": "Sentinel-class Corvette",
+    "max_hull": 60,
+    "speed": 2,
+    "cargo_capacity": 15,
+    "sensor_range": 2,
+    "fuel_capacity": 10,
+    "combat_power": 20,
+    "maintenance_cost": 7,
+    "build_cost": {"credits": 100, "metals": 50},
+    "build_turns": 4,
+    "abilities": ["patrol", "escort", "intercept", "blockade", "engage"]
+  }
+}
