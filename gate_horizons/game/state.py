@@ -118,6 +118,16 @@ class GameState:
         """Process one game turn."""
         return self.turn_processor.process_turn(self)
 
+    def activate_gate(self, system_id: str) -> bool:
+        """Activate a dormant gate, applying any tech-based cost reduction."""
+        tech_effects = self.tech.get_effects()
+        cost_reduction = tech_effects.get("gate_cost_reduction", 0.0)
+        return self.galaxy.activate_gate(
+            system_id,
+            resources=self.resources,
+            cost_reduction=cost_reduction,
+        )
+
     def save(self, filepath: str) -> None:
         """Save game state to JSON file."""
         import json

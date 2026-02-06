@@ -188,21 +188,55 @@ class GalaxyMap:
             return -1
         return len(path) - 1
 
-    def activate_gate(self, system_id: str, resources: "ResourceManager" = None) -> bool:
-        """Activate a dormant gate. Returns True if successful."""
+    def activate_gate(
+        self,
+        system_id: str,
+        resources: "ResourceManager" = None,
+        cost_reduction: float = 0.0,
+    ) -> bool:
+        """Activate a dormant gate. Returns True if successful.
+
+        Args:
+            system_id: The system whose gate to activate.
+            resources: ResourceManager to deduct costs from.
+            cost_reduction: Fractional discount (0.0–1.0) applied to
+                activation costs, e.g. from the Gate Resonance Tuning tech.
+        """
         system = self.systems.get(system_id)
         if not system or system.gate_active:
             return False
 
         if resources and system.gate_activation_cost:
-            if not resources.can_afford(system.gate_activation_cost):
+            reduction = max(0.0, min(1.0, cost_reduction))
+            effective_cost = {
+                res: max(0, int(amount * (1.0 - reduction)))
+                for res, amount in system.gate_activation_cost.items()
+            }
+            if not resources.can_afford(effective_cost):
                 return False
-            for res, amount in system.gate_activation_cost.items():
+            for res, amount in effective_cost.items():
                 resources.spend(res, amount)
 
         system.gate_active = True
         self._path_cache.clear()  # Invalidate cache on topology change
         return True
+
+    def get_gate_activation_cost(
+        self, system_id: str, cost_reduction: float = 0.0
+    ) -> dict:
+        """Return the effective activation cost for a dormant gate.
+
+        Returns an empty dict if the gate is already active or the system
+        does not exist.
+        """
+        system = self.systems.get(system_id)
+        if not system or system.gate_active:
+            return {}
+        reduction = max(0.0, min(1.0, cost_reduction))
+        return {
+            res: max(0, int(amount * (1.0 - reduction)))
+            for res, amount in system.gate_activation_cost.items()
+        }
 
     def get_systems_by_tier(self, tier: int) -> list:
         return [s for s in self.systems.values() if s.tier == tier]

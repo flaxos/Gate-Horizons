@@ -61,6 +61,7 @@ class TechTree:
     def __init__(self):
         self.techs: dict[str, TechNode] = {}
         self.active_research: str = None  # Currently researching tech ID
+        self.research_queue: list[str] = []  # Queued tech IDs to auto-start
 
     def load_from_json(self, filepath: Union[str, Traversable]) -> None:
         if hasattr(filepath, "read_text"):
@@ -126,14 +127,57 @@ class TechTree:
         self.active_research = tech_id
         return True
 
-    def process_turn(self) -> Optional[str]:
-        """Advance research by one turn. Returns completed tech ID or None."""
+    def queue_research(self, tech_id: str) -> bool:
+        """Add a tech to the research queue.
+
+        The tech must exist, not already be researched/researching, and not
+        already be in the queue.  Prerequisites are checked at dequeue time
+        so the player can plan ahead.
+        """
+        tech = self.techs.get(tech_id)
+        if not tech or tech.researched or tech.researching:
+            return False
+        if tech_id in self.research_queue:
+            return False
+        if tech_id == self.active_research:
+            return False
+        self.research_queue.append(tech_id)
+        return True
+
+    def dequeue_research(self, tech_id: str) -> bool:
+        """Remove a tech from the research queue."""
+        if tech_id in self.research_queue:
+            self.research_queue.remove(tech_id)
+            return True
+        return False
+
+    def _advance_queue(self, resources=None) -> bool:
+        """Try to start the next researchable tech from the queue.
+
+        Skips entries whose prerequisites are not yet met (they stay in the
+        queue).  Returns True if a new research was started.
+        """
+        for tech_id in list(self.research_queue):
+            if self.can_research(tech_id):
+                self.research_queue.remove(tech_id)
+                return self.start_research(tech_id, resources)
+        return False
+
+    def process_turn(self, resources=None) -> Optional[str]:
+        """Advance research by one turn. Returns completed tech ID or None.
+
+        When a tech completes, the next eligible tech in the research queue
+        is automatically started.
+        """
         if not self.active_research:
+            # Nothing active — try to start from queue
+            self._advance_queue(resources)
             return None
 
         tech = self.techs.get(self.active_research)
         if not tech or not tech.researching:
             self.active_research = None
+            self._advance_queue(resources)
             return None
 
         tech.turns_remaining -= 1
@@ -143,6 +187,8 @@ class TechTree:
             tech.turns_remaining = 0
             completed = self.active_research
             self.active_research = None
+            # Auto-start next from queue
+            self._advance_queue(resources)
             return completed
 
         return None
@@ -180,6 +226,7 @@ class TechTree:
         return {
             "techs": {tid: t.to_dict() for tid, t in self.techs.items()},
             "active_research": self.active_research,
+            "research_queue": list(self.research_queue),
         }
 
     @classmethod
@@ -188,4 +235,5 @@ class TechTree:
         for tid, tdata in data.get("techs", {}).items():
             tt.techs[tid] = TechNode.from_dict(tdata)
         tt.active_research = data.get("active_research")
+        tt.research_queue = list(data.get("research_queue", []))
         return tt

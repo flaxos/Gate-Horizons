@@ -286,7 +286,9 @@ class TurnProcessor:
 
     def _process_research(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "tech"):
-            completed = game_state.tech.process_turn()
+            completed = game_state.tech.process_turn(
+                resources=game_state.resources if hasattr(game_state, "resources") else None,
+            )
             if completed:
                 tech = game_state.tech.techs.get(completed)
                 report.tech_completed = tech.name if tech else completed
