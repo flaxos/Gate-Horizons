@@ -177,11 +177,15 @@ class Colony:
 
         # Happiness adjustments
         if self.population > housing_cap * 0.9:
-            self.happiness = max(0, self.happiness - 5)
-            report["happiness_change"] -= 5
+            self.happiness = max(0, self.happiness - 3)
+            report["happiness_change"] -= 3
         elif self.population < housing_cap * 0.5:
             self.happiness = min(100, self.happiness + 2)
             report["happiness_change"] += 2
+        elif self.happiness < 70:
+            # Middle band (50-90% capacity): slowly recover toward baseline
+            self.happiness = min(70, self.happiness + 1)
+            report["happiness_change"] += 1
 
         # Tier check
         new_tier = self.get_tier()
