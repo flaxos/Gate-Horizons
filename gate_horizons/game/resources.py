@@ -33,6 +33,20 @@ class ResourceManager:
             self.per_system_resources[system_id][resource] = max(0, sys_current - amount)
         return True
 
+    def spend_and_return_actual(self, resource: str, amount: int, system_id: str = None) -> int:
+        if resource not in RESOURCE_TYPES:
+            return 0
+        amount = max(0, amount)
+        current = self.global_resources.get(resource, 0)
+        actual = min(current, amount)
+        if actual <= 0:
+            return 0
+        self.global_resources[resource] = current - actual
+        if system_id and system_id in self.per_system_resources:
+            sys_current = self.per_system_resources[system_id].get(resource, 0)
+            self.per_system_resources[system_id][resource] = max(0, sys_current - actual)
+        return actual
+
     def can_afford(self, cost_dict: dict) -> bool:
         for resource, amount in cost_dict.items():
             if resource in ("turns",):  # Skip non-resource costs
