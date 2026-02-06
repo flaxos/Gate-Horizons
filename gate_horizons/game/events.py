@@ -214,21 +214,30 @@ class EventEngine:
         # Apply costs to game state
         costs = selected_outcome.get("costs", {})
         if game_state and costs:
+            applied_costs = {}
             for cost_type, amount in costs.items():
                 if cost_type == "hull_damage":
                     # Apply hull damage to a random ship
                     ships = list(game_state.fleet.ships.values())
                     if ships:
                         target = random.choice(ships)
+                        actual = min(target.hull, amount)
                         target.hull = max(0, target.hull - amount)
+                        if actual > 0:
+                            applied_costs[cost_type] = actual
                 elif cost_type == "fuel_cost":
                     ships = list(game_state.fleet.ships.values())
                     if ships:
                         target = random.choice(ships)
+                        actual = min(target.fuel, amount)
                         target.fuel = max(0, target.fuel - amount)
+                        if actual > 0:
+                            applied_costs[cost_type] = actual
                 elif cost_type in ("energy", "metals", "exotics", "credits", "intel"):
-                    game_state.resources.spend(cost_type, amount)
-            result.costs_applied = dict(costs)
+                    actual = game_state.resources.spend_and_return_actual(cost_type, amount)
+                    if actual > 0:
+                        applied_costs[cost_type] = actual
+            result.costs_applied = applied_costs
 
         # Mark as triggered
         if event.one_time:
