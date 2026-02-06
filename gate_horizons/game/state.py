@@ -1,5 +1,7 @@
 """Master game state for Gate Horizons."""
 
+from __future__ import annotations
+
 import os
 from typing import Optional
 
