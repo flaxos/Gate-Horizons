@@ -191,10 +191,14 @@ class TurnProcessor:
             s for s in game_state.fleet.ships.values()
             if s.path
         ]
+        # Get fuel efficiency from researched tech effects
+        tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
+        fuel_efficiency = tech_effects.get("fuel_efficiency", 1.0)
+
         for ship in ships_to_process:
             if not game_state.game_clock.mark_processed("movements", ship.id):
                 continue
-            result = game_state.fleet.process_movement(ship.id)
+            result = game_state.fleet.process_movement(ship.id, fuel_efficiency=fuel_efficiency)
             report.ships_moved.append({
                 "ship_id": ship.id,
                 "ship_name": ship.name,
@@ -265,7 +269,13 @@ class TurnProcessor:
 
     def _process_colonies(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "colonies"):
-            colony_reports = game_state.colonies.process_all_turns()
+            # Get build_time_reduction from researched tech effects
+            tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
+            build_time_reduction = int(tech_effects.get("build_time_reduction", 0))
+
+            colony_reports = game_state.colonies.process_all_turns(
+                build_time_reduction=build_time_reduction,
+            )
             report.colony_reports = colony_reports
 
             for cr in colony_reports:
@@ -296,19 +306,25 @@ class TurnProcessor:
         if "combat_accuracy_bonus" in effects and hasattr(game_state, "combat"):
             game_state.combat.combat_accuracy_bonus += effects["combat_accuracy_bonus"]
 
-        # Speed bonuses
+        # Speed bonuses (permanent per-ship stat change)
         if "speed_bonus" in effects:
             for ship_class, bonus in effects["speed_bonus"].items():
                 for ship in game_state.fleet.ships.values():
                     if ship.ship_class == ship_class:
                         ship.stats.speed += bonus
 
-        # Hull bonus
+        # Hull bonus (permanent per-ship stat change)
         if "hull_bonus" in effects:
             mult = effects["hull_bonus"]
             for ship in game_state.fleet.ships.values():
                 ship.stats.max_hull = int(ship.stats.max_hull * mult)
                 ship.hull = min(ship.hull, ship.stats.max_hull)
+
+        # Sensor bonus (permanent per-ship stat change)
+        if "sensor_bonus" in effects:
+            bonus = effects["sensor_bonus"]
+            for ship in game_state.fleet.ships.values():
+                ship.stats.sensor_range += bonus
 
     def _process_maintenance(self, game_state, report: TurnReport) -> None:
         maintenance = game_state.fleet.get_total_maintenance()

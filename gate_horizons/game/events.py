@@ -139,6 +139,11 @@ class EventEngine:
             return []
 
         selected = random.sample(eligible, min(num_events, len(eligible)))
+        for event in selected:
+            # Mark one-time events as triggered immediately so they cannot
+            # re-fire on subsequent turns even if the player hasn't resolved them.
+            if event.one_time:
+                self.triggered_events.append(event.id)
         self.event_queue.extend(selected)
         return selected
 
@@ -255,8 +260,8 @@ class EventEngine:
                         applied_costs[cost_type] = actual
             result.costs_applied = applied_costs
 
-        # Mark as triggered
-        if event.one_time:
+        # Mark as triggered (may already be marked from check_triggers)
+        if event.one_time and event_id not in self.triggered_events:
             self.triggered_events.append(event_id)
 
         # Remove from queue

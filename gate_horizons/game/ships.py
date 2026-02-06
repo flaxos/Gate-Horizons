@@ -239,8 +239,14 @@ class FleetManager:
         ship.mining = False
         return True
 
-    def process_movement(self, ship_id: str) -> MovementResult:
-        """Advance a ship along its path by its speed stat."""
+    def process_movement(self, ship_id: str, fuel_efficiency: float = 1.0) -> MovementResult:
+        """Advance a ship along its path by its speed stat.
+
+        Args:
+            ship_id: Ship to move.
+            fuel_efficiency: Tech multiplier (e.g. 1.2 = 20% less fuel).
+                Fuel cost = max(1, round(hops / efficiency)).
+        """
         ship = self.ships.get(ship_id)
         if not ship or not ship.path:
             return MovementResult(
@@ -251,8 +257,14 @@ class FleetManager:
 
         moves = min(ship.stats.speed, len(ship.path))
 
-        if ship.fuel < moves:
-            moves = ship.fuel
+        # Calculate fuel cost with efficiency
+        eff = max(1.0, fuel_efficiency)
+        fuel_cost = max(1, round(moves / eff))
+
+        if ship.fuel < fuel_cost:
+            # Reduce moves to what fuel allows
+            affordable_moves = max(0, int(ship.fuel * eff))
+            moves = min(moves, affordable_moves)
             if moves == 0:
                 return MovementResult(
                     ship_id=ship_id,
@@ -261,11 +273,12 @@ class FleetManager:
                     remaining_path=list(ship.path),
                     fuel_consumed=0,
                 )
-        fuel_cost = moves
+            fuel_cost = max(1, round(moves / eff))
 
         for _ in range(moves):
             ship.location = ship.path.pop(0)
-            ship.fuel -= 1
+
+        ship.fuel -= fuel_cost
 
         arrived = len(ship.path) == 0
         if arrived:
