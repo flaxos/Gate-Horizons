@@ -245,9 +245,8 @@ class FleetManager:
             )
 
         moves = min(ship.stats.speed, len(ship.path))
-        fuel_cost = moves
 
-        if ship.fuel < fuel_cost:
+        if ship.fuel < moves:
             moves = ship.fuel
             if moves == 0:
                 return MovementResult(
@@ -257,6 +256,7 @@ class FleetManager:
                     remaining_path=list(ship.path),
                     fuel_consumed=0,
                 )
+        fuel_cost = moves
 
         for _ in range(moves):
             ship.location = ship.path.pop(0)
