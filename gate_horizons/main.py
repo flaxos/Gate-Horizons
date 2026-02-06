@@ -12,7 +12,13 @@ Config.set("graphics", "resizable", "1")
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, FadeTransition
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.metrics import dp
 from kivy.resources import resource_add_path
 
 from game.state import GameState
@@ -29,6 +35,74 @@ from ui.screens.event_screen import EventPopup
 from ui.widgets.save_load import LoadGamePopup
 
 
+class ExitConfirmPopup(Popup):
+    """Confirmation dialog shown before closing the app."""
+
+    def __init__(self, on_confirm=None, on_cancel=None, **kwargs):
+        self._on_confirm = on_confirm
+        self._on_cancel = on_cancel
+
+        content = BoxLayout(orientation="vertical", spacing=dp(12), padding=dp(16))
+
+        content.add_widget(Label(
+            text="Are you sure you want to exit?\nUnsaved progress will be lost.",
+            font_size="14sp",
+            color=(0.78, 0.88, 0.96, 1),
+            halign="center",
+            valign="middle",
+            size_hint_y=0.6,
+        ))
+
+        btn_row = BoxLayout(
+            orientation="horizontal",
+            spacing=dp(16),
+            size_hint_y=None,
+            height=dp(48),
+        )
+
+        cancel_btn = Button(
+            text="Cancel",
+            font_size="14sp",
+            background_color=(0.12, 0.25, 0.4, 0.8),
+            color=(0.85, 0.95, 1, 1),
+        )
+        cancel_btn.bind(on_release=self._cancel)
+        btn_row.add_widget(cancel_btn)
+
+        exit_btn = Button(
+            text="Exit Game",
+            font_size="14sp",
+            bold=True,
+            background_color=(0.5, 0.12, 0.12, 0.9),
+            color=(1, 0.85, 0.85, 1),
+        )
+        exit_btn.bind(on_release=self._confirm)
+        btn_row.add_widget(exit_btn)
+
+        content.add_widget(btn_row)
+
+        super().__init__(
+            title="Exit Gate Horizons?",
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+            auto_dismiss=True,
+            **kwargs,
+        )
+
+    def _cancel(self, *args):
+        self.dismiss()
+        if self._on_cancel:
+            self._on_cancel()
+
+    def _confirm(self, *args):
+        self.dismiss()
+        if self._on_confirm:
+            self._on_confirm()
+
+
 class GateHorizonsApp(App):
     title = "Gate Horizons"
 
@@ -37,6 +111,7 @@ class GateHorizonsApp(App):
         self.game_state = None
         self.save_manager = None
         self.galaxy_map_screen = None
+        self._exit_popup = None
 
     def build(self):
         # Load theme
@@ -77,7 +152,48 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.trade_screen)
 
         self.sm.current = "main_menu"
+
+        # Bind exit confirmation handlers
+        Window.bind(on_request_close=self._on_close_request)
+        Window.bind(on_keyboard=self._on_keyboard)
+
         return self.sm
+
+    # ------------------------------------------------------------------
+    # Exit confirmation
+    # ------------------------------------------------------------------
+
+    def _on_close_request(self, *args):
+        """Intercept window close to show confirmation dialog."""
+        self._show_exit_confirmation()
+        return True  # Cancel the default close
+
+    def _on_keyboard(self, window, key, scancode, codepoint, modifier):
+        """Handle back button (Android) and Escape key."""
+        if key == 27:  # ESC / Android back
+            self._show_exit_confirmation()
+            return True
+        return False
+
+    def _show_exit_confirmation(self):
+        """Display the exit confirmation popup."""
+        if self._exit_popup is not None:
+            return  # Already showing
+        self._exit_popup = ExitConfirmPopup(
+            on_confirm=self._do_exit,
+            on_cancel=self._cancel_exit,
+        )
+        self._exit_popup.bind(on_dismiss=lambda *a: setattr(self, '_exit_popup', None))
+        self._exit_popup.open()
+
+    def _do_exit(self):
+        """Auto-save and stop the app."""
+        self.auto_save()
+        self.stop()
+
+    def _cancel_exit(self):
+        """Clear exit popup reference."""
+        self._exit_popup = None
 
     def start_new_game(self):
         """Start a fresh game."""
