@@ -49,13 +49,18 @@ Gate Horizons is a canon-owned setting for hard-sci strategy, narrative, and vis
 - 12 star systems connected by jump gates
 - 4 ship types (Scout, Freighter, Miner, Corvette)
 - 5 resources (Energy, Metals, Exotics, Credits, Intel)
-- Colony management with 5 infrastructure types
-- Trade routes between systems
+- Colony management with 8 infrastructure types (housing, industry, defense, research, spaceport, power, mining, logistics)
+- Colony levels (Outpost -> Settlement -> Colony -> Hub City)
+- Abstracted logistics network with latency-based trade routes
+- Per-colony stockpiles with storage caps
+- Colony founding (tech-gated) and upgrade mechanics
+- World traits (Hub, Frontier, Mineral Rich, Volatile)
+- Shortage penalties and stability system
 - Auto-resolve combat with probability display
 - Pre-generated narrative events
-- Basic tech tree (10 unlocks)
+- Tech tree with 15 unlocks (including Colonisation, Logistics I/II/III)
 - Save/Load via SQLite
-- Full turn processing loop
+- Full turn processing loop with deterministic 5-phase resolution
 
 ### Architecture
 ```
@@ -97,6 +102,49 @@ Canon stability beats novelty. See `docs/CANON.md`, `docs/DRIFT_GUARDRAILS.md`, 
 - **Pre-generated content** — No runtime API dependency, fully offline playable
 - **Placeholder art** — Ship fast, swap in AI-generated art in Phase 3
 - **Hard sci-fi tone** — Grounded, plausible, sense of wonder
+
+---
+
+## Colony Expansion & Logistics
+
+**Not Factorio: abstracted logistics.** Resources flow as per-turn quantities, not individual items on belts.
+
+### How Colony Logistics Works
+- **Stockpiles**: Each colony has local storage for all 5 resources, with caps based on colony level and logistics infrastructure
+- **Trade Routes**: Abstract links between colonies with `capacity_per_turn`, `latency_turns`, and `risk_factor`
+- **In-Transit Queue**: Shipped goods take N turns to arrive (simulating distance)
+- **Shortages**: If a colony can't cover its consumption, stability drops and growth halts
+
+### Turn Resolution Order (Deterministic)
+1. **Apply arrivals** from in-transit queue -> add to colony stockpiles
+2. **Compute production** -> add to stockpiles (respect storage caps)
+3. **Compute consumption/upkeep** -> subtract from stockpiles; record shortages
+4. **Apply shortage penalties** -> stability/growth modifiers
+5. **Compute trade flows** -> create in-transit shipments with latency
+
+### Colony Levels
+| Level | Name | Max Infra Slots | Storage Mult | Route Cap Mult |
+|-------|------|-----------------|--------------|----------------|
+| 0 | Outpost | 3 | 0.5x | 0.5x |
+| 1 | Settlement | 5 | 1.0x | 1.0x |
+| 2 | Colony | 7 | 1.5x | 1.5x |
+| 3 | Hub City | 8 | 2.0x | 2.0x |
+
+### Running the Headless Logistics Demo
+```bash
+python -m gate_horizons.tests.test_colony_logistics
+```
+This creates a Hub world + Frontier outpost, sets up a trade route with latency,
+runs 30 turns, and prints the per-turn stockpile progression. Also runs the full
+test suite for the logistics system.
+
+### What is Implemented vs Future
+**Implemented now**: Colony levels, stockpiles, storage caps, trade routes with
+latency/capacity, shortage penalties, stability system, world traits (hub/frontier),
+tech-gated colonisation, logistics infrastructure, full headless test suite.
+
+**Future (not implemented)**: Ship-level freight simulation, piracy/trade disruption
+events, diplomacy-based trade agreements, procedural galaxy generation, UI screens.
 
 ---
 

@@ -12,10 +12,14 @@ from typing import Optional
 class Planet:
     id: str
     name: str
-    type: str  # rocky, gas_giant, ice, volcanic, oceanic, barren
+    type: str  # rocky, gas_giant, ice, volcanic, oceanic, barren, desert, toxic, garden
     resources: dict = field(default_factory=dict)
     colonizable: bool = False
     description: str = ""
+    habitability: float = 0.5  # 0.0 (hostile) to 1.0 (earthlike)
+    gravity: float = 1.0  # relative to Earth (1.0)
+    baseline_output: dict = field(default_factory=dict)  # base per-turn yields before infrastructure
+    traits: list = field(default_factory=list)  # e.g. ["hub", "frontier", "mineral_rich"]
 
     def to_dict(self) -> dict:
         return {
@@ -25,6 +29,10 @@ class Planet:
             "resources": dict(self.resources),
             "colonizable": self.colonizable,
             "description": self.description,
+            "habitability": self.habitability,
+            "gravity": self.gravity,
+            "baseline_output": dict(self.baseline_output),
+            "traits": list(self.traits),
         }
 
     @classmethod

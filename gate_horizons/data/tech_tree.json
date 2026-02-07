@@ -50,6 +50,13 @@
         "cost": {"intel": 20, "exotics": 3, "turns": 4},
         "effect": {"mining_yield": 1.5},
         "prerequisites": ["reinforced_hulls"]
+      },
+      "industrial_processing": {
+        "name": "Industrial Processing",
+        "description": "Enables ore-to-metals conversion. +30% industry output at colonies",
+        "cost": {"intel": 18, "turns": 4},
+        "effect": {"industry_bonus": 1.3},
+        "prerequisites": ["rapid_construction"]
       }
     }
   },
@@ -69,6 +76,13 @@
         "description": "+15% combat auto-resolve accuracy",
         "cost": {"intel": 20, "turns": 4},
         "effect": {"combat_accuracy_bonus": 0.15},
+        "prerequisites": ["deep_scan"]
+      },
+      "research_acceleration": {
+        "name": "Research Acceleration",
+        "description": "Intel synergy: +1 intel per turn per colony with research lab",
+        "cost": {"intel": 22, "turns": 4},
+        "effect": {"research_bonus": 1},
         "prerequisites": ["deep_scan"]
       }
     }
@@ -90,6 +104,42 @@
         "cost": {"intel": 25, "exotics": 5, "turns": 5},
         "effect": {"diplomacy_bonus": 0.3},
         "prerequisites": ["signal_decryption"]
+      }
+    }
+  },
+  "expansion": {
+    "tier1": {
+      "colonisation": {
+        "name": "Colonisation",
+        "description": "Unlocks founding outposts on colonizable worlds",
+        "cost": {"intel": 12, "turns": 3},
+        "effect": {"unlock_colonisation": true},
+        "prerequisites": []
+      },
+      "logistics_1": {
+        "name": "Logistics I",
+        "description": "Enables trade routes between colonies. Base capacity 10/turn",
+        "cost": {"intel": 10, "turns": 3},
+        "effect": {"logistics_capacity_bonus": 0, "unlock_trade_routes": true},
+        "prerequisites": []
+      }
+    },
+    "tier2": {
+      "logistics_2": {
+        "name": "Logistics II",
+        "description": "Increases route capacity by 50%. Enables logistics hubs",
+        "cost": {"intel": 20, "exotics": 3, "turns": 4},
+        "effect": {"logistics_capacity_bonus": 0.5, "unlock_logistics_hub": true},
+        "prerequisites": ["logistics_1"]
+      }
+    },
+    "tier3": {
+      "logistics_3": {
+        "name": "Logistics III",
+        "description": "Doubles route capacity. Enables auto-balancing supply routes",
+        "cost": {"intel": 30, "exotics": 8, "turns": 6},
+        "effect": {"logistics_capacity_bonus": 1.0, "unlock_auto_balance": true},
+        "prerequisites": ["logistics_2"]
       }
     }
   }
