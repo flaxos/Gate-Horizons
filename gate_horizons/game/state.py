@@ -15,9 +15,12 @@ from .events import EventEngine
 from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
+from .production import ProductionManager, ProductionConfig, ExtractionSite
+from .logistics import LogisticsManager
+from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 3
+CURRENT_SCHEMA_VERSION = 4
 
 
 # Default data paths (relative to gate_horizons package)
@@ -41,6 +44,10 @@ class GameState:
         self.game_time: str = "January 2157"
         self.difficulty: str = "normal"
         self.log: list[str] = []
+        # New production + logistics + shipyard subsystems
+        self.production = ProductionManager()
+        self.logistics = LogisticsManager()
+        self.shipyard = ShipyardManager()
 
     @classmethod
     def new_game(cls, difficulty: str = "normal") -> "GameState":
@@ -63,6 +70,10 @@ class GameState:
         # Load events
         events_path = _get_data_path("events")
         state.events.load_events(events_path)
+
+        # Load production config
+        prod_path = _get_data_path("production_config.json")
+        state.production.config.load_from_json(prod_path)
 
         # Starting resources
         state.resources.global_resources = {
@@ -104,6 +115,20 @@ class GameState:
                 "energy": 40, "metals": 30, "exotics": 3,
                 "credits": 50, "intel": 5,
             }
+
+            # Starting production: Earth has ore_iron and silicates extraction
+            colony.extraction_sites = [
+                ExtractionSite(resource_id="ore_iron", base_yield=3, level=1),
+                ExtractionSite(resource_id="silicates", base_yield=2, level=1),
+            ]
+            # Starting production inventory with some alloys for early construction
+            colony.production_inventory["ore_iron"] = 10
+            colony.production_inventory["metal_alloys"] = 8
+
+            # Starting orbital: Earth has a spaceport
+            state.shipyard.facilities["sol"] = [
+                OrbitalFacility(facility_type="spaceport", level=1),
+            ]
 
         # Starting ships
         scout = state.fleet.create_ship("scout", "sol", "ISS Pathfinder")
@@ -185,6 +210,20 @@ class GameState:
         )
         colony.stability = 50  # New outposts are fragile
 
+        # Auto-generate extraction sites based on planet body type
+        if planet:
+            available = self.production.determine_extraction_resources(
+                planet.type, seed=hash(planet.id),
+            )
+            for res_info in available[:3]:  # Max 3 starting extraction sites
+                colony.extraction_sites.append(
+                    ExtractionSite(
+                        resource_id=res_info["resource_id"],
+                        base_yield=res_info["base_yield"],
+                        level=1,
+                    )
+                )
+
         self.log.append(f"Founded outpost: {colony_name} at {system_id}")
         return True, f"Outpost {colony_name} established"
 
@@ -241,6 +280,36 @@ class GameState:
         return colony.start_ship_build(
             ship_class, ship_name, build_turns, build_time_reduction
         )
+
+    def build_ship_orbital(
+        self,
+        system_id: str,
+        blueprint_id: str,
+        name: str = None,
+    ) -> bool:
+        """Start building a ship via orbital shipyard (component-based).
+
+        Consumes components from colony production inventory and credits.
+        """
+        colony = self.colonies.colonies.get(system_id)
+        if not colony:
+            return False
+
+        blueprint = self.production.config.ship_blueprints.get(blueprint_id)
+        if not blueprint:
+            return False
+
+        ship_name = name or blueprint.get("name", f"New {blueprint_id}")
+
+        order = self.shipyard.start_ship_build(
+            system_id=system_id,
+            blueprint_id=blueprint_id,
+            ship_name=ship_name,
+            config=self.production.config.to_dict(),
+            inventory=colony.production_inventory,
+            resources=self.resources,
+        )
+        return order is not None
 
     def create_trade_route(
         self,
@@ -306,6 +375,9 @@ class GameState:
             "game_time": self.game_time,
             "difficulty": self.difficulty,
             "log": list(self.log),
+            "production": self.production.to_dict(),
+            "logistics": self.logistics.to_dict(),
+            "shipyard": self.shipyard.to_dict(),
         }
 
     @classmethod
@@ -337,4 +409,21 @@ class GameState:
         state.game_time = data.get("game_time", "January 2157")
         state.difficulty = data.get("difficulty", "normal")
         state.log = list(data.get("log", []))
+
+        # Schema v4: production + logistics + shipyard subsystems
+        if schema_version >= 4:
+            state.production = ProductionManager.from_dict(data.get("production", {}))
+            state.logistics = LogisticsManager.from_dict(data.get("logistics", {}))
+            state.shipyard = ShipyardManager.from_dict(data.get("shipyard", {}))
+        else:
+            # Migration: load production config for old saves
+            state.production = ProductionManager()
+            state.logistics = LogisticsManager()
+            state.shipyard = ShipyardManager()
+            try:
+                prod_path = _get_data_path("production_config.json")
+                state.production.config.load_from_json(prod_path)
+            except Exception:
+                pass  # Config may not exist in test environments
+
         return state

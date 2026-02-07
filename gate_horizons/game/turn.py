@@ -70,6 +70,11 @@ class TurnReport:
     logistics_arrivals: list = field(default_factory=list)
     logistics_shipments: list = field(default_factory=list)
     shortage_reports: dict = field(default_factory=dict)
+    # Production loop reports
+    extraction_output: dict = field(default_factory=dict)
+    factory_output: dict = field(default_factory=dict)
+    freighter_route_reports: list = field(default_factory=list)
+    shipyard_report: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -97,6 +102,10 @@ class TurnReport:
             "logistics_arrivals": self.logistics_arrivals,
             "logistics_shipments": self.logistics_shipments,
             "shortage_reports": dict(self.shortage_reports),
+            "extraction_output": dict(self.extraction_output),
+            "factory_output": dict(self.factory_output),
+            "freighter_route_reports": self.freighter_route_reports,
+            "shipyard_report": dict(self.shipyard_report),
         }
 
     def get_summary_lines(self) -> list:
@@ -117,6 +126,29 @@ class TurnReport:
             parts = [f"{amt} {res}" for res, amt in self.mining_output.items() if amt > 0]
             if parts:
                 lines.append(f"Mining produced: {', '.join(parts)}")
+
+        if self.extraction_output:
+            parts = [f"{amt} {res}" for res, amt in self.extraction_output.items() if amt > 0]
+            if parts:
+                lines.append(f"Extraction produced: {', '.join(parts)}")
+
+        if self.factory_output:
+            parts = [f"{amt} {res}" for res, amt in self.factory_output.items() if amt > 0]
+            if parts:
+                lines.append(f"Factories produced: {', '.join(parts)}")
+
+        if self.freighter_route_reports:
+            active = [r for r in self.freighter_route_reports if r.get("actions")]
+            if active:
+                lines.append(f"{len(active)} freighter route(s) active")
+
+        if self.shipyard_report:
+            completed_ships = self.shipyard_report.get("ships_completed", [])
+            completed_facilities = self.shipyard_report.get("facilities_completed", [])
+            for s in completed_ships:
+                lines.append(f"Ship completed: {s.get('ship_name', 'Unknown')}")
+            for f in completed_facilities:
+                lines.append(f"Facility completed: {f.get('facility_type', 'Unknown')} at {f.get('system_id', 'Unknown')}")
 
         if self.logistics_arrivals:
             lines.append(f"{len(self.logistics_arrivals)} logistics delivery(s) arrived")
@@ -200,6 +232,18 @@ class TurnProcessor:
         if clock.mark_processed("mining"):
             self._process_mining(game_state, report)
 
+        # A3. Process production extraction (new raw resource extraction)
+        if clock.mark_processed("extraction"):
+            self._process_extraction(game_state, report)
+
+        # A4. Process factory production (recipes -> components)
+        if clock.mark_processed("factories"):
+            self._process_factories(game_state, report)
+
+        # A5. Process freighter route execution (physical cargo movement)
+        if clock.mark_processed("freighter_routes"):
+            self._process_freighter_routes(game_state, report)
+
         # ============================================================
         # Phase B — Colony Logistics (5-step deterministic order)
         # ============================================================
@@ -231,6 +275,10 @@ class TurnProcessor:
         # C1. Process construction queues (infrastructure, ships)
         if clock.mark_processed("colonies"):
             self._process_colonies(game_state, report)
+
+        # C1b. Process orbital shipyard builds
+        if clock.mark_processed("shipyard"):
+            self._process_shipyard(game_state, report)
 
         # C2. Process tech research
         if clock.mark_processed("research"):
@@ -340,6 +388,67 @@ class TurnProcessor:
                 ship.cargo.clear()
 
         report.mining_output = mining_output
+
+    def _process_extraction(self, game_state, report: TurnReport) -> None:
+        """A3: Process raw resource extraction at all colonies."""
+        if not hasattr(game_state, "colonies") or not hasattr(game_state, "production"):
+            return
+
+        tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
+        mining_mult = tech_effects.get("mining_yield", 1.0)
+
+        total_extracted = {}
+        for system_id, colony in game_state.colonies.colonies.items():
+            if not colony.extraction_sites:
+                continue
+            mining_level = colony.infrastructure.get("mining", {}).get("level", 0)
+            extracted = game_state.production.process_extraction(
+                extraction_sites=colony.extraction_sites,
+                inventory=colony.production_inventory,
+                mining_level=mining_level,
+                tech_mult=mining_mult,
+            )
+            for res, amt in extracted.items():
+                total_extracted[res] = total_extracted.get(res, 0) + amt
+
+        report.extraction_output = total_extracted
+
+    def _process_factories(self, game_state, report: TurnReport) -> None:
+        """A4: Process factory recipe production at all colonies."""
+        if not hasattr(game_state, "colonies") or not hasattr(game_state, "production"):
+            return
+
+        total_produced = {}
+        for system_id, colony in game_state.colonies.colonies.items():
+            if not colony.factories:
+                continue
+            produced = game_state.production.process_factories(
+                factories=colony.factories,
+                inventory=colony.production_inventory,
+            )
+            for res, amt in produced.items():
+                total_produced[res] = total_produced.get(res, 0) + amt
+
+        report.factory_output = total_produced
+
+    def _process_freighter_routes(self, game_state, report: TurnReport) -> None:
+        """A5: Process physical freighter route execution."""
+        if not hasattr(game_state, "logistics"):
+            return
+
+        # Build production inventories map
+        prod_inventories = {}
+        if hasattr(game_state, "colonies"):
+            for system_id, colony in game_state.colonies.colonies.items():
+                prod_inventories[system_id] = colony.production_inventory
+
+        route_reports = game_state.logistics.process_routes(
+            fleet=game_state.fleet,
+            colonies=game_state.colonies if hasattr(game_state, "colonies") else None,
+            galaxy=game_state.galaxy,
+            production_inventories=prod_inventories,
+        )
+        report.freighter_route_reports = route_reports
 
     # ================================================================
     # Phase B — Colony Logistics (5-step deterministic order)
@@ -470,6 +579,38 @@ class TurnProcessor:
                         report.construction_completed.append(
                             f"{cr.get('colony_name', 'Unknown')}: {ship.name} launched!"
                         )
+
+    def _process_shipyard(self, game_state, report: TurnReport) -> None:
+        """C1b: Process orbital shipyard construction."""
+        if not hasattr(game_state, "shipyard"):
+            return
+
+        config = None
+        if hasattr(game_state, "production"):
+            config = game_state.production.config.to_dict()
+
+        shipyard_report = game_state.shipyard.process_tick(
+            fleet=game_state.fleet,
+            config=config,
+        )
+
+        # Create ships from completed orbital builds
+        for completed_ship in shipyard_report.get("ships_completed", []):
+            blueprint_id = completed_ship.get("blueprint_id", "")
+            ship_name = completed_ship.get("ship_name", "New Ship")
+            system_id = completed_ship.get("system_id", "")
+
+            if system_id and hasattr(game_state, "fleet"):
+                # Use the blueprint_id as ship_class for the fleet manager
+                ship = game_state.fleet.create_ship(
+                    blueprint_id, system_id, ship_name,
+                )
+                if ship:
+                    report.construction_completed.append(
+                        f"Orbital build complete: {ship_name} launched at {system_id}!"
+                    )
+
+        report.shipyard_report = shipyard_report
 
     def _process_research(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "tech"):
