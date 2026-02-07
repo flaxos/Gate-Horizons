@@ -10,6 +10,17 @@ Developer: Solo
 
 ---
 
+## Canon & Lore Pack (Source of Truth)
+Gate Horizons is a canon-owned setting for hard-sci strategy, narrative, and visual development. This repository is the **source of truth** for canon, aesthetics, and storyboard continuity across the project. Strategic traversal via gates/wormholes runs on months-scale timelines, while tactical missions are real-time in the Spaceship Sim layer. Refer to the canon pack for all lore, visuals, and prequel material:
+
+- `canon/CANON.md`
+- `canon/TIMELINE.md`
+- `canon/STYLE_BIBLE.md`
+- `canon/STORYBOARD.md`
+- `canon/IMAGE_PROMPT_TEMPLATE.md`
+- `canon/AI_AGENT_RULES.md`
+- `lore/prequel_novella/CH01_The_Moon_That_Lied.md`
+
 ## Quick Start for Development
 
 ### Prerequisites
