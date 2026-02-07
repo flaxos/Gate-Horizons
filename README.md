@@ -55,6 +55,31 @@ MVC Pattern:
   assets/  → Art and sound (placeholder → AI-generated)
 ```
 
+## Two-layer Design (Meta vs Tactical)
+Gate Horizons is the **meta game**: exploration, colonisation, logistics, research, factions, canon timeline, and encounter generation. Flaxos Spaceship Sim is the **tactical runtime**: real‑time ship simulation (RCS + Epstein drive), multi‑station play, and mission execution. The timescale separation is deliberate: Gate Horizons advances in weeks/months via gates/wormholes, while tactical missions unfold locally in real time. This keeps strategy and consequence in the meta layer, and skill and execution in the tactical layer.
+
+### Contract-only Integration (Non-negotiable)
+Integration is **contract only**:
+
+- Gate Horizons outputs `EncounterSpec.json` (mission request).
+- Spaceship Sim returns `ResultSpec.json` (mission outcomes).
+
+There is no shared runtime logic, no direct ship control from Gate Horizons, and no tactical system ownership by Gate Horizons. Conversely, Spaceship Sim does not own factions, economy, or canon. The conceptual contract lives in `docs/ENCOUNTER_CONTRACT.md`.
+
+### LLM Usage Guardrails
+LLMs may assist with lore or encounter proposals **only** within canon constraints and after validation. Allowed usage:
+
+- Drafting flavour text that cites canon sections.
+- Proposing encounter outlines that fit the EncounterSpec template.
+
+Disallowed usage:
+
+- Introducing new technology or timeline changes without canon versioning.
+- Bypassing the EncounterSpec/ResultSpec contract.
+- Expanding tactical rules or ship systems (owned by Spaceship Sim).
+
+Canon stability beats novelty. See `docs/CANON.md`, `docs/DRIFT_GUARDRAILS.md`, and `docs/AI_AGENT_RULES.md`.
+
 ### Key Design Decisions
 - **Turn-based** — Mobile-friendly, battery-efficient, "one more turn" addictive
 - **Kivy** — Native Android support via Buildozer, good touch handling
