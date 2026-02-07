@@ -128,6 +128,35 @@ class GameState:
             cost_reduction=cost_reduction,
         )
 
+    def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
+        """Start constructing a ship at a colony's spaceport.
+
+        Validates the colony has a spaceport with a free slot, checks and
+        deducts build costs, and queues the ship.  Returns True on success.
+        """
+        colony = self.colonies.colonies.get(system_id)
+        if not colony:
+            return False
+
+        templates = self.fleet._ship_templates
+        if not colony.can_build_ship(ship_class, templates):
+            return False
+
+        cost = colony.get_ship_build_cost(ship_class, templates)
+        if not self.resources.can_afford(cost):
+            return False
+
+        template = templates.get(ship_class, {})
+        build_turns = template.get("build_turns", 3)
+        tech_effects = self.tech.get_effects()
+        build_time_reduction = int(tech_effects.get("build_time_reduction", 0))
+        ship_name = name or template.get("name", f"New {ship_class.title()}")
+
+        self.resources.spend_dict(cost)
+        return colony.start_ship_build(
+            ship_class, ship_name, build_turns, build_time_reduction
+        )
+
     def save(self, filepath: str) -> None:
         """Save game state to JSON file."""
         import json
