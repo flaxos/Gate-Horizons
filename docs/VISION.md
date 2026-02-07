@@ -32,3 +32,7 @@ Flaxos Spaceship Sim is the **tactical runtime**: real‑time, local, in‑syste
 
 ## Integration Contract Location
 See `docs/ENCOUNTER_CONTRACT.md` for the conceptual contract between Gate Horizons and Spaceship Sim.
+
+## Canon Timescale & Network Reality
+- Sol is a dead-end spur; other systems host richer gate networks.
+- Strategic travel is months-scale; tactical missions are real-time (Spaceship Sim).
