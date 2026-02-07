@@ -8,7 +8,7 @@ from typing import Optional
 from .galaxy import GalaxyMap
 from .ships import FleetManager
 from .resources import ResourceManager
-from .colonies import ColonyManager, Colony
+from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
 from .trade import TradeManager
 from .combat import CombatResolver
 from .events import EventEngine
@@ -17,7 +17,7 @@ from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
 
 
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 
 
 # Default data paths (relative to gate_horizons package)
@@ -85,6 +85,8 @@ class GameState:
                 planet_id="earth",
                 name="Earth",
                 initial_pop=500,
+                level=2,  # Start as a Colony (level 2)
+                world_traits=["hub"],
             )
             # Starting infrastructure
             colony.infrastructure["housing"]["level"] = 3
@@ -92,7 +94,16 @@ class GameState:
             colony.infrastructure["defense"]["level"] = 1
             colony.infrastructure["research"]["level"] = 1
             colony.infrastructure["spaceport"]["level"] = 1
+            colony.infrastructure["power"]["level"] = 2
+            colony.infrastructure["mining"]["level"] = 1
+            colony.infrastructure["logistics"]["level"] = 1
             colony.happiness = 75
+            colony.stability = 80
+            # Starting stockpiles
+            colony.stockpiles = {
+                "energy": 40, "metals": 30, "exotics": 3,
+                "credits": 50, "intel": 5,
+            }
 
         # Starting ships
         scout = state.fleet.create_ship("scout", "sol", "ISS Pathfinder")
@@ -128,12 +139,86 @@ class GameState:
             cost_reduction=cost_reduction,
         )
 
-    def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
-        """Start constructing a ship at a colony's spaceport.
+    def found_colony(self, system_id: str, planet_id: str, name: str = None) -> tuple:
+        """Found a new outpost colony on a world.
 
-        Validates the colony has a spaceport with a free slot, checks and
-        deducts build costs, and queues the ship.  Returns True on success.
+        Requires colonisation tech and resource costs.
+        Returns (success: bool, message: str).
         """
+        # Get researched tech set
+        researched = {t.id for t in self.tech.techs.values() if t.researched}
+
+        can_found, reason = self.colonies.can_found_colony(
+            system_id, planet_id,
+            galaxy=self.galaxy,
+            researched_techs=researched,
+        )
+        if not can_found:
+            return False, reason
+
+        # Check and spend resources
+        cost = self.colonies.get_founding_cost()
+        if not self.resources.can_afford(cost):
+            return False, f"Cannot afford founding cost: {cost}"
+        self.resources.spend_dict(cost)
+
+        # Get planet info for traits
+        system = self.galaxy.systems.get(system_id)
+        planet = None
+        world_traits = []
+        if system:
+            for p in system.planets:
+                if p.id == planet_id:
+                    planet = p
+                    world_traits = list(p.traits) if p.traits else []
+                    break
+
+        colony_name = name or (planet.name if planet else f"Colony at {system_id}")
+
+        colony = self.colonies.establish_colony(
+            system_id=system_id,
+            planet_id=planet_id,
+            name=colony_name,
+            initial_pop=50,  # Outposts start small
+            level=0,  # Outpost
+            world_traits=world_traits,
+        )
+        colony.stability = 50  # New outposts are fragile
+
+        self.log.append(f"Founded outpost: {colony_name} at {system_id}")
+        return True, f"Outpost {colony_name} established"
+
+    def upgrade_colony(self, system_id: str) -> tuple:
+        """Upgrade a colony to the next level.
+
+        Returns (success: bool, message: str).
+        """
+        colony = self.colonies.colonies.get(system_id)
+        if not colony:
+            return False, "No colony at this system"
+
+        researched = {t.id for t in self.tech.techs.values() if t.researched}
+        if not colony.can_upgrade(researched):
+            required = colony.get_upgrade_tech_requirements()
+            return False, f"Cannot upgrade: tech requirements not met ({required})"
+
+        cost = colony.get_upgrade_cost()
+        if not cost:
+            return False, "Colony is at maximum level"
+
+        if not self.resources.can_afford(cost):
+            return False, f"Cannot afford upgrade cost: {cost}"
+
+        self.resources.spend_dict(cost)
+        old_level = colony.level
+        colony.upgrade()
+        level_name = colony.get_level_info()["name"]
+
+        self.log.append(f"Upgraded {colony.name} to {level_name} (level {colony.level})")
+        return True, f"{colony.name} upgraded to {level_name}"
+
+    def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
+        """Start constructing a ship at a colony's spaceport."""
         colony = self.colonies.colonies.get(system_id)
         if not colony:
             return False
@@ -155,6 +240,41 @@ class GameState:
         self.resources.spend_dict(cost)
         return colony.start_ship_build(
             ship_class, ship_name, build_turns, build_time_reduction
+        )
+
+    def create_trade_route(
+        self,
+        source: str,
+        dest: str,
+        manifest: dict,
+        capacity_per_turn: int = None,
+        latency_turns: int = 1,
+    ) -> Optional:
+        """Create a logistics trade route between two colonies.
+
+        If capacity_per_turn is None, auto-compute from source colony logistics.
+        """
+        # Compute capacity from colony infrastructure if not specified
+        if capacity_per_turn is None:
+            source_colony = self.colonies.colonies.get(source)
+            if source_colony:
+                capacity_per_turn = source_colony.get_logistics_capacity()
+
+                # Apply tech bonuses
+                tech_effects = self.tech.get_effects()
+                logistics_bonus = tech_effects.get("logistics_capacity_bonus", 0)
+                if logistics_bonus > 0:
+                    capacity_per_turn = int(capacity_per_turn * (1 + logistics_bonus))
+            else:
+                capacity_per_turn = 10
+
+        return self.trade.create_route(
+            source=source,
+            dest=dest,
+            capacity_per_turn=capacity_per_turn,
+            latency_turns=latency_turns,
+            manifest=manifest,
+            galaxy=self.galaxy,
         )
 
     def save(self, filepath: str) -> None:

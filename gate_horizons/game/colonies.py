@@ -1,8 +1,26 @@
-"""Colony management system for Gate Horizons."""
+"""Colony management system for Gate Horizons.
+
+Colonies are abstracted settlements on worlds. Each colony tracks:
+- Level (0=Outpost, 1=Settlement, 2=Colony, 3=Hub City)
+- Local stockpiles with storage caps
+- Stability (affected by shortages, overcrowding, traits)
+- Infrastructure slots with per-type effects
+- Growth/upgrade progress toward next level
+
+This is NOT Factorio: no belt/item micromanagement. Resources flow
+as abstracted per-turn quantities through the logistics network.
+"""
 
 from typing import Optional
 
-INFRASTRUCTURE_TYPES = ["housing", "industry", "defense", "research", "spaceport"]
+# Infrastructure types available for construction
+INFRASTRUCTURE_TYPES = [
+    "housing", "industry", "defense", "research", "spaceport",
+    "power", "mining", "logistics",
+]
+
+# Legacy types kept for backward compatibility during deserialization
+_LEGACY_INFRA_TYPES = ["housing", "industry", "defense", "research", "spaceport"]
 
 DEFAULT_INFRASTRUCTURE = {
     infra: {"level": 0, "building": False, "turns_remaining": 0}
@@ -16,6 +34,9 @@ BUILD_COSTS = {
     "defense": {"credits": 50, "metals": 30},
     "research": {"credits": 45, "metals": 20},
     "spaceport": {"credits": 60, "metals": 40},
+    "power": {"credits": 35, "metals": 20},
+    "mining": {"credits": 45, "metals": 30},
+    "logistics": {"credits": 55, "metals": 35},
 }
 
 BUILD_TURNS = {
@@ -24,11 +45,71 @@ BUILD_TURNS = {
     "defense": 3,
     "research": 3,
     "spaceport": 4,
+    "power": 2,
+    "mining": 3,
+    "logistics": 4,
 }
 
 # Housing capacity per level (base + per-level bonus)
 HOUSING_BASE_CAP = 100
 HOUSING_PER_LEVEL = 200
+
+# Colony level definitions
+COLONY_LEVELS = {
+    0: {"name": "Outpost", "max_infra_slots": 3, "storage_mult": 0.5, "route_cap_mult": 0.5},
+    1: {"name": "Settlement", "max_infra_slots": 5, "storage_mult": 1.0, "route_cap_mult": 1.0},
+    2: {"name": "Colony", "max_infra_slots": 7, "storage_mult": 1.5, "route_cap_mult": 1.5},
+    3: {"name": "Hub City", "max_infra_slots": 8, "storage_mult": 2.0, "route_cap_mult": 2.0},
+}
+
+# Costs to upgrade colony level (from current level to next)
+COLONY_UPGRADE_COSTS = {
+    0: {"credits": 100, "metals": 60, "energy": 30},       # Outpost -> Settlement
+    1: {"credits": 250, "metals": 150, "energy": 80},      # Settlement -> Colony
+    2: {"credits": 500, "metals": 300, "energy": 150, "exotics": 10},  # Colony -> Hub City
+}
+
+# Tech prerequisites for colony upgrade
+COLONY_UPGRADE_TECH = {
+    0: [],                       # Outpost -> Settlement: no extra tech
+    1: ["colonisation"],         # Settlement -> Colony: colonisation tech
+    2: ["logistics_2"],          # Colony -> Hub City: logistics II
+}
+
+# Base storage caps per resource (before multipliers)
+BASE_STORAGE = {
+    "energy": 100,
+    "metals": 100,
+    "exotics": 30,
+    "credits": 200,
+    "intel": 50,
+}
+
+# Colony founding costs
+FOUNDING_COST = {"credits": 80, "metals": 50, "energy": 20}
+
+# World trait modifiers
+WORLD_TRAIT_MODIFIERS = {
+    "hub": {
+        "logistics_bonus": 2,       # +2 to logistics infrastructure effect
+        "storage_bonus": 50,         # +50 to all storage caps
+        "research_penalty": -1,      # -1 to research output
+        "stability_bonus": 5,        # +5 base stability
+    },
+    "frontier": {
+        "exotics_chance": 0.3,       # 30% chance of bonus exotics per turn
+        "stability_penalty": -10,    # -10 base stability
+        "capacity_penalty": -20,     # -20 to all storage caps
+        "exotics_bonus": 2,          # +2 exotics output when triggered
+    },
+    "mineral_rich": {
+        "metals_bonus": 3,           # +3 metals per turn
+    },
+    "volatile": {
+        "energy_bonus": 2,           # +2 energy per turn
+        "stability_penalty": -5,     # -5 base stability
+    },
+}
 
 
 class Colony:
@@ -42,6 +123,13 @@ class Colony:
         infrastructure: dict = None,
         build_queue: list = None,
         shipyard_queue: list = None,
+        level: int = 0,
+        stability: int = 60,
+        stockpiles: dict = None,
+        owner_faction: str = "player",
+        upgrade_progress: int = 0,
+        world_traits: list = None,
+        shortage_turns: int = 0,
     ):
         self.system_id = system_id
         self.planet_id = planet_id
@@ -53,8 +141,18 @@ class Colony:
         }
         self.build_queue = build_queue or []
         self.shipyard_queue = shipyard_queue or []
+        self.level = level
+        self.stability = stability
+        self.stockpiles = stockpiles or {
+            "energy": 0, "metals": 0, "exotics": 0, "credits": 0, "intel": 0,
+        }
+        self.owner_faction = owner_faction
+        self.upgrade_progress = upgrade_progress
+        self.world_traits = world_traits or []
+        self.shortage_turns = shortage_turns
 
     def get_tier(self) -> int:
+        """Map colony level to world tier for backward compatibility."""
         levels = [
             self.infrastructure.get(k, {}).get("level", 0)
             for k in INFRASTRUCTURE_TYPES
@@ -65,29 +163,90 @@ class Colony:
             return 2  # Developing
         return 3  # Frontier outpost
 
+    def get_level_info(self) -> dict:
+        return COLONY_LEVELS.get(self.level, COLONY_LEVELS[0])
+
+    def get_storage_caps(self) -> dict:
+        """Calculate storage caps based on level, infrastructure, and traits."""
+        level_info = self.get_level_info()
+        storage_mult = level_info["storage_mult"]
+
+        # Base storage scaled by level
+        caps = {r: int(v * storage_mult) for r, v in BASE_STORAGE.items()}
+
+        # Logistics infrastructure bonus: +25% per level
+        logistics_level = self.infrastructure.get("logistics", {}).get("level", 0)
+        for r in caps:
+            caps[r] += int(caps[r] * logistics_level * 0.25)
+
+        # World trait modifiers
+        for trait in self.world_traits:
+            mods = WORLD_TRAIT_MODIFIERS.get(trait, {})
+            storage_bonus = mods.get("storage_bonus", 0)
+            capacity_penalty = mods.get("capacity_penalty", 0)
+            for r in caps:
+                caps[r] += storage_bonus + capacity_penalty
+
+        # Ensure minimum storage of 20
+        for r in caps:
+            caps[r] = max(20, caps[r])
+
+        return caps
+
+    def get_active_infra_count(self) -> int:
+        """Count infrastructure types with level >= 1."""
+        return sum(
+            1 for k in INFRASTRUCTURE_TYPES
+            if self.infrastructure.get(k, {}).get("level", 0) >= 1
+        )
+
     def calculate_production(self) -> dict:
+        """Calculate per-turn production based on infrastructure and traits."""
         production = {}
         industry_level = self.infrastructure.get("industry", {}).get("level", 0)
         research_level = self.infrastructure.get("research", {}).get("level", 0)
         spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
+        power_level = self.infrastructure.get("power", {}).get("level", 0)
+        mining_level = self.infrastructure.get("mining", {}).get("level", 0)
 
-        # Base production scales with population and infrastructure
         pop_factor = self.population / 100.0
-        happiness_factor = self.happiness / 100.0
+        stability_factor = max(0.1, self.stability / 100.0)
 
-        # Industry produces metals and energy
-        production["metals"] = int(industry_level * 3 * pop_factor * happiness_factor)
-        production["energy"] = int((industry_level + 1) * 2 * pop_factor)
+        # Power generates energy
+        production["energy"] = int((power_level + 1) * 2 * pop_factor)
+
+        # Mining generates metals (requires power)
+        effective_mining = min(mining_level, power_level + 1)
+        production["metals"] = int(effective_mining * 3 * pop_factor * stability_factor)
+
+        # Industry also contributes metals and energy
+        production["metals"] += int(industry_level * 2 * pop_factor * stability_factor)
+        production["energy"] += int(industry_level * 1 * pop_factor)
 
         # Research produces intel
-        production["intel"] = int(research_level * 2 * pop_factor * happiness_factor)
+        production["intel"] = int(research_level * 2 * pop_factor * stability_factor)
 
-        # Spaceport generates credits through trade
+        # Spaceport generates credits
         production["credits"] = int((spaceport_level + 1) * 3 * pop_factor)
+
+        # World trait bonuses
+        for trait in self.world_traits:
+            mods = WORLD_TRAIT_MODIFIERS.get(trait, {})
+            if "metals_bonus" in mods:
+                production["metals"] += mods["metals_bonus"]
+            if "energy_bonus" in mods:
+                production["energy"] += mods["energy_bonus"]
+            if "research_penalty" in mods:
+                production["intel"] = max(0, production["intel"] + mods["research_penalty"])
 
         return production
 
     def calculate_consumption(self) -> dict:
+        """Calculate per-turn consumption/upkeep.
+
+        Upkeep scales with colony level + infrastructure count to prevent
+        runaway growth.
+        """
         consumption = {}
         pop_factor = self.population / 100.0
 
@@ -95,12 +254,50 @@ class Colony:
         consumption["energy"] = int(2 * pop_factor)
         consumption["credits"] = int(1 * pop_factor)
 
-        # Infrastructure maintenance
+        # Infrastructure maintenance scales with level and count
+        infra_count = self.get_active_infra_count()
+        level_mult = 1 + self.level * 0.5  # Higher level = more upkeep
+
         for infra_type in INFRASTRUCTURE_TYPES:
             level = self.infrastructure.get(infra_type, {}).get("level", 0)
-            consumption["credits"] = consumption.get("credits", 0) + level
+            consumption["credits"] = consumption.get("credits", 0) + int(level * level_mult)
+
+        # Additional energy upkeep for infrastructure density
+        consumption["energy"] += int(infra_count * self.level * 0.5)
 
         return consumption
+
+    def apply_shortage_penalties(self, shortages: dict) -> dict:
+        """Apply penalties when stockpile can't cover consumption.
+
+        Returns dict of penalties applied.
+        """
+        penalties = {}
+        total_shortage = sum(shortages.values())
+
+        if total_shortage > 0:
+            self.shortage_turns += 1
+
+            # Stability drops based on shortage severity
+            stability_hit = min(20, total_shortage * 2 + self.shortage_turns)
+            self.stability = max(0, self.stability - stability_hit)
+            penalties["stability_loss"] = stability_hit
+
+            # Growth halted during shortages
+            penalties["growth_halted"] = True
+
+            # Production penalty: 50% reduction if prolonged shortage
+            if self.shortage_turns >= 3:
+                penalties["production_penalty"] = 0.5
+        else:
+            # Recovery: stability slowly increases when no shortages
+            if self.shortage_turns > 0:
+                self.shortage_turns = max(0, self.shortage_turns - 1)
+            recovery = 2 if self.shortage_turns == 0 else 1
+            self.stability = min(100, self.stability + recovery)
+            penalties["stability_recovery"] = recovery
+
+        return penalties
 
     def start_construction(self, infra_type: str, build_time_reduction: int = 0) -> bool:
         """Start building/upgrading an infrastructure type."""
@@ -110,6 +307,13 @@ class Colony:
         infra = self.infrastructure.get(infra_type, {})
         if infra.get("building", False):
             return False  # Already building
+
+        # Check infrastructure slot limit based on colony level
+        level_info = self.get_level_info()
+        if self.get_active_infra_count() >= level_info["max_infra_slots"]:
+            # Allow upgrades to existing infrastructure, but not new types
+            if infra.get("level", 0) == 0:
+                return False
 
         turns = max(1, BUILD_TURNS.get(infra_type, 3) - build_time_reduction)
         self.infrastructure[infra_type] = {
@@ -123,11 +327,42 @@ class Colony:
         """Get cost to build next level of infrastructure."""
         base_cost = BUILD_COSTS.get(infra_type, {})
         level = self.infrastructure.get(infra_type, {}).get("level", 0)
-        # Cost scales with level
         return {r: int(amount * (1 + level * 0.5)) for r, amount in base_cost.items()}
 
     def queue_construction(self, infra_type: str) -> None:
         self.build_queue.append({"type": infra_type})
+
+    def get_upgrade_cost(self) -> dict:
+        """Get cost to upgrade colony to next level."""
+        return dict(COLONY_UPGRADE_COSTS.get(self.level, {}))
+
+    def get_upgrade_tech_requirements(self) -> list:
+        """Get tech prerequisites for upgrading to next level."""
+        return list(COLONY_UPGRADE_TECH.get(self.level, []))
+
+    def can_upgrade(self, researched_techs: set = None) -> bool:
+        """Check if colony can be upgraded to next level."""
+        if self.level >= 3:
+            return False
+
+        # Check tech prerequisites
+        required_techs = self.get_upgrade_tech_requirements()
+        if required_techs and researched_techs:
+            for tech_id in required_techs:
+                if tech_id not in researched_techs:
+                    return False
+        elif required_techs:
+            return False
+
+        return True
+
+    def upgrade(self) -> bool:
+        """Upgrade colony to next level. Caller must check costs and tech."""
+        if self.level >= 3:
+            return False
+        self.level += 1
+        self.upgrade_progress = 0
+        return True
 
     # ---- Ship construction (shipyard) ----
 
@@ -136,7 +371,6 @@ class Colony:
         spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
         if spaceport_level < 1:
             return False
-        # Concurrent build slots = spaceport level
         if len(self.shipyard_queue) >= spaceport_level:
             return False
         if ship_class not in templates:
@@ -155,11 +389,6 @@ class Colony:
         build_turns: int,
         build_time_reduction: int = 0,
     ) -> bool:
-        """Add a ship to the shipyard queue.
-
-        The caller is responsible for validating resources and deducting costs
-        before calling this method.
-        """
         spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
         if spaceport_level < 1:
             return False
@@ -173,12 +402,29 @@ class Colony:
         })
         return True
 
+    def get_logistics_capacity(self) -> int:
+        """Get outgoing logistics route capacity based on infrastructure and level.
+
+        This determines how many resources per turn can be shipped out.
+        """
+        logistics_level = self.infrastructure.get("logistics", {}).get("level", 0)
+        level_info = self.get_level_info()
+        base_cap = 10 + logistics_level * 8
+        cap = int(base_cap * level_info["route_cap_mult"])
+
+        # Hub trait bonus
+        for trait in self.world_traits:
+            mods = WORLD_TRAIT_MODIFIERS.get(trait, {})
+            cap += mods.get("logistics_bonus", 0) * 5
+
+        return cap
+
     def process_turn(self, build_time_reduction: int = 0) -> dict:
         """Process one turn for this colony. Returns summary of changes.
 
-        Args:
-            build_time_reduction: Turns to subtract from new construction
-                (from tech effects like Rapid Construction).
+        Note: This handles construction, shipyard, population, and happiness.
+        Stockpile production/consumption is handled by the turn processor
+        to follow the correct resolution order.
         """
         report = {
             "construction_completed": [],
@@ -186,6 +432,7 @@ class Colony:
             "population_growth": 0,
             "happiness_change": 0,
             "tier_change": None,
+            "stability": self.stability,
         }
 
         old_tier = self.get_tier()
@@ -205,7 +452,6 @@ class Colony:
         if self.build_queue:
             for infra_type in INFRASTRUCTURE_TYPES:
                 if not self.infrastructure.get(infra_type, {}).get("building", False):
-                    # Find queued item for this type
                     for i, item in enumerate(self.build_queue):
                         if item["type"] == infra_type:
                             self.start_construction(infra_type, build_time_reduction)
@@ -222,27 +468,44 @@ class Colony:
                 })
                 self.shipyard_queue.remove(item)
 
-        # Population growth
+        # Population growth (halted if in shortage)
+        if self.shortage_turns == 0:
+            housing_level = self.infrastructure.get("housing", {}).get("level", 0)
+            housing_cap = HOUSING_BASE_CAP + housing_level * HOUSING_PER_LEVEL
+            if self.population < housing_cap:
+                growth_rate = 0.05
+                if self.stability >= 80:
+                    growth_rate += 0.02
+                elif self.stability < 40:
+                    growth_rate -= 0.03
+                # Outpost penalty: slower growth
+                if self.level == 0:
+                    growth_rate *= 0.5
+                growth = max(1, int(self.population * growth_rate))
+                growth = min(growth, housing_cap - self.population)
+                self.population += growth
+                report["population_growth"] = growth
+
+        # Happiness adjustments (now tracks stability more closely)
         housing_level = self.infrastructure.get("housing", {}).get("level", 0)
         housing_cap = HOUSING_BASE_CAP + housing_level * HOUSING_PER_LEVEL
-        if self.population < housing_cap:
-            growth_rate = 0.05  # Base 5%
-            if self.happiness >= 80:
-                growth_rate += 0.02
-            elif self.happiness < 40:
-                growth_rate -= 0.03
-            growth = max(1, int(self.population * growth_rate))
-            growth = min(growth, housing_cap - self.population)
-            self.population += growth
-            report["population_growth"] = growth
 
-        # Happiness adjustments
         if self.population > housing_cap * 0.9:
             self.happiness = max(0, self.happiness - 5)
             report["happiness_change"] -= 5
         elif self.population < housing_cap * 0.5:
             self.happiness = min(100, self.happiness + 2)
             report["happiness_change"] += 2
+
+        # Stability influences happiness
+        if self.stability < 30:
+            self.happiness = max(0, self.happiness - 3)
+            report["happiness_change"] -= 3
+        elif self.stability > 80:
+            self.happiness = min(100, self.happiness + 1)
+            report["happiness_change"] += 1
+
+        report["stability"] = self.stability
 
         # Tier check
         new_tier = self.get_tier()
@@ -263,6 +526,13 @@ class Colony:
             },
             "build_queue": list(self.build_queue),
             "shipyard_queue": [dict(item) for item in self.shipyard_queue],
+            "level": self.level,
+            "stability": self.stability,
+            "stockpiles": dict(self.stockpiles),
+            "owner_faction": self.owner_faction,
+            "upgrade_progress": self.upgrade_progress,
+            "world_traits": list(self.world_traits),
+            "shortage_turns": self.shortage_turns,
         }
 
     @classmethod
@@ -272,9 +542,9 @@ class Colony:
         }
         incoming_infra = data.get("infrastructure") or {}
         for infra_type, infra_data in incoming_infra.items():
-            if infra_type not in infrastructure or not isinstance(infra_data, dict):
+            if infra_type not in INFRASTRUCTURE_TYPES or not isinstance(infra_data, dict):
                 continue
-            merged = dict(infrastructure[infra_type])
+            merged = dict(infrastructure.get(infra_type, DEFAULT_INFRASTRUCTURE.get(infra_type, {})))
             merged.update(infra_data)
             infrastructure[infra_type] = merged
         return cls(
@@ -286,6 +556,15 @@ class Colony:
             infrastructure=infrastructure,
             build_queue=list(data.get("build_queue", [])),
             shipyard_queue=[dict(item) for item in data.get("shipyard_queue", [])],
+            level=data.get("level", 0),
+            stability=data.get("stability", 60),
+            stockpiles=data.get("stockpiles", {
+                "energy": 0, "metals": 0, "exotics": 0, "credits": 0, "intel": 0,
+            }),
+            owner_faction=data.get("owner_faction", "player"),
+            upgrade_progress=data.get("upgrade_progress", 0),
+            world_traits=list(data.get("world_traits", [])),
+            shortage_turns=data.get("shortage_turns", 0),
         )
 
 
@@ -299,15 +578,50 @@ class ColonyManager:
         planet_id: str,
         name: str,
         initial_pop: int = 100,
+        level: int = 0,
+        world_traits: list = None,
     ) -> Colony:
         colony = Colony(
             system_id=system_id,
             planet_id=planet_id,
             name=name,
             population=initial_pop,
+            level=level,
+            world_traits=world_traits or [],
         )
         self.colonies[system_id] = colony
         return colony
+
+    def can_found_colony(self, system_id: str, planet_id: str, galaxy=None,
+                         tech_effects: dict = None, researched_techs: set = None) -> tuple:
+        """Check if a new colony can be founded. Returns (can_found, reason)."""
+        if system_id in self.colonies:
+            return False, "System already has a colony"
+
+        # Check colonisation tech
+        if researched_techs is None or "colonisation" not in researched_techs:
+            return False, "Colonisation technology required"
+
+        # Check planet exists and is colonizable
+        if galaxy:
+            system = galaxy.systems.get(system_id)
+            if not system:
+                return False, "System not found"
+            planet = None
+            for p in system.planets:
+                if p.id == planet_id:
+                    planet = p
+                    break
+            if not planet:
+                return False, "Planet not found"
+            if not planet.colonizable:
+                return False, "Planet is not colonizable"
+
+        return True, "OK"
+
+    def get_founding_cost(self) -> dict:
+        """Get the resource cost to found a new colony."""
+        return dict(FOUNDING_COST)
 
     def abandon_colony(self, system_id: str) -> bool:
         if system_id in self.colonies:

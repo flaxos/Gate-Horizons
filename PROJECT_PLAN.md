@@ -416,7 +416,94 @@ All narrative content will be pre-generated using Claude/LLM and stored as JSON 
 
 ---
 
-## 11. Open Questions & Future Considerations
+## 11. Colony Expansion & Logistics Mechanics (Implemented)
+
+> **Design Note**: This is NOT Factorio. No belt/item micromanagement.
+> Resources flow as abstracted per-turn quantities through the logistics network.
+
+### 11.1 Colony Levels
+Colonies progress through 4 levels, each unlocking more infrastructure slots
+and increasing logistics throughput:
+
+| Level | Name | Max Infra | Storage | Route Cap | Upgrade Cost |
+|-------|------|-----------|---------|-----------|--------------|
+| 0 | Outpost | 3 | 0.5x | 0.5x | — |
+| 1 | Settlement | 5 | 1.0x | 1.0x | 100Cr 60Mt 30E |
+| 2 | Colony | 7 | 1.5x | 1.5x | 250Cr 150Mt 80E |
+| 3 | Hub City | 8 | 2.0x | 2.0x | 500Cr 300Mt 150E 10X |
+
+Upgrade tech prerequisites: Level 1→2 requires Colonisation tech, Level 2→3 requires Logistics II.
+
+### 11.2 Infrastructure Types
+| Type | Effect | Build Cost | Turns |
+|------|--------|------------|-------|
+| Housing | Population cap: 100 + 200/level | 30Cr 15Mt | 2 |
+| Industry | +metals, +energy (scaled by pop & stability) | 40Cr 25Mt | 3 |
+| Defense | Combat defense bonus | 50Cr 30Mt | 3 |
+| Research | +intel (scaled by pop & stability) | 45Cr 20Mt | 3 |
+| Spaceport | +credits, ship construction slots | 60Cr 40Mt | 4 |
+| Power | +energy, enables mining | 35Cr 20Mt | 2 |
+| Mining | +metals (limited by power level) | 45Cr 30Mt | 3 |
+| Logistics | +storage caps, +route capacity | 55Cr 35Mt | 4 |
+
+### 11.3 Stockpiles & Storage Caps
+Each colony stores resources locally. Base caps (before multipliers):
+Energy=100, Metals=100, Exotics=30, Credits=200, Intel=50.
+Caps scale with colony level (storage_mult), logistics infrastructure (+25%/level),
+and world traits (Hub +50, Frontier -20).
+
+### 11.4 Trade Routes (Abstracted Logistics)
+- **capacity_per_turn**: Max total resources shipped per direction
+- **latency_turns**: Transit delay (≥1, usually = gate distance)
+- **risk_factor**: Chance of 30% partial loss per shipment (0.0-1.0)
+- **resource_manifest**: {outbound: {resource: amount}, inbound: {resource: amount}}
+
+Capacity derives from colony logistics infrastructure + tech bonuses.
+Logistics I unlocks routes; Logistics II adds +50% capacity; Logistics III doubles it.
+
+### 11.5 Turn Resolution Order
+1. Apply arrivals from in-transit queue -> add to colony stockpiles
+2. Compute colony production -> add to stockpiles (respect storage caps)
+3. Compute colony consumption/upkeep -> subtract from stockpiles; record shortages
+4. Apply shortage penalties -> stability/growth modifiers
+5. Compute trade flows -> create in-transit shipments with latency
+
+### 11.6 Shortage Penalties (Balancing Guardrails)
+- Upkeep scales with colony level + infrastructure count (level_mult = 1 + level*0.5)
+- If consumption > stockpile: shortage recorded, stability drops (min 20, severity*2 + cumulative_turns)
+- 3+ consecutive shortage turns: 50% production penalty
+- Growth halted during shortages
+- Recovery: +2 stability/turn when shortage resolves
+
+### 11.7 World Traits
+| Trait | Effects |
+|-------|---------|
+| Hub | +logistics, +storage, -research, +stability |
+| Frontier | +exotics chance, -stability, -storage capacity |
+| Mineral Rich | +3 metals/turn |
+| Volatile | +2 energy/turn, -stability |
+
+### 11.8 Hub Worlds Feed Frontier Worlds
+The Logistics infrastructure building increases storage + route capacity.
+Hub-trait worlds get additional logistics bonuses.
+Frontier-trait worlds have reduced capacity and lower stability,
+making them dependent on hub supply lines.
+Without sustained logistics from hubs, frontier worlds experience
+shortages → stability drops → production penalties → possible collapse.
+
+### 11.9 Tech Gating
+| Tech | Tier | Effect |
+|------|------|--------|
+| Colonisation | 1 | Unlocks founding outposts |
+| Logistics I | 1 | Enables trade routes, base 10/turn |
+| Logistics II | 2 | +50% route capacity, enables logistics hubs |
+| Logistics III | 3 | Doubles route capacity, auto-balancing |
+| Industrial Processing | 2 | +30% industry output |
+| Research Acceleration | 2 | +1 intel/turn per colony with research lab |
+
+---
+
+## 12. Open Questions & Future Considerations
 
 1. **Signal Delay Mechanic** — Should messages between distant colonies take turns to arrive? Adds realism but complexity. (Phase 2 decision)
 2. **Gate Builder Meta-Story** — What happened to them? Options: Ascended, civil war, still watching, natural disaster. (Define during content gen)
