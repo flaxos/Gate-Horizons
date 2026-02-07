@@ -284,6 +284,19 @@ class TurnProcessor:
                         f"{cr.get('colony_name', 'Unknown')}: {completed}"
                     )
 
+                # Create ships that finished building in the shipyard
+                for ship_info in cr.get("ships_completed", []):
+                    system_id = cr.get("system_id", "")
+                    ship = game_state.fleet.create_ship(
+                        ship_info["ship_class"],
+                        system_id,
+                        ship_info["name"],
+                    )
+                    if ship:
+                        report.construction_completed.append(
+                            f"{cr.get('colony_name', 'Unknown')}: {ship.name} launched!"
+                        )
+
     def _process_research(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "tech"):
             completed = game_state.tech.process_turn(

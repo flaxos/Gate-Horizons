@@ -26,6 +26,10 @@ BUILD_TURNS = {
     "spaceport": 4,
 }
 
+# Housing capacity per level (base + per-level bonus)
+HOUSING_BASE_CAP = 100
+HOUSING_PER_LEVEL = 200
+
 
 class Colony:
     def __init__(
@@ -37,6 +41,7 @@ class Colony:
         happiness: int = 70,
         infrastructure: dict = None,
         build_queue: list = None,
+        shipyard_queue: list = None,
     ):
         self.system_id = system_id
         self.planet_id = planet_id
@@ -47,6 +52,7 @@ class Colony:
             k: dict(v) for k, v in DEFAULT_INFRASTRUCTURE.items()
         }
         self.build_queue = build_queue or []
+        self.shipyard_queue = shipyard_queue or []
 
     def get_tier(self) -> int:
         levels = [
@@ -123,6 +129,50 @@ class Colony:
     def queue_construction(self, infra_type: str) -> None:
         self.build_queue.append({"type": infra_type})
 
+    # ---- Ship construction (shipyard) ----
+
+    def can_build_ship(self, ship_class: str, templates: dict) -> bool:
+        """Check if colony can queue a ship build (spaceport exists, slot open)."""
+        spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
+        if spaceport_level < 1:
+            return False
+        # Concurrent build slots = spaceport level
+        if len(self.shipyard_queue) >= spaceport_level:
+            return False
+        if ship_class not in templates:
+            return False
+        return True
+
+    def get_ship_build_cost(self, ship_class: str, templates: dict) -> dict:
+        """Return the resource cost to build a ship class."""
+        template = templates.get(ship_class, {})
+        return dict(template.get("build_cost", {}))
+
+    def start_ship_build(
+        self,
+        ship_class: str,
+        name: str,
+        build_turns: int,
+        build_time_reduction: int = 0,
+    ) -> bool:
+        """Add a ship to the shipyard queue.
+
+        The caller is responsible for validating resources and deducting costs
+        before calling this method.
+        """
+        spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
+        if spaceport_level < 1:
+            return False
+        if len(self.shipyard_queue) >= spaceport_level:
+            return False
+        turns = max(1, build_turns - build_time_reduction)
+        self.shipyard_queue.append({
+            "ship_class": ship_class,
+            "name": name,
+            "turns_remaining": turns,
+        })
+        return True
+
     def process_turn(self, build_time_reduction: int = 0) -> dict:
         """Process one turn for this colony. Returns summary of changes.
 
@@ -132,6 +182,7 @@ class Colony:
         """
         report = {
             "construction_completed": [],
+            "ships_completed": [],
             "population_growth": 0,
             "happiness_change": 0,
             "tier_change": None,
@@ -161,9 +212,19 @@ class Colony:
                             self.build_queue.pop(i)
                             break
 
+        # Advance shipyard queue
+        for item in list(self.shipyard_queue):
+            item["turns_remaining"] -= 1
+            if item["turns_remaining"] <= 0:
+                report["ships_completed"].append({
+                    "ship_class": item["ship_class"],
+                    "name": item["name"],
+                })
+                self.shipyard_queue.remove(item)
+
         # Population growth
         housing_level = self.infrastructure.get("housing", {}).get("level", 0)
-        housing_cap = 100 + housing_level * 150
+        housing_cap = HOUSING_BASE_CAP + housing_level * HOUSING_PER_LEVEL
         if self.population < housing_cap:
             growth_rate = 0.05  # Base 5%
             if self.happiness >= 80:
@@ -201,6 +262,7 @@ class Colony:
                 k: dict(v) for k, v in self.infrastructure.items()
             },
             "build_queue": list(self.build_queue),
+            "shipyard_queue": [dict(item) for item in self.shipyard_queue],
         }
 
     @classmethod
@@ -223,6 +285,7 @@ class Colony:
             happiness=data.get("happiness", 70),
             infrastructure=infrastructure,
             build_queue=list(data.get("build_queue", [])),
+            shipyard_queue=[dict(item) for item in data.get("shipyard_queue", [])],
         )
 
 
