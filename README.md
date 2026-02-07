@@ -10,6 +10,29 @@ Developer: Solo
 
 ---
 
+## Canon & Lore Pack
+
+Gate Horizons is the **source of truth** for all canon, aesthetics, and storyboard materials in the Gate Horizons universe. This repo locks the hard-sci vibe and prevents drift across all content — including LLM-assisted generation.
+
+**Timescale principle:** months-scale strategic traversal via gates/wormholes at the meta layer; tactical real-time missions run in Spaceship Sim at the local layer.
+
+### Canon files (start here)
+| File | Purpose |
+|------|---------|
+| [`canon/CANON.md`](canon/CANON.md) | Hard canon constraints — the law |
+| [`canon/TIMELINE.md`](canon/TIMELINE.md) | Prequel timeline (ERA 0–6) |
+| [`canon/STYLE_BIBLE.md`](canon/STYLE_BIBLE.md) | Visual tone + anti-drift rules |
+| [`canon/STORYBOARD.md`](canon/STORYBOARD.md) | Numbered storyboard frames (SB01–SB12) |
+| [`canon/IMAGE_PROMPT_TEMPLATE.md`](canon/IMAGE_PROMPT_TEMPLATE.md) | Reusable ChatGPT image-generation template |
+| [`canon/AI_AGENT_RULES.md`](canon/AI_AGENT_RULES.md) | Rules for LLM agents working on this project |
+
+### Prequel novella
+| File | Purpose |
+|------|---------|
+| [`lore/prequel_novella/CH01_The_Moon_That_Lied.md`](lore/prequel_novella/CH01_The_Moon_That_Lied.md) | Full opening chapter |
+
+---
+
 ## Quick Start for Development
 
 ### Prerequisites

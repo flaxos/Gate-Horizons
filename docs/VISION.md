@@ -30,5 +30,10 @@ Flaxos Spaceship Sim is the **tactical runtime**: real‑time, local, in‑syste
 - Spaceship Sim does **not** own factions, economy, or canon timeline.
 - There is **no** shared AI director that bypasses the contract.
 
+## Network Topology
+- Sol is a dead-end spur; other systems have richer gate networks.
+- Strategic travel is months-scale; tactical missions are real-time (Spaceship Sim).
+- See `canon/CANON.md` and `canon/TIMELINE.md` for the full prequel canon and gate constraint details.
+
 ## Integration Contract Location
 See `docs/ENCOUNTER_CONTRACT.md` for the conceptual contract between Gate Horizons and Spaceship Sim.
