@@ -6,12 +6,21 @@ Colonies are abstracted settlements on worlds. Each colony tracks:
 - Stability (affected by shortages, overcrowding, traits)
 - Infrastructure slots with per-type effects
 - Growth/upgrade progress toward next level
+- Production inventory (raw, processed, components)
+- Extraction sites and factories
 
 This is NOT Factorio: no belt/item micromanagement. Resources flow
 as abstracted per-turn quantities through the logistics network.
 """
 
 from typing import Optional
+
+from .production import (
+    ExtractionSite,
+    Factory,
+    empty_production_inventory,
+    ALL_PRODUCTION_RESOURCES,
+)
 
 # Infrastructure types available for construction
 INFRASTRUCTURE_TYPES = [
@@ -130,6 +139,10 @@ class Colony:
         upgrade_progress: int = 0,
         world_traits: list = None,
         shortage_turns: int = 0,
+        # Production system fields
+        production_inventory: dict = None,
+        extraction_sites: list = None,
+        factories: list = None,
     ):
         self.system_id = system_id
         self.planet_id = planet_id
@@ -150,6 +163,10 @@ class Colony:
         self.upgrade_progress = upgrade_progress
         self.world_traits = world_traits or []
         self.shortage_turns = shortage_turns
+        # Production system
+        self.production_inventory = production_inventory or empty_production_inventory()
+        self.extraction_sites = extraction_sites or []
+        self.factories = factories or []
 
     def get_tier(self) -> int:
         """Map colony level to world tier for backward compatibility."""
@@ -533,6 +550,9 @@ class Colony:
             "upgrade_progress": self.upgrade_progress,
             "world_traits": list(self.world_traits),
             "shortage_turns": self.shortage_turns,
+            "production_inventory": dict(self.production_inventory),
+            "extraction_sites": [s.to_dict() for s in self.extraction_sites],
+            "factories": [f.to_dict() for f in self.factories],
         }
 
     @classmethod
@@ -547,6 +567,23 @@ class Colony:
             merged = dict(infrastructure.get(infra_type, DEFAULT_INFRASTRUCTURE.get(infra_type, {})))
             merged.update(infra_data)
             infrastructure[infra_type] = merged
+        # Production system fields (default to empty for old saves)
+        prod_inv = data.get("production_inventory")
+        if prod_inv:
+            # Ensure all keys present
+            full_inv = empty_production_inventory()
+            full_inv.update(prod_inv)
+            prod_inv = full_inv
+        else:
+            prod_inv = empty_production_inventory()
+
+        extraction_sites = [
+            ExtractionSite.from_dict(s) for s in data.get("extraction_sites", [])
+        ]
+        factories = [
+            Factory.from_dict(f) for f in data.get("factories", [])
+        ]
+
         return cls(
             system_id=data.get("system_id", ""),
             planet_id=data.get("planet_id", ""),
@@ -565,6 +602,9 @@ class Colony:
             upgrade_progress=data.get("upgrade_progress", 0),
             world_traits=list(data.get("world_traits", [])),
             shortage_turns=data.get("shortage_turns", 0),
+            production_inventory=prod_inv,
+            extraction_sites=extraction_sites,
+            factories=factories,
         )
 
 

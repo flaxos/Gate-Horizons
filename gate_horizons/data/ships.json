@@ -50,5 +50,44 @@
     "build_cost": {"credits": 100, "metals": 50},
     "build_turns": 4,
     "abilities": ["patrol", "escort", "intercept", "blockade", "engage"]
+  },
+  "small_freighter": {
+    "name": "Tramp-class Light Freighter",
+    "max_hull": 40,
+    "speed": 2,
+    "cargo_capacity": 80,
+    "sensor_range": 1,
+    "fuel_capacity": 10,
+    "combat_power": 2,
+    "maintenance_cost": 4,
+    "build_cost": {"credits": 60, "metals": 30},
+    "build_turns": 4,
+    "abilities": ["load_cargo", "unload_cargo", "set_trade_route"]
+  },
+  "medium_freighter": {
+    "name": "Merchantman-class Freighter",
+    "max_hull": 60,
+    "speed": 1,
+    "cargo_capacity": 200,
+    "sensor_range": 1,
+    "fuel_capacity": 12,
+    "combat_power": 3,
+    "maintenance_cost": 7,
+    "build_cost": {"credits": 120, "metals": 60},
+    "build_turns": 6,
+    "abilities": ["load_cargo", "unload_cargo", "set_trade_route", "emergency_jettison"]
+  },
+  "colony_ship": {
+    "name": "Ark-class Colony Ship",
+    "max_hull": 100,
+    "speed": 1,
+    "cargo_capacity": 300,
+    "sensor_range": 1,
+    "fuel_capacity": 20,
+    "combat_power": 2,
+    "maintenance_cost": 12,
+    "build_cost": {"credits": 300, "metals": 150},
+    "build_turns": 12,
+    "abilities": ["load_cargo", "unload_cargo", "establish_colony"]
   }
 }

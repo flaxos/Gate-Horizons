@@ -1,0 +1,257 @@
+{
+  "version": "1.0.0",
+  "description": "Production chain configuration: resources, extraction, recipes, orbital facilities, ship blueprints",
+
+  "resource_types": {
+    "raw": [
+      "ore_iron", "silicates", "water_ice", "gas_h2", "gas_he3",
+      "organics", "rare_metals"
+    ],
+    "processed": [
+      "metal_alloys", "polymers", "fuel", "electronics"
+    ],
+    "components": [
+      "hull_segments", "reactor_parts", "habitat_modules", "cargo_frames"
+    ]
+  },
+
+  "body_type_resources": {
+    "rocky": {
+      "ore_iron":     {"base_yield": 4, "probability": 1.0},
+      "silicates":    {"base_yield": 3, "probability": 0.9},
+      "rare_metals":  {"base_yield": 1, "probability": 0.2}
+    },
+    "garden": {
+      "ore_iron":     {"base_yield": 3, "probability": 0.8},
+      "silicates":    {"base_yield": 2, "probability": 0.7},
+      "organics":     {"base_yield": 3, "probability": 0.9},
+      "water_ice":    {"base_yield": 2, "probability": 0.8}
+    },
+    "ice": {
+      "water_ice":    {"base_yield": 5, "probability": 1.0},
+      "organics":     {"base_yield": 2, "probability": 0.5},
+      "gas_h2":       {"base_yield": 2, "probability": 0.4}
+    },
+    "gas_giant": {
+      "gas_h2":       {"base_yield": 6, "probability": 1.0},
+      "gas_he3":      {"base_yield": 2, "probability": 0.3}
+    },
+    "volcanic": {
+      "ore_iron":     {"base_yield": 5, "probability": 0.9},
+      "silicates":    {"base_yield": 4, "probability": 0.8},
+      "rare_metals":  {"base_yield": 2, "probability": 0.4}
+    },
+    "oceanic": {
+      "water_ice":    {"base_yield": 4, "probability": 0.9},
+      "organics":     {"base_yield": 3, "probability": 0.7},
+      "rare_metals":  {"base_yield": 1, "probability": 0.15}
+    },
+    "barren": {
+      "ore_iron":     {"base_yield": 3, "probability": 0.7},
+      "silicates":    {"base_yield": 2, "probability": 0.6},
+      "rare_metals":  {"base_yield": 1, "probability": 0.3}
+    },
+    "desert": {
+      "ore_iron":     {"base_yield": 3, "probability": 0.8},
+      "silicates":    {"base_yield": 4, "probability": 0.9},
+      "rare_metals":  {"base_yield": 1, "probability": 0.25}
+    },
+    "toxic": {
+      "organics":     {"base_yield": 4, "probability": 0.6},
+      "rare_metals":  {"base_yield": 2, "probability": 0.35},
+      "gas_h2":       {"base_yield": 2, "probability": 0.4}
+    },
+    "asteroid_belt": {
+      "ore_iron":     {"base_yield": 6, "probability": 1.0},
+      "rare_metals":  {"base_yield": 3, "probability": 0.5},
+      "silicates":    {"base_yield": 3, "probability": 0.8}
+    },
+    "artificial": {
+      "rare_metals":  {"base_yield": 2, "probability": 0.6}
+    }
+  },
+
+  "recipes": {
+    "metal_alloys": {
+      "tier": 1,
+      "inputs":  {"ore_iron": 3},
+      "outputs": {"metal_alloys": 2},
+      "time": 1,
+      "facility": "factory",
+      "power_cost": 1
+    },
+    "polymers": {
+      "tier": 1,
+      "inputs":  {"organics": 3},
+      "outputs": {"polymers": 2},
+      "time": 1,
+      "facility": "factory",
+      "power_cost": 1
+    },
+    "fuel": {
+      "tier": 1,
+      "inputs":  {"gas_h2": 2, "water_ice": 1},
+      "outputs": {"fuel": 3},
+      "time": 1,
+      "facility": "factory",
+      "power_cost": 1
+    },
+    "electronics": {
+      "tier": 1,
+      "inputs":  {"rare_metals": 2, "silicates": 2},
+      "outputs": {"electronics": 1},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 2
+    },
+    "hull_segments": {
+      "tier": 2,
+      "inputs":  {"metal_alloys": 4},
+      "outputs": {"hull_segments": 2},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 2
+    },
+    "reactor_parts": {
+      "tier": 2,
+      "inputs":  {"electronics": 2, "metal_alloys": 2},
+      "outputs": {"reactor_parts": 1},
+      "time": 3,
+      "facility": "factory",
+      "power_cost": 3
+    },
+    "habitat_modules": {
+      "tier": 2,
+      "inputs":  {"polymers": 3, "metal_alloys": 2},
+      "outputs": {"habitat_modules": 1},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 2
+    },
+    "cargo_frames": {
+      "tier": 2,
+      "inputs":  {"metal_alloys": 3, "polymers": 1},
+      "outputs": {"cargo_frames": 2},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 1
+    }
+  },
+
+  "orbital_facility_types": {
+    "spaceport": {
+      "description": "Basic orbital docking and storage. Receives ships but cannot build them.",
+      "build_cost": {"metal_alloys": 10, "hull_segments": 4, "credits": 100},
+      "build_turns": 5,
+      "storage_bonus": 200,
+      "dock_slots": 3,
+      "can_build_ships": false,
+      "upgrade_cost_mult": 1.5
+    },
+    "drydock": {
+      "description": "Ship assembly facility. Can build scouts, small/medium freighters, and miners.",
+      "build_cost": {"metal_alloys": 20, "hull_segments": 8, "electronics": 4, "credits": 200},
+      "build_turns": 8,
+      "storage_bonus": 100,
+      "dock_slots": 2,
+      "can_build_ships": true,
+      "buildable_classes": ["scout", "miner", "small_freighter", "medium_freighter", "corvette"],
+      "max_concurrent_builds": 1,
+      "upgrade_cost_mult": 1.5,
+      "prerequisite": "spaceport"
+    },
+    "orbital_yard": {
+      "description": "Advanced orbital construction. Builds colony ships and large freighters.",
+      "build_cost": {"metal_alloys": 40, "hull_segments": 16, "electronics": 8, "reactor_parts": 4, "credits": 400},
+      "build_turns": 12,
+      "storage_bonus": 150,
+      "dock_slots": 4,
+      "can_build_ships": true,
+      "buildable_classes": ["scout", "miner", "small_freighter", "medium_freighter", "corvette", "colony_ship", "large_freighter"],
+      "max_concurrent_builds": 2,
+      "upgrade_cost_mult": 2.0,
+      "prerequisite": "drydock"
+    }
+  },
+
+  "ship_blueprints": {
+    "small_freighter": {
+      "name": "Tramp-class Light Freighter",
+      "components": {"hull_segments": 4, "reactor_parts": 1, "cargo_frames": 4},
+      "credits": 60,
+      "build_turns": 4,
+      "required_facility": "drydock",
+      "stats": {
+        "max_hull": 40,
+        "speed": 2,
+        "cargo_capacity": 80,
+        "sensor_range": 1,
+        "fuel_capacity": 10,
+        "combat_power": 2,
+        "maintenance_cost": 4
+      },
+      "abilities": ["load_cargo", "unload_cargo", "set_trade_route"]
+    },
+    "medium_freighter": {
+      "name": "Merchantman-class Freighter",
+      "components": {"hull_segments": 8, "reactor_parts": 2, "cargo_frames": 8},
+      "credits": 120,
+      "build_turns": 6,
+      "required_facility": "drydock",
+      "stats": {
+        "max_hull": 60,
+        "speed": 1,
+        "cargo_capacity": 200,
+        "sensor_range": 1,
+        "fuel_capacity": 12,
+        "combat_power": 3,
+        "maintenance_cost": 7
+      },
+      "abilities": ["load_cargo", "unload_cargo", "set_trade_route", "emergency_jettison"]
+    },
+    "colony_ship": {
+      "name": "Ark-class Colony Ship",
+      "components": {"hull_segments": 16, "reactor_parts": 4, "habitat_modules": 8, "cargo_frames": 6},
+      "credits": 300,
+      "build_turns": 12,
+      "required_facility": "orbital_yard",
+      "stats": {
+        "max_hull": 100,
+        "speed": 1,
+        "cargo_capacity": 300,
+        "sensor_range": 1,
+        "fuel_capacity": 20,
+        "combat_power": 2,
+        "maintenance_cost": 12
+      },
+      "abilities": ["load_cargo", "unload_cargo", "establish_colony"]
+    }
+  },
+
+  "extraction_balance": {
+    "base_power_per_site": 1,
+    "mining_level_bonus": 0.5,
+    "advanced_mining_tech_mult": 1.5,
+    "max_extraction_sites_per_colony": 6,
+    "extraction_site_build_cost": {"credits": 30, "metal_alloys": 5},
+    "extraction_site_build_turns": 2
+  },
+
+  "factory_balance": {
+    "max_factories_per_colony_level": {
+      "0": 1,
+      "1": 2,
+      "2": 3,
+      "3": 4
+    },
+    "factory_build_cost": {"credits": 50, "metal_alloys": 10},
+    "factory_build_turns": 3,
+    "factory_maintenance_per_turn": 2
+  },
+
+  "fleet_ops_balance": {
+    "fuel_cost_per_hop": 1,
+    "maintenance_scaling": 1.1,
+    "freighter_ops_cost_per_trip": 3
+  }
+}
