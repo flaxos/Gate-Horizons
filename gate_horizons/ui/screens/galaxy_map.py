@@ -611,8 +611,10 @@ class GalaxyMapScreen(Screen):
         if not ship:
             return
 
-        if action.name == "Move To":
+        if action.name in ("Move To", "Reroute"):
             self._show_destination_menu(ship_id)
+        elif action.name == "Continue":
+            self.refresh()
         elif action.name == "Scan System":
             system = self.game_state.galaxy.systems.get(ship.location)
             if system:
@@ -642,11 +644,40 @@ class GalaxyMapScreen(Screen):
         elif action.name == "Unload Cargo":
             for resource, amount in list(ship.cargo.items()):
                 self.game_state.resources.add(resource, amount, ship.location)
-                ship.cargo.clear()
+            ship.cargo.clear()
             self.refresh()
         elif action.name == "Load Cargo":
             # Load available resources up to capacity
             self.refresh()
+        elif action.name == "Emergency Jettison":
+            ship.cargo.clear()
+            self.refresh()
+        elif action.name == "Deliver Cargo":
+            if ship.cargo_used == 0:
+                return
+            colony_systems = list(self.game_state.colonies.colonies.keys())
+            if ship.location in colony_systems:
+                for resource, amount in list(ship.cargo.items()):
+                    self.game_state.resources.add(resource, amount, ship.location)
+                ship.cargo.clear()
+                self.refresh()
+                return
+            shortest_path = None
+            nearest_system = None
+            for system_id in colony_systems:
+                path = self.game_state.galaxy.get_path(ship.location, system_id)
+                if not path:
+                    continue
+                if shortest_path is None or len(path) < len(shortest_path):
+                    shortest_path = path
+                    nearest_system = system_id
+            if nearest_system:
+                self.game_state.fleet.move_ship(
+                    ship_id,
+                    nearest_system,
+                    self.game_state.galaxy,
+                )
+                self.refresh()
         elif action.name == "Emergency Stop":
             ship.path.clear()
             ship.destination = None
@@ -684,9 +715,7 @@ class GalaxyMapScreen(Screen):
 
     def _on_activate_gate(self, btn):
         system_id = btn.system_id
-        result = self.game_state.galaxy.activate_gate(
-            system_id, self.game_state.resources
-        )
+        result = self.game_state.activate_gate(system_id)
         if result:
             self.refresh()
             self._show_system_panel(system_id)
