@@ -1,5 +1,7 @@
 """Fleet management screen for Gate Horizons."""
 
+import math
+
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -161,6 +163,26 @@ class FleetScreen(Screen):
                 halign="left",
                 text_size=(None, None),
             ))
+            travel_status = None
+            if ship.path or ship.destination:
+                path = ship.path or []
+                destination_id = ship.destination or (path[-1] if path else None)
+                if destination_id:
+                    dest_system = self.game_state.galaxy.systems.get(destination_id)
+                    dest_name = dest_system.name if dest_system else destination_id
+                    speed = ship.stats.speed or 1
+                    eta_turns = math.ceil(len(path) / speed) if path else 0
+                    travel_status = (
+                        f"🟡 In Transit • Destination: {dest_name} • ETA: {eta_turns} turns"
+                    )
+            if travel_status:
+                info.add_widget(Label(
+                    text=travel_status,
+                    font_size="9sp",
+                    color=(1, 0.85, 0.4, 0.9),
+                    halign="left",
+                    text_size=(None, None),
+                ))
             card.add_widget(info)
 
             # Hull bar

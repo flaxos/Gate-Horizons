@@ -690,18 +690,61 @@ class GalaxyMapScreen(Screen):
                 text_size=(dp(240), None),
             ))
             for ship in ships_here:
-                btn = Button(
-                    text=f"  🚀 {ship.name} ({ship.ship_class})",
-                    size_hint_y=None,
-                    height=dp(32),
-                    font_size="11sp",
-                    background_color=(0.12, 0.25, 0.4, 0.6),
-                    color=(0.85, 0.95, 1, 1),
-                    halign="left",
-                )
-                btn.ship_id = ship.id
-                btn.bind(on_release=lambda b: self._show_ship_panel(b.ship_id))
-                panel.add_widget(btn)
+                travel_status = None
+                if ship.path or ship.destination:
+                    path = ship.path or []
+                    destination_id = ship.destination or (path[-1] if path else None)
+                    if destination_id:
+                        dest_system = self.game_state.galaxy.systems.get(destination_id)
+                        dest_name = dest_system.name if dest_system else destination_id
+                        speed = ship.stats.speed or 1
+                        eta_turns = math.ceil(len(path) / speed) if path else 0
+                        travel_status = (
+                            f"🟡 In Transit • Destination: {dest_name} • ETA: {eta_turns} turns"
+                        )
+
+                if travel_status:
+                    ship_box = BoxLayout(
+                        orientation="vertical",
+                        size_hint_y=None,
+                        height=dp(50),
+                        spacing=dp(2),
+                    )
+                    btn = Button(
+                        text=f"  🚀 {ship.name} ({ship.ship_class})",
+                        size_hint_y=None,
+                        height=dp(32),
+                        font_size="11sp",
+                        background_color=(0.12, 0.25, 0.4, 0.6),
+                        color=(0.85, 0.95, 1, 1),
+                        halign="left",
+                    )
+                    btn.ship_id = ship.id
+                    btn.bind(on_release=lambda b: self._show_ship_panel(b.ship_id))
+                    ship_box.add_widget(btn)
+                    ship_box.add_widget(Label(
+                        text=travel_status,
+                        font_size="10sp",
+                        color=(1, 0.85, 0.4, 0.9),
+                        size_hint_y=None,
+                        height=dp(16),
+                        halign="left",
+                        text_size=(dp(240), None),
+                    ))
+                    panel.add_widget(ship_box)
+                else:
+                    btn = Button(
+                        text=f"  🚀 {ship.name} ({ship.ship_class})",
+                        size_hint_y=None,
+                        height=dp(32),
+                        font_size="11sp",
+                        background_color=(0.12, 0.25, 0.4, 0.6),
+                        color=(0.85, 0.95, 1, 1),
+                        halign="left",
+                    )
+                    btn.ship_id = ship.id
+                    btn.bind(on_release=lambda b: self._show_ship_panel(b.ship_id))
+                    panel.add_widget(btn)
 
         # Colony info
         colony = self.game_state.colonies.colonies.get(system_id)
