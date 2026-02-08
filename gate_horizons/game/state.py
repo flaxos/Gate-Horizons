@@ -327,6 +327,42 @@ class GameState:
             unloaded[resource] = amount
         return unloaded
 
+    def investigate_anomaly(self, system_id: str):
+        """Investigate the next uninvestigated anomaly in a system.
+
+        Returns the queued event if one is selected, otherwise None.
+        """
+        system = self.galaxy.systems.get(system_id)
+        if not system or not system.anomalies:
+            return None
+
+        target_anomaly = None
+        for anomaly in system.anomalies:
+            if isinstance(anomaly, dict):
+                if anomaly.get("investigated"):
+                    continue
+                target_anomaly = anomaly
+                break
+            target_anomaly = anomaly
+            break
+
+        if not target_anomaly:
+            return None
+
+        if isinstance(target_anomaly, dict):
+            target_anomaly["investigated"] = True
+            bonus_resources = target_anomaly.get("bonus_resources", {})
+            for resource, amount in bonus_resources.items():
+                self.resources.add(resource, amount, system_id)
+
+            tags = ["anomaly"]
+            if target_anomaly.get("type"):
+                tags.append(target_anomaly["type"])
+        else:
+            tags = ["anomaly"]
+
+        return self.events.select_event_by_tags(tags, self)
+
     def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
         """Start constructing a ship at a colony's spaceport."""
         if ship_class in self.production.config.ship_blueprints:

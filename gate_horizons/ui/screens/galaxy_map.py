@@ -688,6 +688,14 @@ class GalaxyMapScreen(Screen):
             if system:
                 system.surveyed = True
                 self.refresh()
+        elif action.name == "Investigate Anomaly":
+            event = self.game_state.investigate_anomaly(ship.location)
+            self.refresh()
+            if event:
+                from kivy.app import App
+                app = App.get_running_app()
+                if app:
+                    app.show_event(event)
         elif action.name == "Begin Mining":
             ship.mining = True
             ship.mission = "mining"

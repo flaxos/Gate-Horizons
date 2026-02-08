@@ -270,6 +270,34 @@ class EventEngine:
 
         return result
 
+    def select_event_by_tags(self, tags: list, game_state=None) -> Optional[Event]:
+        """Select a random event matching tags and requirements.
+
+        Adds the selected event to the queue and returns it.
+        """
+        if not tags:
+            return None
+
+        eligible = []
+        tag_set = set(tags)
+        for event in self.available_events:
+            if event.one_time and event.id in self.triggered_events:
+                continue
+            if not event.tags or not tag_set.intersection(event.tags):
+                continue
+            if game_state and not self._meets_requirements(event, game_state):
+                continue
+            eligible.append(event)
+
+        if not eligible:
+            return None
+
+        selected = random.choice(eligible)
+        if selected.one_time:
+            self.triggered_events.append(selected.id)
+        self.event_queue.append(selected)
+        return selected
+
     def get_pending_events(self) -> list:
         return list(self.event_queue)
 
