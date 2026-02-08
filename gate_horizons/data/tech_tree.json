@@ -4,15 +4,25 @@
       "efficient_drives": {
         "name": "Efficient Drives",
         "description": "Improve fuel efficiency for all ships by 20%",
-        "cost": {"intel": 10, "turns": 3},
-        "effect": {"fuel_efficiency": 1.2},
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "fuel_efficiency": 1.2
+        },
         "prerequisites": []
       },
       "gate_resonance": {
         "name": "Gate Resonance Tuning",
         "description": "Reduce gate activation energy cost by 30%",
-        "cost": {"intel": 15, "turns": 4},
-        "effect": {"gate_cost_reduction": 0.3},
+        "cost": {
+          "intel": 15,
+          "turns": 4
+        },
+        "effect": {
+          "gate_cost_reduction": 0.3
+        },
         "prerequisites": []
       }
     },
@@ -20,9 +30,50 @@
       "burst_drives": {
         "name": "Burst Acceleration",
         "description": "+1 speed for Scout and Corvette classes",
-        "cost": {"intel": 25, "exotics": 5, "turns": 5},
-        "effect": {"speed_bonus": {"scout": 1, "corvette": 1}},
-        "prerequisites": ["efficient_drives"]
+        "cost": {
+          "intel": 25,
+          "exotics": 5,
+          "turns": 5
+        },
+        "effect": {
+          "speed_bonus": {
+            "scout": 1,
+            "corvette": 1
+          }
+        },
+        "prerequisites": [
+          "efficient_drives"
+        ]
+      }
+    },
+    "tier3": {
+      "long_range_drives": {
+        "name": "Long-Range Drives",
+        "description": "Improve fuel efficiency for all ships by 40%",
+        "cost": {
+          "intel": 28,
+          "turns": 5
+        },
+        "effect": {
+          "fuel_efficiency": 1.4
+        },
+        "prerequisites": [
+          "burst_drives"
+        ]
+      },
+      "slipstream_calibration": {
+        "name": "Slipstream Calibration",
+        "description": "Reduce gate activation energy cost by 50%",
+        "cost": {
+          "intel": 30,
+          "turns": 5
+        },
+        "effect": {
+          "gate_cost_reduction": 0.5
+        },
+        "prerequisites": [
+          "gate_resonance"
+        ]
       }
     }
   },
@@ -31,15 +82,25 @@
       "reinforced_hulls": {
         "name": "Reinforced Hulls",
         "description": "+20% hull points for all ships",
-        "cost": {"intel": 10, "turns": 3},
-        "effect": {"hull_bonus": 1.2},
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "hull_bonus": 1.2
+        },
         "prerequisites": []
       },
       "rapid_construction": {
         "name": "Rapid Construction",
         "description": "-1 turn for all ship and building construction",
-        "cost": {"intel": 12, "turns": 3},
-        "effect": {"build_time_reduction": 1},
+        "cost": {
+          "intel": 12,
+          "turns": 3
+        },
+        "effect": {
+          "build_time_reduction": 1
+        },
         "prerequisites": []
       }
     },
@@ -47,16 +108,76 @@
       "advanced_mining": {
         "name": "Advanced Mining Rigs",
         "description": "+50% mining yield for Miner-class ships",
-        "cost": {"intel": 20, "exotics": 3, "turns": 4},
-        "effect": {"mining_yield": 1.5},
-        "prerequisites": ["reinforced_hulls"]
+        "cost": {
+          "intel": 20,
+          "exotics": 3,
+          "turns": 4
+        },
+        "effect": {
+          "mining_yield": 1.5
+        },
+        "prerequisites": [
+          "reinforced_hulls"
+        ]
       },
       "industrial_processing": {
         "name": "Industrial Processing",
         "description": "Enables ore-to-metals conversion. +30% industry output at colonies",
-        "cost": {"intel": 18, "turns": 4},
-        "effect": {"industry_bonus": 1.3},
-        "prerequisites": ["rapid_construction"]
+        "cost": {
+          "intel": 18,
+          "turns": 4
+        },
+        "effect": {
+          "industry_bonus": 1.3
+        },
+        "prerequisites": [
+          "rapid_construction"
+        ]
+      }
+    },
+    "tier3": {
+      "hardened_plating": {
+        "name": "Hardened Plating",
+        "description": "+35% hull points for all ships",
+        "cost": {
+          "intel": 26,
+          "turns": 5
+        },
+        "effect": {
+          "hull_bonus": 1.35
+        },
+        "prerequisites": [
+          "reinforced_hulls"
+        ]
+      },
+      "automation_lines": {
+        "name": "Automation Lines",
+        "description": "-2 turns for ship and building construction",
+        "cost": {
+          "intel": 24,
+          "turns": 5
+        },
+        "effect": {
+          "build_time_reduction": 2
+        },
+        "prerequisites": [
+          "rapid_construction"
+        ]
+      },
+      "deep_core_extractors": {
+        "name": "Deep Core Extractors",
+        "description": "+75% mining yield for Miner-class ships",
+        "cost": {
+          "intel": 28,
+          "exotics": 6,
+          "turns": 6
+        },
+        "effect": {
+          "mining_yield": 1.75
+        },
+        "prerequisites": [
+          "advanced_mining"
+        ]
       }
     }
   },
@@ -65,8 +186,14 @@
       "deep_scan": {
         "name": "Deep Scanning Arrays",
         "description": "+1 sensor range for all ships, reveal hidden anomalies",
-        "cost": {"intel": 10, "turns": 3},
-        "effect": {"sensor_bonus": 1, "reveal_hidden": true},
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "sensor_bonus": 1,
+          "reveal_hidden": true
+        },
         "prerequisites": []
       }
     },
@@ -74,16 +201,60 @@
       "predictive_analysis": {
         "name": "Predictive Threat Analysis",
         "description": "+15% combat auto-resolve accuracy",
-        "cost": {"intel": 20, "turns": 4},
-        "effect": {"combat_accuracy_bonus": 0.15},
-        "prerequisites": ["deep_scan"]
+        "cost": {
+          "intel": 20,
+          "turns": 4
+        },
+        "effect": {
+          "combat_accuracy_bonus": 0.15
+        },
+        "prerequisites": [
+          "deep_scan"
+        ]
       },
       "research_acceleration": {
         "name": "Research Acceleration",
         "description": "Intel synergy: +1 intel per turn per colony with research lab",
-        "cost": {"intel": 22, "turns": 4},
-        "effect": {"research_bonus": 1},
-        "prerequisites": ["deep_scan"]
+        "cost": {
+          "intel": 22,
+          "turns": 4
+        },
+        "effect": {
+          "research_bonus": 1
+        },
+        "prerequisites": [
+          "deep_scan"
+        ]
+      }
+    },
+    "tier3": {
+      "long_range_arrays": {
+        "name": "Long-Range Sensor Arrays",
+        "description": "+1 sensor range for all ships",
+        "cost": {
+          "intel": 24,
+          "turns": 4
+        },
+        "effect": {
+          "sensor_bonus": 1
+        },
+        "prerequisites": [
+          "predictive_analysis"
+        ]
+      },
+      "battlefield_simulation": {
+        "name": "Battlefield Simulation",
+        "description": "+25% combat auto-resolve accuracy",
+        "cost": {
+          "intel": 26,
+          "turns": 5
+        },
+        "effect": {
+          "combat_accuracy_bonus": 0.25
+        },
+        "prerequisites": [
+          "predictive_analysis"
+        ]
       }
     }
   },
@@ -92,8 +263,13 @@
       "signal_decryption": {
         "name": "Signal Decryption",
         "description": "Can decode alien transmissions, unlocking diplomacy events",
-        "cost": {"intel": 15, "turns": 4},
-        "effect": {"unlock_diplomacy": true},
+        "cost": {
+          "intel": 15,
+          "turns": 4
+        },
+        "effect": {
+          "unlock_diplomacy": true
+        },
         "prerequisites": []
       }
     },
@@ -101,9 +277,17 @@
       "cultural_exchange": {
         "name": "Cultural Exchange Protocols",
         "description": "+30% favorable diplomacy outcomes",
-        "cost": {"intel": 25, "exotics": 5, "turns": 5},
-        "effect": {"diplomacy_bonus": 0.3},
-        "prerequisites": ["signal_decryption"]
+        "cost": {
+          "intel": 25,
+          "exotics": 5,
+          "turns": 5
+        },
+        "effect": {
+          "diplomacy_bonus": 0.3
+        },
+        "prerequisites": [
+          "signal_decryption"
+        ]
       }
     }
   },
@@ -112,15 +296,26 @@
       "colonisation": {
         "name": "Colonisation",
         "description": "Unlocks founding outposts on colonizable worlds",
-        "cost": {"intel": 12, "turns": 3},
-        "effect": {"unlock_colonisation": true},
+        "cost": {
+          "intel": 12,
+          "turns": 3
+        },
+        "effect": {
+          "unlock_colonisation": true
+        },
         "prerequisites": []
       },
       "logistics_1": {
         "name": "Logistics I",
         "description": "Enables trade routes between colonies. Base capacity 10/turn",
-        "cost": {"intel": 10, "turns": 3},
-        "effect": {"logistics_capacity_bonus": 0, "unlock_trade_routes": true},
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "logistics_capacity_bonus": 0,
+          "unlock_trade_routes": true
+        },
         "prerequisites": []
       }
     },
@@ -128,18 +323,54 @@
       "logistics_2": {
         "name": "Logistics II",
         "description": "Increases route capacity by 50%. Enables logistics hubs",
-        "cost": {"intel": 20, "exotics": 3, "turns": 4},
-        "effect": {"logistics_capacity_bonus": 0.5, "unlock_logistics_hub": true},
-        "prerequisites": ["logistics_1"]
+        "cost": {
+          "intel": 20,
+          "exotics": 3,
+          "turns": 4
+        },
+        "effect": {
+          "logistics_capacity_bonus": 0.5,
+          "unlock_logistics_hub": true
+        },
+        "prerequisites": [
+          "logistics_1"
+        ]
       }
     },
     "tier3": {
       "logistics_3": {
         "name": "Logistics III",
         "description": "Doubles route capacity. Enables auto-balancing supply routes",
-        "cost": {"intel": 30, "exotics": 8, "turns": 6},
-        "effect": {"logistics_capacity_bonus": 1.0, "unlock_auto_balance": true},
-        "prerequisites": ["logistics_2"]
+        "cost": {
+          "intel": 30,
+          "exotics": 8,
+          "turns": 6
+        },
+        "effect": {
+          "logistics_capacity_bonus": 1.0,
+          "unlock_auto_balance": true
+        },
+        "prerequisites": [
+          "logistics_2"
+        ]
+      }
+    },
+    "tier4": {
+      "logistics_4": {
+        "name": "Logistics IV",
+        "description": "Increases route capacity by 150%. Enables rapid auto-balancing.",
+        "cost": {
+          "intel": 40,
+          "exotics": 12,
+          "turns": 7
+        },
+        "effect": {
+          "logistics_capacity_bonus": 1.5,
+          "unlock_auto_balance": true
+        },
+        "prerequisites": [
+          "logistics_3"
+        ]
       }
     }
   }

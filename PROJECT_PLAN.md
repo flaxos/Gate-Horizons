@@ -329,10 +329,10 @@ gate_horizons/
 | 3 | Polish & loop | Trade routes, mini-map, tech tree (basic), tutorial flow, balancing |
 
 ### Phase 2: Feature Complete (Target: 3-4 weeks after Phase 1)
-- Full tech tree (20-30 techs)
+- Full tech tree (20-30 techs) — shipped (24 techs)
 - Expanded diplomacy with alien factions
-- Expanded event library (100+ events)
-- Galaxy generation (procedural)
+- Expanded event library (100+ events) — shipped (105 exploration events)
+- Galaxy generation (procedural) — shipped (seeded generator)
 - Android build via Buildozer
 - Performance optimization for mobile
 

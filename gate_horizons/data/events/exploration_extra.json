@@ -1,0 +1,5764 @@
+{
+  "exploration_events": [
+    {
+      "id": "exp_101",
+      "title": "Sensor Ghost 1",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_102",
+      "title": "Derelict Relay 2",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_103",
+      "title": "Icy Cavern 3",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_104",
+      "title": "Ancient Survey Buoy 4",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_105",
+      "title": "Magnetic Storm 5",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_106",
+      "title": "Silent Habitat 6",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_107",
+      "title": "Gravity Shear 7",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_108",
+      "title": "Isolated Cache 8",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_109",
+      "title": "Cryogenic Pod 9",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_110",
+      "title": "Fragmented Gate 10",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_111",
+      "title": "Sensor Ghost 11",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_112",
+      "title": "Derelict Relay 12",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_113",
+      "title": "Icy Cavern 13",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_114",
+      "title": "Ancient Survey Buoy 14",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_115",
+      "title": "Magnetic Storm 15",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_116",
+      "title": "Silent Habitat 16",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_117",
+      "title": "Gravity Shear 17",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_118",
+      "title": "Isolated Cache 18",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_119",
+      "title": "Cryogenic Pod 19",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_120",
+      "title": "Fragmented Gate 20",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_121",
+      "title": "Sensor Ghost 21",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_122",
+      "title": "Derelict Relay 22",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_123",
+      "title": "Icy Cavern 23",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_124",
+      "title": "Ancient Survey Buoy 24",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_125",
+      "title": "Magnetic Storm 25",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_126",
+      "title": "Silent Habitat 26",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_127",
+      "title": "Gravity Shear 27",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_128",
+      "title": "Isolated Cache 28",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_129",
+      "title": "Cryogenic Pod 29",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_130",
+      "title": "Fragmented Gate 30",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_131",
+      "title": "Sensor Ghost 31",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_132",
+      "title": "Derelict Relay 32",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_133",
+      "title": "Icy Cavern 33",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_134",
+      "title": "Ancient Survey Buoy 34",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_135",
+      "title": "Magnetic Storm 35",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_136",
+      "title": "Silent Habitat 36",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_137",
+      "title": "Gravity Shear 37",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_138",
+      "title": "Isolated Cache 38",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_139",
+      "title": "Cryogenic Pod 39",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_140",
+      "title": "Fragmented Gate 40",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_141",
+      "title": "Sensor Ghost 41",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_142",
+      "title": "Derelict Relay 42",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_143",
+      "title": "Icy Cavern 43",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_144",
+      "title": "Ancient Survey Buoy 44",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_145",
+      "title": "Magnetic Storm 45",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_146",
+      "title": "Silent Habitat 46",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_147",
+      "title": "Gravity Shear 47",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_148",
+      "title": "Isolated Cache 48",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_149",
+      "title": "Cryogenic Pod 49",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_150",
+      "title": "Fragmented Gate 50",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_151",
+      "title": "Sensor Ghost 51",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_152",
+      "title": "Derelict Relay 52",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_153",
+      "title": "Icy Cavern 53",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_154",
+      "title": "Ancient Survey Buoy 54",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_155",
+      "title": "Magnetic Storm 55",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_156",
+      "title": "Silent Habitat 56",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_157",
+      "title": "Gravity Shear 57",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_158",
+      "title": "Isolated Cache 58",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_159",
+      "title": "Cryogenic Pod 59",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_160",
+      "title": "Fragmented Gate 60",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_161",
+      "title": "Sensor Ghost 61",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_162",
+      "title": "Derelict Relay 62",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_163",
+      "title": "Icy Cavern 63",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_164",
+      "title": "Ancient Survey Buoy 64",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_165",
+      "title": "Magnetic Storm 65",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_166",
+      "title": "Silent Habitat 66",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_167",
+      "title": "Gravity Shear 67",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_168",
+      "title": "Isolated Cache 68",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_169",
+      "title": "Cryogenic Pod 69",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_170",
+      "title": "Fragmented Gate 70",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_171",
+      "title": "Sensor Ghost 71",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_172",
+      "title": "Derelict Relay 72",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_173",
+      "title": "Icy Cavern 73",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_174",
+      "title": "Ancient Survey Buoy 74",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_175",
+      "title": "Magnetic Storm 75",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_176",
+      "title": "Silent Habitat 76",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_177",
+      "title": "Gravity Shear 77",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_178",
+      "title": "Isolated Cache 78",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_179",
+      "title": "Cryogenic Pod 79",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_180",
+      "title": "Fragmented Gate 80",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_181",
+      "title": "Sensor Ghost 81",
+      "description": "A transient sensor ghost lingers near a quiet asteroid belt.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "anomaly",
+        "signal"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_182",
+      "title": "Derelict Relay 82",
+      "description": "A derelict comms relay drifts between two minor bodies, its beacon still pulsing.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "signal"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_183",
+      "title": "Icy Cavern 83",
+      "description": "Scanning an ice moon reveals a hollow cavern with unusual thermal readings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "ice",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_184",
+      "title": "Ancient Survey Buoy 84",
+      "description": "An ancient survey buoy broadcasts decades-old star charts and warnings.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survey"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_185",
+      "title": "Magnetic Storm 85",
+      "description": "A magnetic storm blooms around a small moon, distorting sensor returns.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "hazard",
+        "anomaly"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_186",
+      "title": "Silent Habitat 86",
+      "description": "A small habitat ring sits dark and powerless in orbit of a barren world.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "derelict",
+        "habitat"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    },
+    {
+      "id": "exp_187",
+      "title": "Gravity Shear 87",
+      "description": "Local gravity shear twists debris into a stable, unnatural spiral.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gravity",
+        "anomaly"
+      ],
+      "tier_requirement": 3,
+      "one_time": true
+    },
+    {
+      "id": "exp_188",
+      "title": "Isolated Cache 88",
+      "description": "A sealed cargo cache floats in deep space, its transponder long expired.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "cache",
+        "salvage"
+      ],
+      "tier_requirement": 4,
+      "one_time": true
+    },
+    {
+      "id": "exp_189",
+      "title": "Cryogenic Pod 89",
+      "description": "A cryogenic pod drifts near a gate, systems flickering on reserve power.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "artifact",
+        "survivor"
+      ],
+      "tier_requirement": 1,
+      "one_time": true
+    },
+    {
+      "id": "exp_190",
+      "title": "Fragmented Gate 90",
+      "description": "A fractured gate segment shows signs of controlled cutting.",
+      "requirements": {
+        "ship_class": "scout",
+        "system_surveyed": false
+      },
+      "choices": [
+        {
+          "text": "Investigate the site up close",
+          "outcomes": [
+            {
+              "probability": 0.6,
+              "result": "success",
+              "description": "Close inspection yields useful data and salvage.",
+              "rewards": {
+                "intel": 4,
+                "credits": 40
+              }
+            },
+            {
+              "probability": 0.4,
+              "result": "partial",
+              "description": "The site is unstable; you recover limited data before withdrawing.",
+              "rewards": {
+                "intel": 2
+              },
+              "costs": {
+                "hull_damage": 6
+              }
+            }
+          ]
+        },
+        {
+          "text": "Log the coordinates and move on",
+          "outcomes": [
+            {
+              "probability": 0.8,
+              "result": "success",
+              "description": "You file a brief report and continue the mission.",
+              "rewards": {
+                "credits": 20,
+                "intel": 1
+              }
+            },
+            {
+              "probability": 0.2,
+              "result": "partial",
+              "description": "The signal fades before your report completes.",
+              "rewards": {
+                "intel": 1
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        "gate_tech",
+        "recovery"
+      ],
+      "tier_requirement": 2,
+      "one_time": true
+    }
+  ]
+}

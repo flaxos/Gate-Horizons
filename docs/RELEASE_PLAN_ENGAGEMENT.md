@@ -1,22 +1,27 @@
 # Release Plan: Engagement Systems
 
 ## Status Update (Reality Sync)
-- Encounter contracts are now implemented and used in encounter branching.
-- Diplomacy gating exists via relation-based encounter options.
-- Mission system and order execution phases remain future work.
+- Encounter contracts are implemented and used in encounter branching.
+- Order execution, refuel/repair, and action handlers are shipped.
+- Mission system is shipped with anomaly/diplomacy gating hooks.
+- Gate damage/capacity mechanics are implemented.
+
+The engagement roadmap phases below are now considered shipped MVPs; future work
+should move into a new engagement release plan once NEXT3 items land.
+
 ## Execution Plan
-1. **Deliver Phase 1: Order Execution + Refuel/Repair + Action Handlers**
-   - Implement order execution flow with validation and resolution steps.
-   - Add refuel and repair loops as baseline ship sustainment actions.
-   - Establish the action handler framework for engagement actions.
-2. **Deliver Phase 2: Mission System + Anomaly/Diplomacy Gating**
-   - Build mission definitions, acceptance, and resolution flows.
-   - Implement anomaly and diplomacy gating rules tied to narrative data.
-   - Integrate mission outcomes with action handlers.
-3. **Deliver Phase 3: Encounter Contract + Gate Damage/Capacity**
-   - Formalize encounter contracts with terms, rewards, and outcomes.
-   - Add gate damage and capacity mechanics affecting encounter availability.
-   - Ensure contract outcomes feed back into missions and order execution.
+1. **Confirm Phase 1: Order Execution + Refuel/Repair + Action Handlers (Shipped)**
+   - Order execution flow with validation and resolution steps.
+   - Refuel/repair loops as baseline ship sustainment actions.
+   - Action handler framework for engagement actions.
+2. **Confirm Phase 2: Mission System + Anomaly/Diplomacy Gating (Shipped)**
+   - Mission definitions, generation, and resolution flows.
+   - Anomaly and diplomacy gating rules tied to narrative data.
+   - Mission outcomes integrated with action handlers.
+3. **Confirm Phase 3: Encounter Contract + Gate Damage/Capacity (Shipped)**
+   - Encounter contracts with terms, rewards, and outcomes.
+   - Gate damage and capacity mechanics affecting encounter availability.
+   - Contract outcomes feed back into missions and order execution flows.
 4. **Docs + Next Release Plan**
    - Update engagement documentation as phases complete.
    - Create the next gameplay/feature-focused release plan based on the upcoming roadmap.
