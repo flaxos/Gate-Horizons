@@ -79,6 +79,27 @@ class TestEncounterContract(unittest.TestCase):
             )
             self.assertEqual(colony.stability, starting_stability - 2)
 
+    def test_import_result_spec_rejects_invalid_payload(self):
+        state = GameState.new_game()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            success, _ = state.export_encounter_spec(
+                system_id="sol",
+                encounter_type="pirates",
+                exports_dir=tmpdir,
+            )
+            self.assertTrue(success)
+
+            invalid_result = {
+                "contractVersion": "1.0",
+                "outcome": "success",
+            }
+            with open(f"{tmpdir}/ResultSpec.json", "w", encoding="utf-8") as handle:
+                json.dump(invalid_result, handle)
+
+            success, message = state.import_result_spec(imports_dir=tmpdir)
+            self.assertFalse(success)
+            self.assertIn("encounterId", message)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

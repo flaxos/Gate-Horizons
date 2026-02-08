@@ -29,11 +29,12 @@
 ### Next 3 selection rule
 - Source docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md`.
 - Select highest-priority items that are planned and not shipped, with minimal dependencies.
+- Confirm each item is explicitly listed as planned in docs and not marked Shipped.
 
 ### NEXT3 (priority + rationale)
-1. **Keyboard shortcuts for map navigation (complete Esc/back)** — P0 UX item in `docs/ROADMAP.md`; partially shipped and low-risk to finish.
-2. **Selection highlight ring animation** — P0 clarity item in `docs/ROADMAP.md`; canvas-only enhancement with minimal dependencies.
-3. **Ship movement lines on system map** — P0 navigation clarity item in `docs/ROADMAP.md`; reuses existing galaxy map path style.
+1. **Keyboard shortcuts for map navigation (complete Esc/back)** — P0 UX item in `docs/ROADMAP.md`; partially shipped and low-risk to finish. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+2. **Selection highlight ring animation** — P0 clarity item in `docs/ROADMAP.md`; canvas-only enhancement with minimal dependencies. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+3. **Ship movement lines on system map** — P0 navigation clarity item in `docs/ROADMAP.md`; reuses existing galaxy map path style. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
 
 ### Milestones and file lists
 

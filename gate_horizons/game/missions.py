@@ -164,7 +164,10 @@ class MissionManager:
             available = [t for t in MISSION_TEMPLATES if self._template_available(t, game_state)]
         if not available:
             return None
-        return random.choice(available)
+        rng = random
+        if hasattr(game_state, "rng_for_context"):
+            rng = game_state.rng_for_context(f"missions:pick:{game_state.turn_number}")
+        return rng.choice(available)
 
     def _create_mission(self, template: dict, created_turn: int) -> Mission:
         return Mission(

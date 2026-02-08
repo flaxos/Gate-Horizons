@@ -5,8 +5,9 @@ from gate_horizons.game.state import GameState
 
 class TestSaveLoadRoundtrip(unittest.TestCase):
     def test_save_load_roundtrip_preserves_core_state(self):
-        state = GameState.new_game()
+        state = GameState.new_game(galaxy_seed=7)
         state.resources.add("metals", 5, system_id="sol")
+        state.rng.random()
 
         data = state.to_dict()
         data.pop("schema_version", None)
@@ -25,6 +26,7 @@ class TestSaveLoadRoundtrip(unittest.TestCase):
             state.resources.global_resources,
             loaded.resources.global_resources,
         )
+        self.assertEqual(state.rng.random(), loaded.rng.random())
 
 
 if __name__ == "__main__":

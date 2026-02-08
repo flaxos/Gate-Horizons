@@ -78,6 +78,12 @@ class EventEngine:
         self.triggered_events: list[str] = []  # IDs of one-time events already triggered
         self.event_queue: list[Event] = []  # Events waiting for player resolution
 
+    @staticmethod
+    def _rng_for(game_state, context: str):
+        if game_state and hasattr(game_state, "rng_for_context"):
+            return game_state.rng_for_context(context)
+        return random
+
     def _is_diplomacy_locked(self, event: Event, game_state) -> bool:
         if "diplomacy" not in event.tags:
             return False
@@ -128,6 +134,7 @@ class EventEngine:
 
     def check_triggers(self, game_state) -> list:
         """Evaluate which events can fire this turn. Returns 0-3 events."""
+        rng = self._rng_for(game_state, f"events:trigger:{getattr(game_state, 'turn_number', 0)}")
         eligible = []
 
         for event in self.available_events:
@@ -145,11 +152,14 @@ class EventEngine:
             return []
 
         # Select 0-3 events weighted by relevance
-        num_events = min(len(eligible), random.choices([0, 1, 2, 3], weights=[0.3, 0.4, 0.2, 0.1])[0])
+        num_events = min(
+            len(eligible),
+            rng.choices([0, 1, 2, 3], weights=[0.3, 0.4, 0.2, 0.1])[0],
+        )
         if num_events == 0:
             return []
 
-        selected = random.sample(eligible, min(num_events, len(eligible)))
+        selected = rng.sample(eligible, min(num_events, len(eligible)))
         for event in selected:
             # Mark one-time events as triggered immediately so they cannot
             # re-fire on subsequent turns even if the player hasn't resolved them.
@@ -201,6 +211,7 @@ class EventEngine:
 
     def resolve_event(self, event_id: str, choice_index: int, game_state=None) -> Optional[EventOutcome]:
         """Resolve an event with a player choice."""
+        rng = self._rng_for(game_state, f"events:resolve:{event_id}")
         # Find the event
         event = None
         for e in self.event_queue:
@@ -231,7 +242,7 @@ class EventEngine:
             outcome_weights.append(weight)
 
         total_weight = sum(outcome_weights)
-        roll = random.uniform(0, total_weight) if total_weight > 0 else 0
+        roll = rng.uniform(0, total_weight) if total_weight > 0 else 0
         cumulative = 0.0
         selected_outcome = outcomes[-1]  # Default to last outcome
 
@@ -265,7 +276,7 @@ class EventEngine:
                     # Apply hull damage to a random ship
                     ships = list(game_state.fleet.ships.values())
                     if ships:
-                        target = random.choice(ships)
+                        target = rng.choice(ships)
                         actual = min(target.hull, amount)
                         target.hull = max(0, target.hull - amount)
                         if actual > 0:
@@ -273,7 +284,7 @@ class EventEngine:
                 elif cost_type == "fuel_cost":
                     ships = list(game_state.fleet.ships.values())
                     if ships:
-                        target = random.choice(ships)
+                        target = rng.choice(ships)
                         actual = min(target.fuel, amount)
                         target.fuel = max(0, target.fuel - amount)
                         if actual > 0:
@@ -298,6 +309,7 @@ class EventEngine:
 
         Adds the selected event to the queue and returns it.
         """
+        rng = self._rng_for(game_state, f"events:tags:{'-'.join(sorted(tags or []))}")
         if not tags:
             return None
 
@@ -317,7 +329,7 @@ class EventEngine:
         if not eligible:
             return None
 
-        selected = random.choice(eligible)
+        selected = rng.choice(eligible)
         if selected.one_time:
             self.triggered_events.append(selected.id)
         self.event_queue.append(selected)

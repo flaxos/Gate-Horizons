@@ -257,7 +257,7 @@ Each facility type has tunable `build_cost`, `build_turns`, `max_concurrent_buil
 | Ship construction | Credits + metals at spaceport | + Component-based construction at orbital facilities |
 | Ship types | 4 (scout, freighter, miner, corvette) | + 4 (small/medium/large freighters, colony ship) |
 | Production inventory | None | Per-colony inventory for 20 production resources |
-| Save/load | Schema v3 | Schema v4 with migration for new fields |
+| Save/load | Schema v3 | Schema v10 with migration for new fields + RNG state |
 | Tests | 32 tests | Expanded production/logistics + trade capacity coverage |
 | UI screens | 8 screens | + 3 screens (production, logistics, shipyard) |
 

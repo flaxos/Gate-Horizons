@@ -468,9 +468,15 @@ class TurnProcessor:
                     gate_capacity = None
                     if hasattr(game_state, "galaxy"):
                         gate_capacity = game_state.galaxy.get_gate_effective_capacity(system.id)
+                    encounter_rng = None
+                    if hasattr(game_state, "rng_for_context"):
+                        encounter_rng = game_state.rng_for_context(
+                            f"encounter:{ship.id}:{system.id}:{report.turn_number}"
+                        )
                     encounter = game_state.combat.generate_random_encounter(
                         system.tier,
                         gate_capacity=gate_capacity,
+                        rng=encounter_rng,
                     )
                     if encounter:
                         if hasattr(game_state, "resolve_encounter"):
@@ -483,7 +489,16 @@ class TurnProcessor:
                                 system=system,
                                 encounter_id=encounter_id,
                             )
-                            combat_result = game_state.combat.auto_resolve([ship], encounter)
+                            combat_rng = None
+                            if hasattr(game_state, "rng_for_context"):
+                                combat_rng = game_state.rng_for_context(
+                                    f"combat:{ship.id}:{system.id}:{report.turn_number}"
+                                )
+                            combat_result = game_state.combat.auto_resolve(
+                                [ship],
+                                encounter,
+                                rng=combat_rng,
+                            )
                             combat_result.encounter_id = encounter_id
                             combat_result.encounter_contract = encounter_spec.to_dict()
                             report.combat_encounters.append(combat_result)

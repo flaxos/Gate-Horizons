@@ -26,11 +26,13 @@ class MapCameraWidget(Widget):
       +/= — zoom in
       -   — zoom out
       Home / 0 — reset camera
+      Escape — go back (if callback provided)
     """
 
-    def __init__(self, on_view_change=None, **kwargs):
+    def __init__(self, on_view_change=None, on_back=None, **kwargs):
         super().__init__(**kwargs)
         self.on_view_change = on_view_change
+        self.on_back = on_back
         self._pan_offset = [0.0, 0.0]
         self._scale = 1.0
         self._min_scale = 0.3
@@ -70,6 +72,11 @@ class MapCameraWidget(Widget):
             self._zoom_at((self.center_x, self.center_y), 0.87)
         elif key in (278, 48):  # Home / 0
             self.reset_camera()
+        elif key == 27 or codepoint == "\x1b":  # Escape
+            if self.on_back:
+                self.on_back()
+                return True
+            return False
         else:
             return False
 
