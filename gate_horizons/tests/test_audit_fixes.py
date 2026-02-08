@@ -420,5 +420,22 @@ class Test13SystemViewColonizationGuards(unittest.TestCase):
         self.assertIn("found_colony", source)
 
 
+class Test14ColonyUpgradeSection(unittest.TestCase):
+    """Test 14: Colony screen should expose upgrade controls."""
+
+    def test_colony_screen_has_upgrade_controls(self):
+        """Colony screen should include upgrade section and action handler."""
+        cs_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "colony_screen.py",
+        )
+        with open(cs_path) as f:
+            source = f.read()
+
+        self.assertIn("Colony Upgrade", source)
+        self.assertIn("upgrade_colony", source)
+        self.assertIn("get_upgrade_cost", source)
+
+
 if __name__ == "__main__":
     unittest.main()
