@@ -5,6 +5,7 @@
 - [x] Intra-system movement (no turn cost)
 - [x] Test save generation (midgame, lategame, sandbox)
 - [x] Camera reset button on gravity well view
+- [x] Map keyboard pan/zoom shortcuts (WASD/arrows, +/-/Home; Esc/back pending)
 
 ## Priority Backlog
 
@@ -13,6 +14,7 @@
 #### 1. Keyboard Shortcuts for Map Navigation
 - **Why:** Desktop users expect WASD/arrow keys for pan, +/- for zoom, Escape for back.
 - **Acceptance criteria:** Arrow keys pan, +/- zoom, Esc goes up one level, Home resets camera.
+- **Status:** Partial — pan/zoom/reset shipped; Esc/back still needed.
 - **Effort:** S
 - **Risk:** Low — purely additive input handling.
 

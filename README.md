@@ -57,8 +57,8 @@ Gate Horizons is a canon-owned setting for hard-sci strategy, narrative, and vis
 - World traits (Hub, Frontier, Mineral Rich, Volatile)
 - Shortage penalties and stability system
 - Auto-resolve combat with probability display
-- Pre-generated narrative events
-- Tech tree with 15 unlocks (including Colonisation, Logistics I/II/III)
+- 100+ pre-generated exploration events
+- Tech tree with 24 unlocks (including Colonisation, Logistics I/II/III)
 - Save/Load via SQLite
 - Full turn processing loop with deterministic 5-phase resolution
 
@@ -144,7 +144,8 @@ latency/capacity, shortage penalties, stability system, world traits (hub/fronti
 tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy
 relations, encounter branching, 24-tech research tree, physical freighter routes,
 shipyard production, procedural galaxy generation (seeded), 100+ exploration events,
-full headless test suite.
+gravity well system map, intra-system movement (no turn cost), deterministic test saves,
+and full headless test suite.
 
 **Future (not implemented)**: Mini-map with sphere-of-influence overlay, piracy/trade
 disruption events, diplomacy-based trade agreements.
