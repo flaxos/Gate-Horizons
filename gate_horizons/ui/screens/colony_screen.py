@@ -145,8 +145,21 @@ class ColonyScreen(Screen):
 
     def set_game_state(self, game_state):
         self.game_state = game_state
-        self.top_bar.update(game_state)
+        self.refresh()
+
+    def on_pre_enter(self, *args):
+        """Refresh colony data when navigating to the screen."""
+        self.refresh()
+
+    def refresh(self):
+        if not self.game_state:
+            return
+        self.top_bar.update(self.game_state)
+        if self.selected_colony not in self.game_state.colonies.colonies:
+            self.selected_colony = None
         self._update_colony_list()
+        if self.selected_colony:
+            self._update_detail()
 
     def _update_colony_list(self):
         self.colony_list.clear_widgets()
