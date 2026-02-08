@@ -12,10 +12,11 @@
       "discovered": true,
       "surveyed": true,
       "tier": 1,
+      "stars": [
+        { "name": "Sol", "spectral": "G" }
+      ],
       "gate_connections": [
-        { "target": "alpha_centauri", "status": "active" },
-        { "target": "tau_ceti", "status": "active" },
-        { "target": "barnards_star", "status": "dormant" }
+        { "target": "alpha_centauri", "status": "active" }
       ],
       "gate_active": true,
       "planets": [
@@ -72,6 +73,11 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "Alpha Centauri A", "spectral": "G" },
+        { "name": "Alpha Centauri B", "spectral": "K" },
+        { "name": "Proxima Centauri", "spectral": "M" }
+      ],
       "gate_connections": [
         { "target": "sol", "status": "active" },
         { "target": "sirius", "status": "active" }
@@ -132,8 +138,10 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "Tau Ceti", "spectral": "G" }
+      ],
       "gate_connections": [
-        { "target": "sol", "status": "active" },
         { "target": "epsilon_eridani", "status": "active" }
       ],
       "gate_active": true,
@@ -181,8 +189,10 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "Barnard's Star", "spectral": "M" }
+      ],
       "gate_connections": [
-        { "target": "sol", "status": "dormant" },
         { "target": "luytens_star", "status": "active" }
       ],
       "gate_active": false,
@@ -225,6 +235,10 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "Sirius A", "spectral": "A" },
+        { "name": "Sirius B", "spectral": "D" }
+      ],
       "gate_connections": [
         { "target": "alpha_centauri", "status": "active" },
         { "target": "procyon", "status": "active" },
@@ -360,6 +374,10 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "Procyon A", "spectral": "F" },
+        { "name": "Procyon B", "spectral": "D" }
+      ],
       "gate_connections": [
         { "target": "sirius", "status": "active" }
       ],
@@ -463,6 +481,10 @@
       "discovered": false,
       "surveyed": false,
       "tier": 3,
+      "stars": [
+        { "name": "61 Cygni A", "spectral": "K" },
+        { "name": "61 Cygni B", "spectral": "K" }
+      ],
       "gate_connections": [
         { "target": "epsilon_eridani", "status": "active" },
         { "target": "kapteyns_star", "status": "active" }

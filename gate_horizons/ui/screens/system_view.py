@@ -241,14 +241,40 @@ class SystemViewScreen(Screen):
         max_radius = min(self.orbital_view.width, self.orbital_view.height) * 0.4
 
         with self.orbital_view.canvas:
-            # Star at center
-            Color(1, 0.9, 0.3, 1)
-            star_size = dp(30)
-            Ellipse(pos=(cx - star_size / 2, cy - star_size / 2),
-                    size=(star_size, star_size))
+            # Stars at center (binary/trinary support)
+            stars = system.stars if hasattr(system, "stars") and system.stars else [{"name": system.name}]
+            star_count = len(stars)
+            star_orbit_radius = dp(18) if star_count > 1 else 0
+            star_sizes = [dp(28), dp(20), dp(16)]
+            spectral_colors = {
+                "O": (0.6, 0.8, 1, 1),
+                "B": (0.7, 0.8, 1, 1),
+                "A": (0.8, 0.85, 1, 1),
+                "F": (1, 1, 0.9, 1),
+                "G": (1, 0.9, 0.3, 1),
+                "K": (1, 0.75, 0.4, 1),
+                "M": (1, 0.5, 0.4, 1),
+                "D": (0.9, 0.9, 0.95, 1),
+            }
+
+            for i, star in enumerate(stars):
+                angle = (i * (360 / max(1, star_count))) * math.pi / 180
+                sx = cx + star_orbit_radius * math.cos(angle)
+                sy = cy + star_orbit_radius * math.sin(angle)
+                spectral = str(star.get("spectral", "G")).upper()
+                color = star.get("color", spectral_colors.get(spectral[:1], (1, 0.9, 0.3, 1)))
+                raw_size = star.get("size")
+                size = dp(raw_size) if raw_size is not None else star_sizes[min(i, len(star_sizes) - 1)]
+                Color(*color)
+                Ellipse(
+                    pos=(sx - size / 2, sy - size / 2),
+                    size=(size, size),
+                )
 
             # Draw orbital rings and planets
             num_planets = len(system.planets)
+            gate_anchor = None
+            outer_anchor = None
             for i, planet in enumerate(system.planets):
                 orbit_r = max_radius * (0.3 + 0.7 * (i / max(1, num_planets)))
 
@@ -277,6 +303,10 @@ class SystemViewScreen(Screen):
                 Ellipse(pos=(px - p_size / 2, py - p_size / 2),
                         size=(p_size, p_size))
 
+                if planet.type == "gas_giant" and gate_anchor is None:
+                    gate_anchor = (px, py, p_size)
+                outer_anchor = (px, py, p_size)
+
                 # Colony indicator on planet
                 if self.system_id in self.game_state.colonies.colonies:
                     colony = self.game_state.colonies.colonies[self.system_id]
@@ -285,6 +315,14 @@ class SystemViewScreen(Screen):
                         c_size = dp(6)
                         Ellipse(pos=(px - c_size / 2, py + p_size / 2),
                                 size=(c_size, c_size))
+
+            gate_anchor = gate_anchor or outer_anchor
+            if gate_anchor:
+                gx, gy, g_size = gate_anchor
+                gate_color = (0.2, 0.8, 0.9, 0.9) if system.gate_active else (0.9, 0.4, 0.2, 0.9)
+                Color(*gate_color)
+                Line(circle=(gx, gy, g_size * 0.95), width=1.2)
+                Line(circle=(gx, gy, g_size * 1.25), width=0.6)
 
     def _update_info(self):
         self.info_panel.clear_widgets()

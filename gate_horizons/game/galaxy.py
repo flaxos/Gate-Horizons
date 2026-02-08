@@ -51,6 +51,7 @@ class StarSystem:
         discovered: bool = False,
         surveyed: bool = False,
         tier: int = 0,
+        stars: list = None,
         planets: list = None,
         stationed_ships: list = None,
         colony: dict = None,
@@ -69,6 +70,7 @@ class StarSystem:
         self.discovered = discovered
         self.surveyed = surveyed
         self.tier = tier
+        self.stars = stars or []
         self.planets = [
             Planet.from_dict(p) if isinstance(p, dict) else p
             for p in (planets or [])
@@ -92,6 +94,7 @@ class StarSystem:
             "discovered": self.discovered,
             "surveyed": self.surveyed,
             "tier": self.tier,
+            "stars": list(self.stars),
             "planets": [p.to_dict() for p in self.planets],
             "stationed_ships": list(self.stationed_ships),
             "colony": self.colony,
@@ -115,7 +118,7 @@ class StarSystem:
         # Remove unknown keys that aren't constructor params
         valid_keys = {
             "id", "name", "x", "y", "discovered", "surveyed", "tier",
-            "planets", "stationed_ships", "colony", "gate_connections",
+            "stars", "planets", "stationed_ships", "colony", "gate_connections",
             "gate_active", "gate_activation_cost", "gate_status",
             "gate_capacity", "gate_repair_cost", "anomalies",
         }
