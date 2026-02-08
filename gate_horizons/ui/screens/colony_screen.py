@@ -7,13 +7,55 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.popup import Popup
 from kivy.uix.progressbar import ProgressBar
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
-from gate_horizons.game.colonies import INFRASTRUCTURE_TYPES, BUILD_COSTS, BUILD_TURNS
+from gate_horizons.game.colonies import (
+    INFRASTRUCTURE_TYPES,
+    BUILD_COSTS,
+    BUILD_TURNS,
+    COLONY_LEVELS,
+)
 from gate_horizons.game.resources import RESOURCE_TYPES
+
+
+class NoticePopup(Popup):
+    """Simple notification popup for colony actions."""
+
+    def __init__(self, title="Notice", message="", **kwargs):
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
+        content.add_widget(Label(
+            text=message,
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(48),
+            halign="center",
+            valign="middle",
+        ))
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.15, 0.2, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        ok_btn.bind(on_release=lambda x: self.dismiss())
+        content.add_widget(ok_btn)
+
+        super().__init__(
+            title=title,
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+            **kwargs,
+        )
 
 
 class ColonyScreen(Screen):
@@ -277,6 +319,103 @@ class ColonyScreen(Screen):
 
         detail_content.add_widget(stock_grid)
 
+        # Colony upgrade section
+        detail_content.add_widget(Label(
+            text="Colony Upgrade",
+            font_size="14sp",
+            bold=True,
+            color=(0.6, 0.8, 1, 1),
+            size_hint_y=None,
+            height=dp(28),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
+
+        next_level = colony.level + 1
+        next_info = COLONY_LEVELS.get(next_level)
+        if next_info:
+            cost = colony.get_upgrade_cost()
+            cost_text = ", ".join(f"{v} {k}" for k, v in cost.items()) or "none"
+            requirements = colony.get_upgrade_tech_requirements()
+            req_text = ", ".join(requirements) if requirements else "none"
+            researched = {
+                t.id for t in self.game_state.tech.techs.values() if t.researched
+            }
+            can_upgrade = colony.can_upgrade(researched)
+            can_afford = self.game_state.resources.can_afford(cost)
+            detail_content.add_widget(Label(
+                text=f"Next: {next_info['name']} (Level {next_level})",
+                font_size="12sp",
+                color=(0.7, 0.85, 1, 0.9),
+                size_hint_y=None,
+                height=dp(22),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+            detail_content.add_widget(Label(
+                text=f"Upgrade Cost: {cost_text}",
+                font_size="11sp",
+                color=(1, 0.8, 0.3, 0.9),
+                size_hint_y=None,
+                height=dp(20),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+            detail_content.add_widget(Label(
+                text=f"Tech Required: {req_text}",
+                font_size="11sp",
+                color=(0.6, 0.75, 0.9, 0.8),
+                size_hint_y=None,
+                height=dp(20),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+            upgrade_btn = Button(
+                text=f"Upgrade to {next_info['name']}",
+                size_hint_y=None,
+                height=dp(34),
+                font_size="12sp",
+                background_color=(0.15, 0.4, 0.2, 0.9)
+                if can_upgrade and can_afford
+                else (0.2, 0.2, 0.2, 0.5),
+                color=(0.3, 1, 0.5, 1)
+                if can_upgrade and can_afford
+                else (0.4, 0.4, 0.4, 0.5),
+                disabled=not (can_upgrade and can_afford),
+            )
+            upgrade_btn.bind(on_release=self._on_upgrade_colony)
+            detail_content.add_widget(upgrade_btn)
+            if not can_upgrade:
+                detail_content.add_widget(Label(
+                    text="Upgrade blocked: tech requirements not met.",
+                    font_size="10sp",
+                    color=(1, 0.5, 0.3, 0.9),
+                    size_hint_y=None,
+                    height=dp(18),
+                    halign="left",
+                    text_size=(dp(500), None),
+                ))
+            elif not can_afford:
+                detail_content.add_widget(Label(
+                    text="Upgrade blocked: insufficient resources.",
+                    font_size="10sp",
+                    color=(1, 0.5, 0.3, 0.9),
+                    size_hint_y=None,
+                    height=dp(18),
+                    halign="left",
+                    text_size=(dp(500), None),
+                ))
+        else:
+            detail_content.add_widget(Label(
+                text="Colony is at maximum level.",
+                font_size="11sp",
+                color=(0.6, 0.75, 0.9, 0.8),
+                size_hint_y=None,
+                height=dp(22),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+
         # Infrastructure grid
         detail_content.add_widget(Label(
             text="Infrastructure",
@@ -519,3 +658,13 @@ class ColonyScreen(Screen):
         app = App.get_running_app()
         if app:
             app.switch_screen("galaxy_map")
+
+    def _on_upgrade_colony(self, *args):
+        if not self.game_state or not self.selected_colony:
+            return
+        success, message = self.game_state.upgrade_colony(self.selected_colony)
+        if not success:
+            NoticePopup(title="Upgrade Blocked", message=message).open()
+        self.top_bar.update(self.game_state)
+        self._update_colony_list()
+        self._update_detail()
