@@ -1,5 +1,6 @@
 """Gate Horizons — Main Application Entry Point."""
 
+import logging
 import os
 import sys
 
@@ -39,8 +40,13 @@ from gate_horizons.ui.screens.colony_screen import ColonyScreen
 from gate_horizons.ui.screens.fleet_screen import FleetScreen
 from gate_horizons.ui.screens.tech_screen import TechScreen
 from gate_horizons.ui.screens.trade_screen import TradeScreen
+from gate_horizons.ui.screens.production_screen import ProductionScreen
+from gate_horizons.ui.screens.logistics_screen import LogisticsScreen
+from gate_horizons.ui.screens.shipyard_screen import ShipyardScreen
 from gate_horizons.ui.screens.event_screen import EventPopup
 from gate_horizons.ui.widgets.save_load import LoadGamePopup
+
+logger = logging.getLogger("gate_horizons.app")
 
 
 class ExitConfirmPopup(Popup):
@@ -114,6 +120,13 @@ class ExitConfirmPopup(Popup):
 class GateHorizonsApp(App):
     title = "Gate Horizons"
 
+    # Screens that should navigate back to galaxy_map on ESC/back
+    _GAME_SCREENS = {
+        "system_view", "colony_screen", "fleet_screen", "tech_screen",
+        "trade_screen", "production_screen", "logistics_screen",
+        "shipyard_screen",
+    }
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.game_state = None
@@ -153,6 +166,9 @@ class GateHorizonsApp(App):
         self.fleet_screen = FleetScreen()
         self.tech_screen = TechScreen()
         self.trade_screen = TradeScreen()
+        self.production_screen = ProductionScreen()
+        self.logistics_screen = LogisticsScreen()
+        self.shipyard_screen = ShipyardScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -161,6 +177,9 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.fleet_screen)
         self.sm.add_widget(self.tech_screen)
         self.sm.add_widget(self.trade_screen)
+        self.sm.add_widget(self.production_screen)
+        self.sm.add_widget(self.logistics_screen)
+        self.sm.add_widget(self.shipyard_screen)
 
         self.sm.current = "main_menu"
 
@@ -168,10 +187,11 @@ class GateHorizonsApp(App):
         Window.bind(on_request_close=self._on_close_request)
         Window.bind(on_keyboard=self._on_keyboard)
 
+        logger.info("App built: %d screens registered", len(self.sm.screen_names))
         return self.sm
 
     # ------------------------------------------------------------------
-    # Exit confirmation
+    # Exit confirmation & back navigation
     # ------------------------------------------------------------------
 
     def _on_close_request(self, *args):
@@ -180,9 +200,23 @@ class GateHorizonsApp(App):
         return True  # Cancel the default close
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifier):
-        """Handle back button (Android) and Escape key."""
+        """Handle back button (Android) and Escape key.
+
+        Navigation priority:
+        1. On main_menu -> show exit confirmation
+        2. On galaxy_map -> navigate to main_menu
+        3. On any other game screen -> navigate back to galaxy_map
+        """
         if key == 27:  # ESC / Android back
-            self._show_exit_confirmation()
+            current = self.sm.current
+            if current == "main_menu":
+                self._show_exit_confirmation()
+            elif current == "galaxy_map":
+                self.sm.current = "main_menu"
+            elif current in self._GAME_SCREENS:
+                self.switch_screen("galaxy_map")
+            else:
+                self._show_exit_confirmation()
             return True
         return False
 
@@ -208,6 +242,7 @@ class GateHorizonsApp(App):
 
     def start_new_game(self):
         """Start a fresh game."""
+        logger.info("Starting new game")
         self.game_state = GameState.new_game()
         self._push_state_to_screens()
         self.sm.current = "galaxy_map"
@@ -216,6 +251,7 @@ class GateHorizonsApp(App):
         """Load autosave and continue."""
         loaded = self.save_manager.load_by_name("autosave", GameState)
         if loaded:
+            logger.info("Loaded autosave at turn %d", loaded.turn_number)
             self.game_state = loaded
             self._push_state_to_screens()
             self.sm.current = "galaxy_map"
@@ -235,12 +271,14 @@ class GateHorizonsApp(App):
         """Load a game from the load popup."""
         loaded = self.save_manager.load_game(save_id, GameState)
         if loaded:
+            logger.info("Loaded save id=%s at turn %d", save_id, loaded.turn_number)
             self.game_state = loaded
             self._push_state_to_screens()
             self.sm.current = "galaxy_map"
 
     def switch_screen(self, screen_name):
         """Navigate to a screen, refreshing its data."""
+        logger.debug("switch_screen -> %s", screen_name)
         if self.game_state:
             self._push_state_to_screens()
         self.sm.current = screen_name
@@ -253,6 +291,7 @@ class GateHorizonsApp(App):
 
     def show_event(self, event):
         """Show an event popup."""
+        logger.info("Showing event: %s", event.title if event else "None")
         popup = EventPopup(
             event=event,
             game_state=self.game_state,
@@ -283,6 +322,9 @@ class GateHorizonsApp(App):
         self.fleet_screen.set_game_state(self.game_state)
         self.tech_screen.set_game_state(self.game_state)
         self.trade_screen.set_game_state(self.game_state)
+        self.production_screen.set_game_state(self.game_state)
+        self.logistics_screen.set_game_state(self.game_state)
+        self.shipyard_screen.set_game_state(self.game_state)
 
 
 def main():

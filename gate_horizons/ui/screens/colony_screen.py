@@ -192,7 +192,7 @@ class ColonyScreen(Screen):
         )
 
         housing_level = colony.infrastructure.get("housing", {}).get("level", 0)
-        housing_cap = 100 + housing_level * 150
+        housing_cap = 100 + housing_level * 200  # matches HOUSING_PER_LEVEL in colonies.py
         stats.add_widget(Label(
             text=f"Population: {colony.population}/{housing_cap}",
             font_size="13sp",
@@ -245,6 +245,9 @@ class ColonyScreen(Screen):
             "defense": "Defense",
             "research": "Research Lab",
             "spaceport": "Spaceport",
+            "power": "Power Grid",
+            "mining": "Mining Ops",
+            "logistics": "Logistics Hub",
         }
 
         for infra_type, label in infra_labels.items():

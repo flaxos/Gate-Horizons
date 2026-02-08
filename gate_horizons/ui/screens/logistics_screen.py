@@ -206,8 +206,11 @@ class LogisticsScreen(Screen):
         self.ship_status_label.text = ship_text
 
     def _new_route(self, instance):
-        # Stub: would open a route creation dialog
-        pass
+        """Navigate to trade screen for route creation (logistics uses trade routes)."""
+        from kivy.app import App
+        app = App.get_running_app()
+        if app:
+            app.switch_screen("trade_screen")
 
     def _cancel_route(self, instance):
         if not self.game_state or not self.selected_route_id:
