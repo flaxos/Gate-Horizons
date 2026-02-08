@@ -63,14 +63,26 @@ class GameState:
         self.pending_encounters: list[dict] = []
 
     @classmethod
-    def new_game(cls, difficulty: str = "normal") -> "GameState":
+    def new_game(
+        cls,
+        difficulty: str = "normal",
+        use_procedural_galaxy: bool = False,
+        galaxy_seed: int | None = None,
+        system_count: int = 12,
+    ) -> "GameState":
         """Initialize a fresh game with starting conditions."""
         state = cls()
         state.difficulty = difficulty
 
         # Load galaxy
-        galaxy_path = _get_data_path("galaxy_templates", "demo_galaxy.json")
-        state.galaxy.load_from_json(galaxy_path)
+        if use_procedural_galaxy:
+            state.galaxy.generate_procedural(
+                seed=galaxy_seed,
+                system_count=system_count,
+            )
+        else:
+            galaxy_path = _get_data_path("galaxy_templates", "demo_galaxy.json")
+            state.galaxy.load_from_json(galaxy_path)
 
         # Load ship templates
         ships_path = _get_data_path("ships.json")
@@ -97,8 +109,10 @@ class GameState:
             "intel": 10,
         }
 
-        # Starting colony at Sol/Earth
+        # Starting colony at Sol/Earth (or procedural fallback)
         sol = state.galaxy.systems.get("sol")
+        starting_system_id = "sol"
+        colony = None
         if sol:
             sol.discovered = True
             sol.surveyed = True
@@ -112,6 +126,31 @@ class GameState:
                 level=2,  # Start as a Colony (level 2)
                 world_traits=["hub"],
             )
+        else:
+            starting_system = next(iter(state.galaxy.systems.values()), None)
+            if starting_system:
+                starting_system_id = starting_system.id
+                starting_system.discovered = True
+                starting_system.surveyed = True
+                starting_system.tier = max(1, starting_system.tier)
+                colonizable = None
+                for planet in starting_system.planets:
+                    if planet.colonizable:
+                        colonizable = planet
+                        break
+                if not colonizable and starting_system.planets:
+                    colonizable = starting_system.planets[0]
+                    colonizable.colonizable = True
+                if colonizable:
+                    colony = state.colonies.establish_colony(
+                        system_id=starting_system.id,
+                        planet_id=colonizable.id,
+                        name=colonizable.name,
+                        initial_pop=500,
+                        level=2,
+                        world_traits=list(colonizable.traits or ["frontier"]),
+                    )
+        if colony:
             # Starting infrastructure
             colony.infrastructure["housing"]["level"] = 3
             colony.infrastructure["industry"]["level"] = 2
@@ -139,14 +178,14 @@ class GameState:
             colony.production_inventory["metal_alloys"] = 8
 
             # Starting orbital: Earth has a spaceport
-            state.shipyard.facilities["sol"] = [
+            state.shipyard.facilities[starting_system_id] = [
                 OrbitalFacility(facility_type="spaceport", level=1),
             ]
 
         # Starting ships
-        scout = state.fleet.create_ship("scout", "sol", "ISS Pathfinder")
-        corvette = state.fleet.create_ship("corvette", "sol", "ISS Sentinel")
-        freighter = state.fleet.create_ship("freighter", "sol", "ISS Hauler")
+        scout = state.fleet.create_ship("scout", starting_system_id, "ISS Pathfinder")
+        corvette = state.fleet.create_ship("corvette", starting_system_id, "ISS Sentinel")
+        freighter = state.fleet.create_ship("freighter", starting_system_id, "ISS Hauler")
 
         # Mark initial fog of war
         state.game_clock = GameClock()

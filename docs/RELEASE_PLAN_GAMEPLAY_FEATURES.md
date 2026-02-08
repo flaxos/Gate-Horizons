@@ -18,9 +18,9 @@
 
 ## Phase 2: Tech, Progression, and Procedural Exploration
 **Scope**
-- Complete the full tech tree (20–30 techs) with clear progression gates.
-- Add procedural galaxy generation for replayable exploration.
-- Expand event library and anomaly content for deeper discovery.
+- Complete the full tech tree (20–30 techs) with clear progression gates. (Shipped: 24 techs)
+- Add procedural galaxy generation for replayable exploration. (Shipped: seeded generator)
+- Expand event library and anomaly content for deeper discovery. (Shipped: 100+ events)
 
 **Success criteria**
 - Tech progression meaningfully changes ship/colony capabilities.

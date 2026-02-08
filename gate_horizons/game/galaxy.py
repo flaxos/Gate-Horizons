@@ -1,6 +1,7 @@
 """Star map graph system for Gate Horizons."""
 
 import json
+import random
 from typing import Union
 from collections import deque
 from dataclasses import dataclass, field
@@ -151,6 +152,97 @@ class GalaxyMap:
                 ]
             system = StarSystem.from_dict(sys_data)
             self.systems[system.id] = system
+
+    def generate_procedural(
+        self,
+        seed: int | None = None,
+        system_count: int = 12,
+        max_connections: int = 3,
+        width: int = 1200,
+        height: int = 700,
+    ) -> None:
+        rng = random.Random(seed)
+        self.systems.clear()
+        self._path_cache.clear()
+
+        planet_types = [
+            "rocky", "gas_giant", "ice", "volcanic", "oceanic",
+            "barren", "desert", "toxic", "garden",
+        ]
+        colonizable_types = {"rocky", "oceanic", "garden", "desert"}
+        traits_pool = ["hub", "frontier", "mineral_rich", "volatile"]
+
+        system_ids = []
+        for idx in range(system_count):
+            sys_id = f"sys_{idx + 1:02d}"
+            system_ids.append(sys_id)
+            name = f"Sector {idx + 1:02d}"
+            x = rng.uniform(80, width - 80)
+            y = rng.uniform(80, height - 80)
+            tier = rng.randint(1, 4)
+            gate_connections = []
+
+            planets = []
+            for pidx in range(rng.randint(1, 3)):
+                p_type = rng.choice(planet_types)
+                planet_id = f"{sys_id}_p{pidx + 1}"
+                planet_name = f"{name}-{pidx + 1}"
+                colonizable = p_type in colonizable_types
+                traits = []
+                if colonizable and rng.random() < 0.4:
+                    traits.append(rng.choice(traits_pool))
+                planet = Planet(
+                    id=planet_id,
+                    name=planet_name,
+                    type=p_type,
+                    colonizable=colonizable,
+                    habitability=round(rng.uniform(0.2, 0.9), 2),
+                    gravity=round(rng.uniform(0.6, 1.4), 2),
+                    traits=traits,
+                )
+                planets.append(planet)
+
+            system = StarSystem(
+                id=sys_id,
+                name=name,
+                x=round(x, 2),
+                y=round(y, 2),
+                discovered=False,
+                surveyed=False,
+                tier=tier,
+                planets=planets,
+                gate_connections=gate_connections,
+                gate_active=True,
+                gate_status=1.0,
+                gate_capacity=rng.randint(60, 120),
+            )
+            self.systems[sys_id] = system
+
+        # Ensure base connectivity by chaining systems
+        for idx in range(1, len(system_ids)):
+            a = system_ids[idx - 1]
+            b = system_ids[idx]
+            self._connect_systems(a, b)
+
+        # Add extra random connections
+        for sys_id in system_ids:
+            connections = self.systems[sys_id].gate_connections
+            target_count = rng.randint(2, max_connections)
+            while len(connections) < target_count:
+                candidate = rng.choice(system_ids)
+                if candidate == sys_id:
+                    continue
+                if candidate in connections:
+                    continue
+                self._connect_systems(sys_id, candidate)
+
+    def _connect_systems(self, a_id: str, b_id: str) -> None:
+        if a_id not in self.systems or b_id not in self.systems:
+            return
+        if b_id not in self.systems[a_id].gate_connections:
+            self.systems[a_id].gate_connections.append(b_id)
+        if a_id not in self.systems[b_id].gate_connections:
+            self.systems[b_id].gate_connections.append(a_id)
 
     def get_neighbors(self, system_id: str) -> list:
         system = self.systems.get(system_id)

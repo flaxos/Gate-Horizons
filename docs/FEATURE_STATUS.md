@@ -1,11 +1,19 @@
 # Feature Status
 
-| Feature | Designed In | Implemented In | Status | Evidence | Notes |
-| --- | --- | --- | --- | --- | --- |
-| EncounterSpec/ResultSpec handshake | `docs/ENCOUNTER_CONTRACT.md` | `gate_horizons/game/combat.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_encounter_contract.py`, `gate_horizons/tests/test_encounter_branching.py` | Shipped | — | Contract schema exists; results apply resources, stability, and relations. |
-| Auto-resolve combat | `PROJECT_PLAN.md` | `gate_horizons/game/combat.py`, `gate_horizons/game/turn.py` | Shipped | — | Deterministic-ish auto-resolve with variance, tied to encounters. |
-| Tactical hex combat MVP | `PROJECT_PLAN.md` | `gate_horizons/game/tactical.py`, `gate_horizons/ui/screens/tactical_screen.py`, `gate_horizons/ui/screens/encounter_screen.py` | Shipped | — | Hex grid combat with tactical screen and encounter launch. |
-| Diplomacy foundation | `PROJECT_PLAN.md` | `gate_horizons/game/diplomacy.py`, `gate_horizons/ui/screens/relations_screen.py`, `gate_horizons/ui/screens/encounter_screen.py` | Shipped | — | Relation scores, diplomacy actions, persistence. |
-| Colony logistics loop | `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md` | `gate_horizons/game/colonies.py`, `gate_horizons/game/trade.py`, `gate_horizons/game/turn.py` | Shipped | — | Production/consumption + trade latency + tests. |
-| Physical freighter routes | `DESIGN_SUMMARY.md` | `gate_horizons/game/logistics.py`, `gate_horizons/ui/screens/logistics_screen.py` | Shipped | — | Waypoint-based freight routes. |
-| Shipyard production | `DESIGN_SUMMARY.md` | `gate_horizons/game/shipyard.py`, `gate_horizons/ui/screens/shipyard_screen.py` | Shipped | — | Orbital facilities + ship build queue. |
+| Feature | Designed In (doc) | Implemented In (files) | Status (Shipped/Partial/Future) | Notes |
+| --- | --- | --- | --- | --- |
+| EncounterSpec/ResultSpec handshake | `docs/ENCOUNTER_CONTRACT.md` | `gate_horizons/game/combat.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_encounter_contract.py`, `gate_horizons/tests/test_encounter_branching.py` | Shipped | Contract schema exists; results apply resources, stability, relations, and gate impact. |
+| Auto-resolve combat | `PROJECT_PLAN.md` | `gate_horizons/game/combat.py`, `gate_horizons/game/turn.py` | Shipped | Deterministic auto-resolve with variance tied to encounter resolution. |
+| Tactical hex combat MVP | `PROJECT_PLAN.md` | `gate_horizons/game/tactical.py`, `gate_horizons/ui/screens/tactical_screen.py`, `gate_horizons/ui/screens/encounter_screen.py` | Shipped | Hex grid combat with tactical screen and encounter launch. |
+| Diplomacy foundation | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/game/diplomacy.py`, `gate_horizons/ui/screens/relations_screen.py`, `gate_horizons/ui/screens/encounter_screen.py` | Shipped | Relation scores, diplomacy actions, persistence. |
+| Missions (auto-generated + progress tracking) | `docs/RELEASE_PLAN_ENGAGEMENT.md` | `gate_horizons/game/missions.py`, `gate_horizons/game/turn.py`, `gate_horizons/ui/screens/mission_screen.py` | Shipped | Auto-generated missions with progress + rewards. |
+| Ship order execution + action handlers | `docs/RELEASE_PLAN_ENGAGEMENT.md` | `gate_horizons/game/state.py`, `gate_horizons/game/turn.py` | Shipped | Validated ship orders executed during turn resolution. |
+| Refuel/repair actions | `docs/RELEASE_PLAN_ENGAGEMENT.md` | `gate_horizons/game/state.py`, `gate_horizons/game/ships.py` | Shipped | Resource-backed refuel/repair handlers with failure reasons. |
+| Colony logistics loop | `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md` | `gate_horizons/game/colonies.py`, `gate_horizons/game/trade.py`, `gate_horizons/game/turn.py` | Shipped | Production/consumption + trade latency + tests. |
+| Physical freighter routes | `DESIGN_SUMMARY.md` | `gate_horizons/game/logistics.py`, `gate_horizons/ui/screens/logistics_screen.py` | Shipped | Waypoint-based freight routes. |
+| Shipyard production | `DESIGN_SUMMARY.md` | `gate_horizons/game/shipyard.py`, `gate_horizons/ui/screens/shipyard_screen.py` | Shipped | Orbital facilities + ship build queue. |
+| Tech tree (24 techs, queueing, effects) | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/game/tech.py`, `gate_horizons/data/tech_tree.json`, `gate_horizons/ui/screens/tech_screen.py` | Shipped | Tech effects drive logistics, sensors, and construction. |
+| Exploration event library (105 events) | `PROJECT_PLAN.md` | `gate_horizons/game/events.py`, `gate_horizons/data/events/exploration.json`, `gate_horizons/data/events/exploration_extra.json`, `gate_horizons/ui/screens/event_screen.py` | Shipped | Event engine + exploration events, one-time gating. |
+| Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | — | Future | Planned for demo slice polish. |
+| Procedural galaxy generation | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/game/galaxy.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_galaxy_generation.py` | Shipped | Seeded generator with deterministic connectivity. |
+| Expanded event library (100+ events) | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/data/events/exploration.json`, `gate_horizons/data/events/exploration_extra.json`, `gate_horizons/game/events.py`, `gate_horizons/tests/test_event_library_content.py` | Shipped | 100+ exploration events loaded via event engine. |

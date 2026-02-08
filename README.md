@@ -141,10 +141,13 @@ test suite for the logistics system.
 ### What is Implemented vs Future
 **Implemented now**: Colony levels, stockpiles, storage caps, trade routes with
 latency/capacity, shortage penalties, stability system, world traits (hub/frontier),
-tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy relations, encounter branching, full headless test suite.
+tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy
+relations, encounter branching, 24-tech research tree, physical freighter routes,
+shipyard production, procedural galaxy generation (seeded), 100+ exploration events,
+full headless test suite.
 
-**Future (not implemented)**: Ship-level freight simulation, piracy/trade disruption
-events, diplomacy-based trade agreements, procedural galaxy generation.
+**Future (not implemented)**: Mini-map with sphere-of-influence overlay, piracy/trade
+disruption events, diplomacy-based trade agreements.
 
 ---
 

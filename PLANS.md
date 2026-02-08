@@ -1,5 +1,78 @@
 # ExecPlans
 
+## STAB-01 + NEXT3: Regression hardening and next roadmap triad
+
+### Regression risk list (top 10)
+1. Encounter pipeline writes malformed ResultSpec payloads and fails to apply consequences.
+2. Tactical combat returns inconsistent victory/defeat results or leaves encounters pending.
+3. Diplomacy actions apply relation deltas but do not persist across save/load.
+4. Ship order execution fails for refuel/repair when colony or spaceport is missing.
+5. Turn processor skips ship orders or applies them twice on multi-turn loops.
+6. Save/load regression drops missions, diplomacy, or pending encounter state.
+7. Trade routes ignore gate capacity or negative gate status, causing invalid shipments.
+8. Event engine re-triggers one-time events after being queued.
+9. Tech effects not applied to derived systems (logistics capacity, construction time, sensor range).
+10. UI encounter navigation breaks return path to galaxy map or save/load.
+
+### Bugfix checklist + acceptance tests
+- Validate encounter branch outputs and ResultSpec application.
+  - Acceptance: `pytest gate_horizons/tests/test_encounter_contract.py gate_horizons/tests/test_encounter_branching.py`
+- Confirm ship order execution and refuel/repair handlers are deterministic and validated.
+  - Acceptance: `pytest gate_horizons/tests/test_ship_construction.py gate_horizons/tests/test_audit_fixes.py`
+- Save/load round-trip preserves diplomacy, missions, encounters, and logistics.
+  - Acceptance: `pytest gate_horizons/tests/test_save_load_roundtrip.py gate_horizons/tests/test_save_load_sqlite.py`
+- UI encounter loop smoke (encounter -> branch -> return -> save/load) via manual Kivy run.
+  - Acceptance: manual smoke test steps in release notes.
+
+### Next 3 selection rule
+- Source docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`, `docs/FEATURE_STATUS.md`.
+- Select highest-priority items that are planned and not shipped, with minimal dependencies.
+
+### NEXT3 (priority + rationale)
+1. **Full tech tree (20–30 techs)** — Phase 2 gameplay scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Required to make progression meaningful and is data-focused (low dependency).
+2. **Procedural galaxy generation** — Phase 2 exploration scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Enables replayability without replacing current demo template.
+3. **Expanded event library (100+ events)** — Phase 2 content scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Adds depth without new systems.
+
+### Milestones and file lists
+
+#### Milestone 0 — STAB-01 Regression hardening
+- Focus: fix regressions after most recent merge; add tests as needed.
+- Target files (as needed):
+  - `gate_horizons/game/state.py`
+  - `gate_horizons/game/turn.py`
+  - `gate_horizons/ui/screens/encounter_screen.py`
+  - `gate_horizons/ui/screens/tactical_screen.py`
+  - `gate_horizons/tests/*`
+  - Docs: `README.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`
+
+#### Milestone 1 — Full tech tree (NEXT3 1/3)
+- Expand `gate_horizons/data/tech_tree.json` to 20–30 techs.
+- Ensure effects are wired to existing systems (logistics, sensors, construction).
+- Tests: update/add tech effect tests as needed.
+- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+
+#### Milestone 2 — Procedural galaxy generation (NEXT3 2/3)
+- Add deterministic procedural galaxy generator (seeded) in `gate_horizons/game/galaxy.py`.
+- Add optional entrypoint to create procedural galaxies without breaking demo template flow.
+- Tests: add generator tests for system count/connectivity.
+- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+
+#### Milestone 3 — Expanded event library (NEXT3 3/3)
+- Expand exploration events to 100+ entries in `gate_horizons/data/events/`.
+- Maintain consistent schema and tag coverage for gating.
+- Tests: add data validation tests (schema + count).
+- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+
+### Out of scope
+- Android build + Buildozer packaging.
+- Real-time tactical runtime integration.
+- New gameplay systems beyond the NEXT3 list.
+- Economy overhaul or procedural narrative generation.
+
+### Rollback plan
+- Each milestone is an isolated commit for targeted revert.
+- If stability regresses, revert Milestone 1–3 commits independently; keep STAB-01 fixes.
+
 ## PHASE1-TACTICAL-TRIAD: Hex combat + Diplomacy + Encounter Branching
 
 ### Acceptance criteria
