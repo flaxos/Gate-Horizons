@@ -85,6 +85,8 @@ class CombatResult:
     xp_gained: int = 0
     fled: bool = False
     gate_impact: dict = field(default_factory=dict)
+    encounter_id: str = ""
+    encounter_contract: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -97,6 +99,8 @@ class CombatResult:
             "xp_gained": self.xp_gained,
             "fled": self.fled,
             "gate_impact": dict(self.gate_impact),
+            "encounter_id": self.encounter_id,
+            "encounter_contract": dict(self.encounter_contract),
         }
 
 

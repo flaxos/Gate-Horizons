@@ -683,40 +683,26 @@ class GalaxyMapScreen(Screen):
             self._show_destination_menu(ship_id)
         elif action.name == "Continue":
             self.refresh()
-        elif action.name == "Scan System":
-            system = self.game_state.galaxy.systems.get(ship.location)
-            if system:
-                system.surveyed = True
-                self.refresh()
-        elif action.name == "Investigate Anomaly":
-            event = self.game_state.investigate_anomaly(ship.location)
+        elif action.name in {
+            "Scan System",
+            "Deploy Probe",
+            "Patrol",
+            "Blockade",
+            "Investigate Anomaly",
+            "Repair",
+            "Refuel",
+        }:
+            params = {}
+            if action.name == "Deploy Probe":
+                params = {"credits": action.cost.get("credits", 5)}
+            self.game_state.issue_ship_order(ship_id, action.name, params=params)
             self.refresh()
-            if event:
-                from kivy.app import App
-                app = App.get_running_app()
-                if app:
-                    app.show_event(event)
         elif action.name == "Begin Mining":
             ship.mining = True
             ship.mission = "mining"
             self.refresh()
         elif action.name == "Continue Mining":
             pass  # Already mining
-        elif action.name in ("Patrol", "Deploy Probe"):
-            ship.mission = action.name.lower().replace(" ", "_")
-            self.refresh()
-        elif action.name == "Repair":
-            cost = action.cost
-            if self.game_state.resources.can_afford(cost):
-                self.game_state.resources.spend_dict(cost)
-                ship.hull = ship.stats.max_hull
-                self.refresh()
-        elif action.name == "Refuel":
-            cost = action.cost
-            if self.game_state.resources.can_afford(cost):
-                self.game_state.resources.spend_dict(cost)
-                ship.fuel = ship.stats.fuel_capacity
-                self.refresh()
         elif action.name == "Unload Cargo":
             self.game_state.unload_ship_cargo_to_colony(ship_id)
             self.refresh()

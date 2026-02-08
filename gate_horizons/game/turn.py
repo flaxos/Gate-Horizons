@@ -77,6 +77,7 @@ class TurnReport:
     freighter_route_reports: list = field(default_factory=list)
     shipyard_report: dict = field(default_factory=dict)
     ship_actions: list = field(default_factory=list)
+    ship_orders: list = field(default_factory=list)
     missions_generated: list = field(default_factory=list)
     missions_completed: list = field(default_factory=list)
     missions_active: list = field(default_factory=list)
@@ -112,6 +113,7 @@ class TurnReport:
             "freighter_route_reports": self.freighter_route_reports,
             "shipyard_report": dict(self.shipyard_report),
             "ship_actions": self.ship_actions,
+            "ship_orders": self.ship_orders,
             "missions_generated": self.missions_generated,
             "missions_completed": self.missions_completed,
             "missions_active": self.missions_active,
@@ -137,6 +139,21 @@ class TurnReport:
                 summary = action.get("summary")
                 if summary:
                     lines.append(summary)
+
+        if self.ship_orders:
+            completed = [o for o in self.ship_orders if o.get("status") == "completed"]
+            failed = [o for o in self.ship_orders if o.get("status") == "failed"]
+            delayed = [o for o in self.ship_orders if o.get("status") == "delayed"]
+            if completed:
+                lines.append(f"{len(completed)} ship order(s) completed")
+            if failed:
+                lines.append(f"{len(failed)} ship order(s) failed")
+                for order in failed:
+                    summary = order.get("summary")
+                    if summary:
+                        lines.append(summary)
+            if delayed:
+                lines.append(f"{len(delayed)} ship order(s) delayed")
 
         if self.missions_generated:
             for mission in self.missions_generated:
@@ -449,7 +466,16 @@ class TurnProcessor:
                         if hasattr(game_state, "resolve_encounter"):
                             game_state.resolve_encounter([ship], encounter, system, report)
                         else:
+                            encounter_id = f"enc-{ship.id[-4:]}-{report.turn_number}"
+                            encounter_spec = game_state.combat.create_encounter_spec(
+                                attacker_ships=[ship],
+                                defender=encounter,
+                                system=system,
+                                encounter_id=encounter_id,
+                            )
                             combat_result = game_state.combat.auto_resolve([ship], encounter)
+                            combat_result.encounter_id = encounter_id
+                            combat_result.encounter_contract = encounter_spec.to_dict()
                             report.combat_encounters.append(combat_result)
                             for resource, amount in combat_result.loot.items():
                                 game_state.resources.add(resource, amount)
