@@ -102,6 +102,25 @@ class Mission:
         return f"{self.progress}/{target}" if target > 0 else ""
 
 
+def mission_display_data(mission) -> dict:
+    """Return a display-ready dict for mission UI rendering."""
+    if hasattr(mission, "to_dict"):
+        data = mission.to_dict()
+    else:
+        data = dict(mission or {})
+
+    if "progress_summary" not in data:
+        if hasattr(mission, "progress_summary"):
+            data["progress_summary"] = mission.progress_summary()
+        else:
+            requirement = data.get("requirement", {}) or {}
+            target = int(requirement.get("target", 0))
+            progress = int(data.get("progress", 0))
+            data["progress_summary"] = f"{progress}/{target}" if target > 0 else ""
+
+    return data
+
+
 class MissionManager:
     def __init__(self):
         self.active_missions: list[Mission] = []

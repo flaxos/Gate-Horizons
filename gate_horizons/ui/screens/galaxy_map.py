@@ -401,6 +401,7 @@ class GalaxyMapScreen(Screen):
             ("🗺 Map", "galaxy_map"),
             ("🚀 Fleet", "fleet_screen"),
             ("🧬 Tech", "tech_screen"),
+            ("🎯 Missions", "mission_screen"),
             ("🏛 Colonies", "colony_screen"),
             ("💱 Trade", "trade_screen"),
             ("🏭 Prod", "production_screen"),

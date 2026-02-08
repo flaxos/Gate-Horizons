@@ -673,10 +673,10 @@ class TestSaveLoadPreservesProductionState(unittest.TestCase):
         self.assertTrue(any(o.get("name") == "ISS Persist" for o in summary))
 
     def test_schema_version_bumped(self):
-        """Schema version is 4 after our changes."""
+        """Schema version is 8 after our changes."""
         gs = GameState.new_game()
         data = gs.to_dict()
-        self.assertEqual(data["schema_version"], 4)
+        self.assertEqual(data["schema_version"], 8)
 
 
 class TestIntegrationExtractionToShipBuild(unittest.TestCase):
