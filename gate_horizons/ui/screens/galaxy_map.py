@@ -235,6 +235,8 @@ class GalaxyMapScreen(Screen):
         self.name = "galaxy_map"
         self.game_state = None
         self._side_panel = None
+        self.selected_system_id = None
+        self._auto_selected = False
         self._build_ui()
 
     def _build_ui(self):
@@ -372,12 +374,28 @@ class GalaxyMapScreen(Screen):
         self.star_map.set_game_state(game_state)
         self.top_bar.update(game_state)
         self._update_labels()
+        self._auto_select_home_colony()
+        self._refresh_side_panel()
 
     def refresh(self):
         if self.game_state:
             self.star_map.set_game_state(self.game_state)
             self.top_bar.update(self.game_state)
             self._update_labels()
+            self._refresh_side_panel()
+
+    def _auto_select_home_colony(self):
+        if self._auto_selected or not self.game_state:
+            return
+        if not self.game_state.colonies.colonies:
+            return
+        first_colony_id = next(iter(self.game_state.colonies.colonies))
+        self._auto_selected = True
+        self._show_system_panel(first_colony_id)
+
+    def _refresh_side_panel(self):
+        if self.selected_system_id and self.side_panel_container.width > 0:
+            self._show_system_panel(self.selected_system_id)
 
     def _update_labels(self):
         """Update floating system name labels."""
@@ -419,7 +437,9 @@ class GalaxyMapScreen(Screen):
     def _show_system_panel(self, system_id):
         system = self.game_state.galaxy.systems.get(system_id)
         if not system:
+            self._close_panel()
             return
+        self.selected_system_id = system_id
 
         self.side_panel_container.clear_widgets()
         self.side_panel_container.width = dp(260)
@@ -777,6 +797,7 @@ class GalaxyMapScreen(Screen):
     def _close_panel(self, *args):
         self.side_panel_container.clear_widgets()
         self.side_panel_container.width = dp(0)
+        self.selected_system_id = None
         self.star_map.selected_system = None
         self.star_map.selected_ship = None
         self.star_map._redraw()
