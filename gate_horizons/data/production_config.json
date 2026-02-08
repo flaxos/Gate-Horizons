@@ -1,74 +1,92 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Production chain configuration: resources, extraction, recipes, orbital facilities, ship blueprints",
+
+  "resource_definitions": {
+    "ore_iron": {"name": "Metal Ores", "tier": "raw", "category": "metals"},
+    "silicates": {"name": "Silicates", "tier": "raw", "category": "silicates"},
+    "water_ice": {"name": "Water Ice", "tier": "raw", "category": "water"},
+    "fissiles": {"name": "Fissiles", "tier": "raw", "category": "fissiles"},
+    "gas_h2": {"name": "Hydrogen", "tier": "raw", "category": "hydrogen"},
+    "gas_he3": {"name": "Helium-3", "tier": "raw", "category": "helium"},
+    "gas_d2": {"name": "Deuterium", "tier": "raw", "category": "hydrogen", "requires_tech": ["deuterium_extraction"]},
+    "volatiles": {"name": "Volatiles", "tier": "raw", "category": "volatiles"},
+    "organics": {"name": "Organics", "tier": "raw", "category": "organics"},
+    "rare_metals": {"name": "Rare Metals", "tier": "raw", "category": "metals"},
+    "exotics": {"name": "Exotics", "tier": "raw", "category": "exotics", "requires_tech": ["exotics_extraction"]},
+
+    "metal_alloys": {"name": "Metal Alloys", "tier": "processed"},
+    "polymers": {"name": "Polymers", "tier": "processed"},
+    "fuel": {"name": "Fuel", "tier": "processed"},
+    "electronics": {"name": "Electronics", "tier": "processed"},
+
+    "hull_plating": {"name": "Hull Plating", "tier": "components"},
+    "drive_assemblies": {"name": "Drive Assemblies", "tier": "components"},
+    "avionics": {"name": "Avionics", "tier": "components"},
+    "hab_modules": {"name": "Hab Modules", "tier": "components"},
+    "cargo_frames": {"name": "Cargo Frames", "tier": "components"}
+  },
 
   "resource_types": {
     "raw": [
-      "ore_iron", "silicates", "water_ice", "gas_h2", "gas_he3",
-      "organics", "rare_metals"
+      "ore_iron", "silicates", "water_ice", "fissiles",
+      "gas_h2", "gas_he3", "gas_d2", "volatiles",
+      "organics", "rare_metals", "exotics"
     ],
     "processed": [
       "metal_alloys", "polymers", "fuel", "electronics"
     ],
     "components": [
-      "hull_segments", "reactor_parts", "habitat_modules", "cargo_frames"
+      "hull_plating", "drive_assemblies", "avionics", "hab_modules", "cargo_frames"
     ]
   },
 
-  "body_type_resources": {
-    "rocky": {
+  "classic_resource_aliases": {
+    "metals": "ore_iron",
+    "water": "water_ice",
+    "hydrogen": "gas_h2",
+    "helium": "gas_he3"
+  },
+
+  "world_types": {
+    "terrestrial": {
       "ore_iron":     {"base_yield": 4, "probability": 1.0},
       "silicates":    {"base_yield": 3, "probability": 0.9},
-      "rare_metals":  {"base_yield": 1, "probability": 0.2}
-    },
-    "garden": {
-      "ore_iron":     {"base_yield": 3, "probability": 0.8},
-      "silicates":    {"base_yield": 2, "probability": 0.7},
-      "organics":     {"base_yield": 3, "probability": 0.9},
-      "water_ice":    {"base_yield": 2, "probability": 0.8}
-    },
-    "ice": {
-      "water_ice":    {"base_yield": 5, "probability": 1.0},
-      "organics":     {"base_yield": 2, "probability": 0.5},
-      "gas_h2":       {"base_yield": 2, "probability": 0.4}
+      "water_ice":    {"base_yield": 2, "probability": 0.6},
+      "fissiles":     {"base_yield": 1, "probability": 0.2},
+      "organics":     {"base_yield": 2, "probability": 0.3},
+      "rare_metals":  {"base_yield": 1, "probability": 0.15}
     },
     "gas_giant": {
       "gas_h2":       {"base_yield": 6, "probability": 1.0},
-      "gas_he3":      {"base_yield": 2, "probability": 0.3}
+      "gas_he3":      {"base_yield": 2, "probability": 0.3},
+      "gas_d2":       {"base_yield": 1, "probability": 0.15, "requires_tech": ["deuterium_extraction"]}
     },
-    "volcanic": {
-      "ore_iron":     {"base_yield": 5, "probability": 0.9},
-      "silicates":    {"base_yield": 4, "probability": 0.8},
-      "rare_metals":  {"base_yield": 2, "probability": 0.4}
+    "ice_body": {
+      "volatiles":    {"base_yield": 5, "probability": 1.0},
+      "water_ice":    {"base_yield": 4, "probability": 0.8},
+      "organics":     {"base_yield": 2, "probability": 0.4}
     },
-    "oceanic": {
-      "water_ice":    {"base_yield": 4, "probability": 0.9},
-      "organics":     {"base_yield": 3, "probability": 0.7},
-      "rare_metals":  {"base_yield": 1, "probability": 0.15}
-    },
-    "barren": {
-      "ore_iron":     {"base_yield": 3, "probability": 0.7},
-      "silicates":    {"base_yield": 2, "probability": 0.6},
-      "rare_metals":  {"base_yield": 1, "probability": 0.3}
-    },
-    "desert": {
-      "ore_iron":     {"base_yield": 3, "probability": 0.8},
-      "silicates":    {"base_yield": 4, "probability": 0.9},
-      "rare_metals":  {"base_yield": 1, "probability": 0.25}
-    },
-    "toxic": {
-      "organics":     {"base_yield": 4, "probability": 0.6},
-      "rare_metals":  {"base_yield": 2, "probability": 0.35},
-      "gas_h2":       {"base_yield": 2, "probability": 0.4}
-    },
-    "asteroid_belt": {
-      "ore_iron":     {"base_yield": 6, "probability": 1.0},
-      "rare_metals":  {"base_yield": 3, "probability": 0.5},
-      "silicates":    {"base_yield": 3, "probability": 0.8}
-    },
-    "artificial": {
-      "rare_metals":  {"base_yield": 2, "probability": 0.6}
+    "exotic": {
+      "exotics":      {"base_yield": 1, "probability": 0.08, "requires_tech": ["exotics_extraction"]},
+      "rare_metals":  {"base_yield": 2, "probability": 0.3}
     }
+  },
+
+  "planet_type_map": {
+    "rocky": "terrestrial",
+    "garden": "terrestrial",
+    "volcanic": "terrestrial",
+    "oceanic": "terrestrial",
+    "barren": "terrestrial",
+    "desert": "terrestrial",
+    "toxic": "terrestrial",
+    "asteroid_belt": "terrestrial",
+    "atmospheric": "terrestrial",
+    "ice": "ice_body",
+    "gas_giant": "gas_giant",
+    "artificial": "exotic",
+    "exotic": "exotic"
   },
 
   "recipes": {
@@ -78,7 +96,8 @@
       "outputs": {"metal_alloys": 2},
       "time": 1,
       "facility": "factory",
-      "power_cost": 1
+      "power_cost": 1,
+      "min_industry_level": 0
     },
     "polymers": {
       "tier": 1,
@@ -86,7 +105,8 @@
       "outputs": {"polymers": 2},
       "time": 1,
       "facility": "factory",
-      "power_cost": 1
+      "power_cost": 1,
+      "min_industry_level": 0
     },
     "fuel": {
       "tier": 1,
@@ -94,7 +114,8 @@
       "outputs": {"fuel": 3},
       "time": 1,
       "facility": "factory",
-      "power_cost": 1
+      "power_cost": 1,
+      "min_industry_level": 0
     },
     "electronics": {
       "tier": 1,
@@ -102,31 +123,44 @@
       "outputs": {"electronics": 1},
       "time": 2,
       "facility": "factory",
-      "power_cost": 2
+      "power_cost": 2,
+      "min_industry_level": 1
     },
-    "hull_segments": {
+    "hull_plating": {
       "tier": 2,
-      "inputs":  {"metal_alloys": 4},
-      "outputs": {"hull_segments": 2},
+      "inputs":  {"metal_alloys": 4, "silicates": 2},
+      "outputs": {"hull_plating": 2},
       "time": 2,
       "facility": "factory",
-      "power_cost": 2
+      "power_cost": 2,
+      "min_industry_level": 1
     },
-    "reactor_parts": {
+    "drive_assemblies": {
       "tier": 2,
-      "inputs":  {"electronics": 2, "metal_alloys": 2},
-      "outputs": {"reactor_parts": 1},
+      "inputs":  {"metal_alloys": 2, "electronics": 2, "fuel": 1},
+      "outputs": {"drive_assemblies": 1},
       "time": 3,
       "facility": "factory",
-      "power_cost": 3
+      "power_cost": 3,
+      "min_industry_level": 2
     },
-    "habitat_modules": {
+    "avionics": {
       "tier": 2,
-      "inputs":  {"polymers": 3, "metal_alloys": 2},
-      "outputs": {"habitat_modules": 1},
+      "inputs":  {"electronics": 2, "rare_metals": 1},
+      "outputs": {"avionics": 1},
       "time": 2,
       "facility": "factory",
-      "power_cost": 2
+      "power_cost": 2,
+      "min_industry_level": 1
+    },
+    "hab_modules": {
+      "tier": 2,
+      "inputs":  {"polymers": 3, "metal_alloys": 2},
+      "outputs": {"hab_modules": 1},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 2,
+      "min_industry_level": 1
     },
     "cargo_frames": {
       "tier": 2,
@@ -134,14 +168,22 @@
       "outputs": {"cargo_frames": 2},
       "time": 2,
       "facility": "factory",
-      "power_cost": 1
+      "power_cost": 1,
+      "min_industry_level": 1
     }
+  },
+
+  "production_storage": {
+    "base_caps": {"raw": 140, "processed": 90, "components": 60},
+    "colony_level_mult": 0.25,
+    "industry_level_mult": 0.2,
+    "min_cap": 20
   },
 
   "orbital_facility_types": {
     "spaceport": {
       "description": "Basic orbital docking and storage. Receives ships but cannot build them.",
-      "build_cost": {"metal_alloys": 10, "hull_segments": 4, "credits": 100},
+      "build_cost": {"metal_alloys": 10, "hull_plating": 4, "credits": 100},
       "build_turns": 5,
       "storage_bonus": 200,
       "dock_slots": 3,
@@ -150,7 +192,7 @@
     },
     "drydock": {
       "description": "Ship assembly facility. Can build scouts, small/medium freighters, and miners.",
-      "build_cost": {"metal_alloys": 20, "hull_segments": 8, "electronics": 4, "credits": 200},
+      "build_cost": {"metal_alloys": 20, "hull_plating": 8, "avionics": 4, "credits": 200},
       "build_turns": 8,
       "storage_bonus": 100,
       "dock_slots": 2,
@@ -162,7 +204,7 @@
     },
     "orbital_yard": {
       "description": "Advanced orbital construction. Builds colony ships and large freighters.",
-      "build_cost": {"metal_alloys": 40, "hull_segments": 16, "electronics": 8, "reactor_parts": 4, "credits": 400},
+      "build_cost": {"metal_alloys": 40, "hull_plating": 16, "avionics": 8, "drive_assemblies": 4, "credits": 400},
       "build_turns": 12,
       "storage_bonus": 150,
       "dock_slots": 4,
@@ -175,9 +217,43 @@
   },
 
   "ship_blueprints": {
+    "scout": {
+      "name": "Pathfinder-class Scout",
+      "components": {"hull_plating": 2, "drive_assemblies": 1, "avionics": 1},
+      "credits": 50,
+      "build_turns": 2,
+      "required_facility": "drydock",
+      "stats": {
+        "max_hull": 30,
+        "speed": 3,
+        "cargo_capacity": 10,
+        "sensor_range": 3,
+        "fuel_capacity": 12,
+        "combat_power": 5,
+        "maintenance_cost": 3
+      },
+      "abilities": ["scan", "probe_deploy", "investigate", "retreat_boost"]
+    },
+    "miner": {
+      "name": "Excavator-class Miner",
+      "components": {"hull_plating": 3, "drive_assemblies": 1, "cargo_frames": 2, "avionics": 1},
+      "credits": 60,
+      "build_turns": 3,
+      "required_facility": "drydock",
+      "stats": {
+        "max_hull": 40,
+        "speed": 1,
+        "cargo_capacity": 60,
+        "sensor_range": 1,
+        "fuel_capacity": 10,
+        "combat_power": 3,
+        "maintenance_cost": 4
+      },
+      "abilities": ["prospect", "extract", "basic_refine", "auto_mine"]
+    },
     "small_freighter": {
       "name": "Tramp-class Light Freighter",
-      "components": {"hull_segments": 4, "reactor_parts": 1, "cargo_frames": 4},
+      "components": {"hull_plating": 4, "drive_assemblies": 1, "cargo_frames": 4, "avionics": 1},
       "credits": 60,
       "build_turns": 4,
       "required_facility": "drydock",
@@ -194,7 +270,7 @@
     },
     "medium_freighter": {
       "name": "Merchantman-class Freighter",
-      "components": {"hull_segments": 8, "reactor_parts": 2, "cargo_frames": 8},
+      "components": {"hull_plating": 8, "drive_assemblies": 2, "cargo_frames": 8, "avionics": 2},
       "credits": 120,
       "build_turns": 6,
       "required_facility": "drydock",
@@ -209,9 +285,26 @@
       },
       "abilities": ["load_cargo", "unload_cargo", "set_trade_route", "emergency_jettison"]
     },
+    "corvette": {
+      "name": "Sentinel-class Corvette",
+      "components": {"hull_plating": 6, "drive_assemblies": 2, "avionics": 2, "cargo_frames": 1},
+      "credits": 100,
+      "build_turns": 4,
+      "required_facility": "drydock",
+      "stats": {
+        "max_hull": 60,
+        "speed": 2,
+        "cargo_capacity": 15,
+        "sensor_range": 2,
+        "fuel_capacity": 10,
+        "combat_power": 20,
+        "maintenance_cost": 7
+      },
+      "abilities": ["patrol", "escort", "intercept", "blockade", "engage"]
+    },
     "colony_ship": {
       "name": "Ark-class Colony Ship",
-      "components": {"hull_segments": 16, "reactor_parts": 4, "habitat_modules": 8, "cargo_frames": 6},
+      "components": {"hull_plating": 16, "drive_assemblies": 4, "hab_modules": 8, "cargo_frames": 6, "avionics": 2},
       "credits": 300,
       "build_turns": 12,
       "required_facility": "orbital_yard",
@@ -225,6 +318,23 @@
         "maintenance_cost": 12
       },
       "abilities": ["load_cargo", "unload_cargo", "establish_colony"]
+    },
+    "large_freighter": {
+      "name": "Atlas-class Heavy Freighter",
+      "components": {"hull_plating": 12, "drive_assemblies": 3, "cargo_frames": 12, "avionics": 2},
+      "credits": 220,
+      "build_turns": 8,
+      "required_facility": "orbital_yard",
+      "stats": {
+        "max_hull": 80,
+        "speed": 1,
+        "cargo_capacity": 320,
+        "sensor_range": 1,
+        "fuel_capacity": 14,
+        "combat_power": 3,
+        "maintenance_cost": 9
+      },
+      "abilities": ["load_cargo", "unload_cargo", "set_trade_route", "emergency_jettison"]
     }
   },
 
@@ -244,9 +354,17 @@
       "2": 3,
       "3": 4
     },
+    "base_throughput": 1,
+    "throughput_per_colony_level": 1,
+    "throughput_per_industry_level": 1,
     "factory_build_cost": {"credits": 50, "metal_alloys": 10},
     "factory_build_turns": 3,
     "factory_maintenance_per_turn": 2
+  },
+
+  "shipyard_balance": {
+    "cancel_refund_ratio": 0.5,
+    "rush_cost_per_turn": 25
   },
 
   "fleet_ops_balance": {

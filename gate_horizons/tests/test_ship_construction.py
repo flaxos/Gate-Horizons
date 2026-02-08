@@ -1,30 +1,37 @@
 """Regression tests for ship construction and colony housing balance."""
 
-import json
 import unittest
 
 from gate_horizons.game.state import GameState
 from gate_horizons.game.colonies import (
-    Colony,
     HOUSING_BASE_CAP,
     HOUSING_PER_LEVEL,
 )
+from gate_horizons.game.shipyard import OrbitalFacility
 
 
 class TestShipConstructionCompletesAndAddsToFleet(unittest.TestCase):
-    """A ship queued at a colony spaceport should be created in the fleet
+    """A ship queued at an orbital drydock should be created in the fleet
     after the required number of turns."""
 
     def test_ship_built_after_build_turns(self):
         gs = GameState.new_game()
         initial_count = len(gs.fleet.ships)
 
-        # Scout: build_cost = {credits: 50, metals: 20}, build_turns = 2
-        ok = gs.build_ship("sol", "scout", "ISS Explorer")
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
+        colony = gs.colonies.colonies["sol"]
+        colony.production_inventory.update({
+            "hull_plating": 5,
+            "drive_assemblies": 2,
+            "avionics": 2,
+        })
+        gs.resources.global_resources["credits"] = 200
+
+        ok = gs.build_ship_orbital("sol", "scout", "ISS Explorer")
         self.assertTrue(ok, "build_ship should succeed with sufficient resources")
 
-        colony = gs.colonies.colonies["sol"]
-        self.assertEqual(len(colony.shipyard_queue), 1)
+        summary = gs.shipyard.get_build_queue_summary()
+        self.assertEqual(len(summary), 1)
 
         # Process 1 turn — ship still building
         gs.process_turn()
@@ -33,7 +40,8 @@ class TestShipConstructionCompletesAndAddsToFleet(unittest.TestCase):
         # Process 2nd turn — ship should complete
         report = gs.process_turn()
         self.assertEqual(len(gs.fleet.ships), initial_count + 1)
-        self.assertEqual(len(colony.shipyard_queue), 0)
+        summary = gs.shipyard.get_build_queue_summary()
+        self.assertEqual(len(summary), 0)
 
         # The new ship should be at Sol
         new_ships = [
@@ -49,41 +57,46 @@ class TestShipConstructionCompletesAndAddsToFleet(unittest.TestCase):
 
 
 class TestShipBuildRejectsInsufficientResources(unittest.TestCase):
-    """build_ship should return False if resources can't cover the cost,
+    """Orbital builds should return False if resources can't cover the cost,
     and should not deduct anything or queue a build."""
 
     def test_no_build_without_resources(self):
         gs = GameState.new_game()
-        # Zero out resources
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
+        # Zero out resources and components
         gs.resources.global_resources = {r: 0 for r in gs.resources.global_resources}
         colony = gs.colonies.colonies["sol"]
+        colony.production_inventory = {k: 0 for k in colony.production_inventory}
 
-        ok = gs.build_ship("sol", "corvette", "ISS Costly")
+        ok = gs.build_ship_orbital("sol", "corvette", "ISS Costly")
         self.assertFalse(ok, "build_ship should fail with no resources")
-        self.assertEqual(len(colony.shipyard_queue), 0)
+        self.assertEqual(len(gs.shipyard.get_build_queue_summary()), 0)
 
 
 class TestShipBuildRespectsSpaceportSlotLimit(unittest.TestCase):
-    """Spaceport level determines concurrent build slots.
-    Level 1 = 1 slot, so a second build should be rejected."""
+    """Orbital drydock limits active builds but allows queueing."""
 
     def test_slot_limit(self):
         gs = GameState.new_game()
-        # Give enough resources for two scouts
-        gs.resources.global_resources["credits"] = 500
-        gs.resources.global_resources["metals"] = 500
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
         colony = gs.colonies.colonies["sol"]
-        spaceport_level = colony.infrastructure["spaceport"]["level"]
-        self.assertEqual(spaceport_level, 1)
+        colony.production_inventory.update({
+            "hull_plating": 10,
+            "drive_assemblies": 5,
+            "avionics": 5,
+        })
+        gs.resources.global_resources["credits"] = 500
 
-        ok1 = gs.build_ship("sol", "scout", "ISS First")
+        ok1 = gs.build_ship_orbital("sol", "scout", "ISS First")
+        ok2 = gs.build_ship_orbital("sol", "scout", "ISS Second")
         self.assertTrue(ok1)
-        self.assertEqual(len(colony.shipyard_queue), 1)
+        self.assertTrue(ok2)
 
-        # Second build should fail (only 1 slot at spaceport level 1)
-        ok2 = gs.build_ship("sol", "scout", "ISS Second")
-        self.assertFalse(ok2, "second concurrent build should be rejected at spaceport level 1")
-        self.assertEqual(len(colony.shipyard_queue), 1)
+        summary = gs.shipyard.get_build_queue_summary()
+        active = [o for o in summary if o.get("status") == "active"]
+        queued = [o for o in summary if o.get("status") == "queued"]
+        self.assertEqual(len(active), 1)
+        self.assertEqual(len(queued), 1)
 
 
 class TestShipyardQueuePersistsSaveLoad(unittest.TestCase):
@@ -92,17 +105,25 @@ class TestShipyardQueuePersistsSaveLoad(unittest.TestCase):
 
     def test_shipyard_roundtrip(self):
         gs = GameState.new_game()
-        gs.build_ship("sol", "scout", "ISS Roundtrip")
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
+        colony = gs.colonies.colonies["sol"]
+        colony.production_inventory.update({
+            "hull_plating": 5,
+            "drive_assemblies": 2,
+            "avionics": 2,
+        })
+        gs.resources.global_resources["credits"] = 200
+
+        gs.build_ship_orbital("sol", "scout", "ISS Roundtrip")
 
         # Serialize and deserialize
         data = gs.to_dict()
         gs2 = GameState.from_dict(data)
-
-        colony2 = gs2.colonies.colonies["sol"]
-        self.assertEqual(len(colony2.shipyard_queue), 1)
-        self.assertEqual(colony2.shipyard_queue[0]["ship_class"], "scout")
-        self.assertEqual(colony2.shipyard_queue[0]["name"], "ISS Roundtrip")
-        self.assertEqual(colony2.shipyard_queue[0]["turns_remaining"], 2)
+        summary = gs2.shipyard.get_build_queue_summary()
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(summary[0]["blueprint"], "scout")
+        self.assertEqual(summary[0]["name"], "ISS Roundtrip")
+        self.assertEqual(summary[0]["turns_left"], 2)
 
         initial_count = len(gs2.fleet.ships)
         # Complete the build
@@ -163,12 +184,20 @@ class TestBuildTimeReductionAppliesToShipyard(unittest.TestCase):
         tech.researching = False
         tech.turns_remaining = 0
 
-        # Scout normally takes 2 turns, with -1 reduction = 1 turn
-        ok = gs.build_ship("sol", "scout", "ISS Fast Build")
-        self.assertTrue(ok)
-
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
         colony = gs.colonies.colonies["sol"]
-        self.assertEqual(colony.shipyard_queue[0]["turns_remaining"], 1)
+        colony.production_inventory.update({
+            "hull_plating": 5,
+            "drive_assemblies": 2,
+            "avionics": 2,
+        })
+        gs.resources.global_resources["credits"] = 200
+
+        # Scout normally takes 2 turns, with -1 reduction = 1 turn
+        ok = gs.build_ship_orbital("sol", "scout", "ISS Fast Build")
+        self.assertTrue(ok)
+        summary = gs.shipyard.get_build_queue_summary()
+        self.assertEqual(summary[0]["turns_left"], 1)
 
         # Should complete after 1 turn
         initial_count = len(gs.fleet.ships)

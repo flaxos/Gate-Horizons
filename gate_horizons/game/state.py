@@ -212,8 +212,9 @@ class GameState:
 
         # Auto-generate extraction sites based on planet body type
         if planet:
+            researched = {t.id for t in self.tech.techs.values() if t.researched}
             available = self.production.determine_extraction_resources(
-                planet.type, seed=hash(planet.id),
+                planet.type, seed=planet.id, researched_techs=researched,
             )
             for res_info in available[:3]:  # Max 3 starting extraction sites
                 colony.extraction_sites.append(
@@ -258,6 +259,9 @@ class GameState:
 
     def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
         """Start constructing a ship at a colony's spaceport."""
+        if ship_class in self.production.config.ship_blueprints:
+            return self.build_ship_orbital(system_id, ship_class, name)
+
         colony = self.colonies.colonies.get(system_id)
         if not colony:
             return False
@@ -300,6 +304,8 @@ class GameState:
             return False
 
         ship_name = name or blueprint.get("name", f"New {blueprint_id}")
+        tech_effects = self.tech.get_effects()
+        build_time_reduction = int(tech_effects.get("build_time_reduction", 0))
 
         order = self.shipyard.start_ship_build(
             system_id=system_id,
@@ -308,6 +314,7 @@ class GameState:
             config=self.production.config.to_dict(),
             inventory=colony.production_inventory,
             resources=self.resources,
+            build_time_reduction=build_time_reduction,
         )
         return order is not None
 
@@ -318,6 +325,7 @@ class GameState:
         manifest: dict,
         capacity_per_turn: int = None,
         latency_turns: int = 1,
+        assigned_ships: list = None,
     ) -> Optional:
         """Create a logistics trade route between two colonies.
 
@@ -344,6 +352,7 @@ class GameState:
             latency_turns=latency_turns,
             manifest=manifest,
             galaxy=self.galaxy,
+            ships=assigned_ships or [],
         )
 
     def save(self, filepath: str) -> None:

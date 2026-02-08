@@ -62,7 +62,7 @@ class TradeRoute:
     """An abstracted logistics link between two worlds.
 
     Unlike the old ship-based system, this is purely abstract:
-    capacity comes from colony logistics infrastructure, not individual ships.
+    capacity comes from colony logistics infrastructure plus assigned freighters.
     """
 
     def __init__(
@@ -96,7 +96,25 @@ class TradeRoute:
         self.active = active
         self.efficiency = efficiency
 
-    def calculate_throughput(self, fleet=None) -> dict:
+    def get_effective_capacity(self, fleet=None, tech_effects: dict = None) -> int:
+        base_capacity = self.capacity_per_turn
+        freighter_capacity = 0
+        if fleet:
+            for ship_id in self.assigned_ships:
+                ship = fleet.ships.get(ship_id)
+                if not ship:
+                    continue
+                if getattr(ship.stats, "freight_capacity", 0) > 0:
+                    freighter_capacity += ship.stats.freight_capacity
+                elif "freighter" in ship.ship_class:
+                    freighter_capacity += max(1, ship.stats.cargo_capacity // 10)
+
+        bonus = 1.0
+        if tech_effects:
+            bonus += tech_effects.get("logistics_capacity_bonus", 0)
+        return max(0, int((base_capacity + freighter_capacity) * bonus))
+
+    def calculate_throughput(self, fleet=None, tech_effects: dict = None) -> dict:
         """Per-turn resource transfer, constrained by capacity.
 
         The fleet parameter is kept for backward compatibility but the
@@ -105,6 +123,7 @@ class TradeRoute:
         if not self.enabled:
             return {"outbound": {}, "inbound": {}}
 
+        capacity = self.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
         throughput = {"outbound": {}, "inbound": {}}
 
         for direction in ("outbound", "inbound"):
@@ -114,8 +133,10 @@ class TradeRoute:
                 continue
 
             # Scale by capacity constraint
-            if total_requested > self.capacity_per_turn:
-                scale = self.capacity_per_turn / total_requested
+            if capacity <= 0:
+                scale = 0.0
+            elif total_requested > capacity:
+                scale = capacity / total_requested
             else:
                 scale = 1.0
 
@@ -241,7 +262,7 @@ class TradeManager:
         self.in_transit = still_in_transit
         return arrivals
 
-    def compute_and_ship(self, colonies=None, resources=None, rng=None) -> list:
+    def compute_and_ship(self, colonies=None, resources=None, fleet=None, tech_effects: dict = None, rng=None) -> list:
         """Step 5 of turn resolution: compute trade flows and create shipments.
 
         For each active route:
@@ -259,7 +280,7 @@ class TradeManager:
             if not route.enabled:
                 continue
 
-            throughput = route.calculate_throughput()
+            throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
             report = {
                 "route_id": route.id,
                 "source": route.source_system,
@@ -360,7 +381,7 @@ class TradeManager:
 
         return reports
 
-    def process_turn(self, resources=None, fleet=None) -> list:
+    def process_turn(self, resources=None, fleet=None, tech_effects: dict = None) -> list:
         """Legacy method: process trade routes with immediate transfer.
 
         Kept for backward compatibility. New code should use
@@ -372,7 +393,7 @@ class TradeManager:
             if not route.active or not route.enabled:
                 continue
 
-            throughput = route.calculate_throughput(fleet)
+            throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
             report = {
                 "route_id": route.id,
                 "source": route.source_system,

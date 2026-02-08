@@ -3,8 +3,9 @@
 import json
 import uuid
 from dataclasses import dataclass, field
-from importlib.resources.abc import Traversable
 from typing import Optional, Union
+
+from .types import Traversable
 
 
 @dataclass
@@ -12,6 +13,7 @@ class ShipStats:
     max_hull: int = 30
     speed: int = 1
     cargo_capacity: int = 10
+    freight_capacity: int = 0
     sensor_range: int = 1
     fuel_capacity: int = 8
     combat_power: int = 5
@@ -23,6 +25,7 @@ class ShipStats:
             "max_hull": self.max_hull,
             "speed": self.speed,
             "cargo_capacity": self.cargo_capacity,
+            "freight_capacity": self.freight_capacity,
             "sensor_range": self.sensor_range,
             "fuel_capacity": self.fuel_capacity,
             "combat_power": self.combat_power,
@@ -204,6 +207,7 @@ class FleetManager:
             max_hull=template["max_hull"],
             speed=template["speed"],
             cargo_capacity=template["cargo_capacity"],
+            freight_capacity=template.get("freight_capacity", 0),
             sensor_range=template["sensor_range"],
             fuel_capacity=template["fuel_capacity"],
             combat_power=template["combat_power"],

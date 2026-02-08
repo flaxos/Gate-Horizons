@@ -6,8 +6,9 @@ import json
 import os
 import random
 from dataclasses import dataclass, field
-from importlib.resources.abc import Traversable
 from typing import Optional, Union
+
+from .types import Traversable
 
 
 @dataclass

@@ -1,8 +1,9 @@
 """Tech tree system for Gate Horizons."""
 
 import json
-from importlib.resources.abc import Traversable
 from typing import Optional, Union
+
+from .types import Traversable
 
 
 class TechNode:

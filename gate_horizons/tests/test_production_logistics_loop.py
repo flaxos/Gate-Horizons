@@ -270,13 +270,13 @@ class TestFactoryRecipe(unittest.TestCase):
         inventory["silicates"] = 5
 
         # Tick 1: consumes inputs, starts processing
-        produced1 = factory.process_tick(inventory, config)
+        produced1 = factory.process_tick(inventory, config, industry_level=1)
         self.assertEqual(produced1, {})
         self.assertEqual(inventory["rare_metals"], 3)  # 5 - 2
         self.assertEqual(inventory["silicates"], 3)  # 5 - 2
 
         # Tick 2: produces output
-        produced2 = factory.process_tick(inventory, config)
+        produced2 = factory.process_tick(inventory, config, industry_level=1)
         self.assertIn("electronics", produced2)
         self.assertEqual(produced2["electronics"], 1)
 
@@ -292,6 +292,25 @@ class TestFactoryRecipe(unittest.TestCase):
         produced = factory.process_tick(inventory, config)
         self.assertEqual(produced, {})
         self.assertEqual(inventory["ore_iron"], 1)  # Unchanged
+
+    def test_recipe_prerequisite_blocks_low_industry(self):
+        """Component recipes should respect minimum industry prerequisites."""
+        config = _load_production_config()
+        factory = Factory(active=True)
+        factory.queue_recipe("hull_plating")
+
+        inventory = empty_production_inventory()
+        inventory["metal_alloys"] = 10
+        inventory["silicates"] = 10
+
+        produced = factory.process_tick(inventory, config, industry_level=0)
+        self.assertEqual(produced, {})
+        self.assertEqual(inventory["metal_alloys"], 10)
+
+        produced = factory.process_tick(inventory, config, industry_level=1)
+        self.assertEqual(produced, {})
+        produced = factory.process_tick(inventory, config, industry_level=1)
+        self.assertIn("hull_plating", produced)
 
     def test_factory_queue_processes_multiple_recipes(self):
         """Factory processes recipes from queue sequentially."""
@@ -315,6 +334,56 @@ class TestFactoryRecipe(unittest.TestCase):
         self.assertIsNone(factory.current_recipe)
 
 
+class TestIndustryCaps(unittest.TestCase):
+    """Test 3b: Throughput and storage caps."""
+
+    def test_throughput_caps_factory_count(self):
+        config = ProductionConfig()
+        config.recipes = {
+            "metal_alloys": {"inputs": {"ore_iron": 2}, "outputs": {"metal_alloys": 1}, "time": 1},
+        }
+        pm = ProductionManager(config)
+
+        factories = [Factory(active=True) for _ in range(2)]
+        for factory in factories:
+            factory.queue_recipe("metal_alloys")
+
+        inventory = empty_production_inventory()
+        inventory["ore_iron"] = 10
+
+        produced = pm.process_factories(factories, inventory, throughput_cap=1)
+        self.assertEqual(produced.get("metal_alloys", 0), 1)
+
+    def test_storage_caps_limit_output(self):
+        config = ProductionConfig()
+        config.resource_definitions = {"ore_iron": {"tier": "raw"}}
+        config.production_storage = {
+            "base_caps": {"raw": 5},
+            "colony_level_mult": 0.0,
+            "industry_level_mult": 0.0,
+            "min_cap": 0
+        }
+        pm = ProductionManager(config)
+
+        inventory = empty_production_inventory()
+        inventory["ore_iron"] = 4
+
+        mock_colony = type(
+            "MockColony",
+            (),
+            {"level": 0, "infrastructure": {"industry": {"level": 0}}},
+        )()
+        caps = pm.get_storage_caps(mock_colony)
+
+        extracted = pm.process_extraction(
+            [ExtractionSite(resource_id="ore_iron", base_yield=4, level=1)],
+            inventory,
+            storage_caps=caps,
+        )
+        self.assertEqual(inventory["ore_iron"], 5)
+        self.assertEqual(extracted["ore_iron"], 1)
+
+
 class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
     """Test 4: Ship build consumes components and completes only in orbital yard/drydock."""
 
@@ -330,8 +399,9 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
 
         # Prepare inventory with required components
         inventory = empty_production_inventory()
-        inventory["hull_segments"] = 10
-        inventory["reactor_parts"] = 5
+        inventory["hull_plating"] = 10
+        inventory["drive_assemblies"] = 5
+        inventory["avionics"] = 3
         inventory["cargo_frames"] = 10
 
         resources = ResourceManager()
@@ -346,8 +416,9 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         self.assertEqual(order.blueprint_id, "small_freighter")
 
         # Components consumed
-        self.assertEqual(inventory["hull_segments"], 6)  # 10 - 4
-        self.assertEqual(inventory["reactor_parts"], 4)  # 5 - 1
+        self.assertEqual(inventory["hull_plating"], 6)  # 10 - 4
+        self.assertEqual(inventory["drive_assemblies"], 4)  # 5 - 1
+        self.assertEqual(inventory["avionics"], 2)  # 3 - 1
         self.assertEqual(inventory["cargo_frames"], 6)  # 10 - 4
 
         # Credits consumed
@@ -383,9 +454,10 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         shipyard.facilities["sol"] = [yard]
 
         inventory = empty_production_inventory()
-        inventory["hull_segments"] = 50
-        inventory["reactor_parts"] = 20
-        inventory["habitat_modules"] = 20
+        inventory["hull_plating"] = 50
+        inventory["drive_assemblies"] = 20
+        inventory["hab_modules"] = 20
+        inventory["avionics"] = 10
         inventory["cargo_frames"] = 20
 
         resources = ResourceManager()
@@ -424,8 +496,9 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         shipyard.facilities["sol"] = [drydock]
 
         inventory = empty_production_inventory()
-        inventory["hull_segments"] = 20
-        inventory["reactor_parts"] = 10
+        inventory["hull_plating"] = 20
+        inventory["drive_assemblies"] = 10
+        inventory["avionics"] = 5
         inventory["cargo_frames"] = 20
 
         resources = ResourceManager()
@@ -447,6 +520,42 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         result = shipyard.process_tick(config=config_dict)
         self.assertEqual(len(result["ships_completed"]), 1)
         self.assertEqual(result["ships_completed"][0]["ship_name"], "ISS Builder")
+
+    def test_queue_order_progression(self):
+        """Queued builds should complete in order as capacity frees up."""
+        config = _load_production_config()
+        config_dict = config.to_dict()
+
+        shipyard = ShipyardManager()
+        drydock = OrbitalFacility(facility_type="drydock", level=1)
+        shipyard.facilities["sol"] = [drydock]
+
+        inventory = empty_production_inventory()
+        inventory.update({k: 100 for k in ALL_PRODUCTION_RESOURCES})
+
+        resources = ResourceManager()
+        resources.global_resources["credits"] = 5000
+
+        shipyard.start_ship_build(
+            "sol", "small_freighter", "ISS First",
+            config_dict, inventory, resources,
+        )
+        shipyard.start_ship_build(
+            "sol", "small_freighter", "ISS Second",
+            config_dict, inventory, resources,
+        )
+
+        # First completes after 4 ticks, second should still be queued/active
+        for _ in range(4):
+            shipyard.process_tick(config=config_dict)
+        summary = shipyard.get_build_queue_summary()
+        self.assertEqual(len([o for o in summary if o.get("name") == "ISS First"]), 0)
+        self.assertEqual(len([o for o in summary if o.get("name") == "ISS Second"]), 1)
+
+        for _ in range(4):
+            result = shipyard.process_tick(config=config_dict)
+        self.assertEqual(len(result["ships_completed"]), 1)
+        self.assertEqual(result["ships_completed"][0]["ship_name"], "ISS Second")
 
     def test_concurrent_build_limit(self):
         """Drydock at level 1 allows only 1 concurrent build."""
@@ -470,10 +579,18 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         )
         self.assertIsNotNone(order1)
 
-        # Second build should fail (1 slot at level 1)
-        can_build, reason = shipyard.can_build_ship("sol", "small_freighter", config_dict)
-        self.assertFalse(can_build)
-        self.assertIn("capacity", reason)
+        # Second build should queue (only 1 active slot at level 1)
+        order2 = shipyard.start_ship_build(
+            "sol", "small_freighter", "ISS Second",
+            config_dict, inventory, resources,
+        )
+        self.assertIsNotNone(order2)
+
+        summary = shipyard.get_build_queue_summary()
+        active = [o for o in summary if o.get("status") == "active"]
+        queued = [o for o in summary if o.get("status") == "queued"]
+        self.assertEqual(len(active), 1)
+        self.assertEqual(len(queued), 1)
 
 
 class TestSaveLoadPreservesProductionState(unittest.TestCase):
@@ -533,6 +650,17 @@ class TestSaveLoadPreservesProductionState(unittest.TestCase):
         # Verify starting spaceport exists
         self.assertIn("sol", gs.shipyard.facilities)
 
+        # Add a drydock and queue a build
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
+        colony = gs.colonies.colonies["sol"]
+        colony.production_inventory.update({k: 50 for k in ALL_PRODUCTION_RESOURCES})
+        gs.resources.global_resources["credits"] = 500
+        queued = gs.shipyard.start_ship_build(
+            "sol", "small_freighter", "ISS Persist",
+            gs.production.config.to_dict(), colony.production_inventory, gs.resources,
+        )
+        self.assertIsNotNone(queued)
+
         data = gs.to_dict()
         gs2 = GameState.from_dict(data)
 
@@ -541,6 +669,8 @@ class TestSaveLoadPreservesProductionState(unittest.TestCase):
             gs2.shipyard.facilities["sol"][0].facility_type,
             "spaceport",
         )
+        summary = gs2.shipyard.get_build_queue_summary()
+        self.assertTrue(any(o.get("name") == "ISS Persist" for o in summary))
 
     def test_schema_version_bumped(self):
         """Schema version is 4 after our changes."""
@@ -600,24 +730,47 @@ class TestBodyTypeResourceAvailability(unittest.TestCase):
         body_res = config.get_body_resources("rocky")
         self.assertIn("ore_iron", body_res)
         self.assertIn("silicates", body_res)
+        self.assertIn("water_ice", body_res)
+        self.assertIn("fissiles", body_res)
 
     def test_gas_giant_has_h2(self):
         """Gas giant should offer gas_h2."""
         config = _load_production_config()
         body_res = config.get_body_resources("gas_giant")
         self.assertIn("gas_h2", body_res)
+        self.assertIn("gas_he3", body_res)
 
     def test_ice_has_water(self):
         """Ice body should offer water_ice."""
         config = _load_production_config()
         body_res = config.get_body_resources("ice")
         self.assertIn("water_ice", body_res)
+        self.assertIn("volatiles", body_res)
 
-    def test_unknown_body_returns_empty(self):
-        """Unknown body type returns empty dict."""
+    def test_unknown_body_defaults(self):
+        """Unknown body types should map to terrestrial rules."""
         config = _load_production_config()
         body_res = config.get_body_resources("unknown_type")
-        self.assertEqual(body_res, {})
+        self.assertIn("ore_iron", body_res)
+
+    def test_tech_gated_resource_requires_prereq(self):
+        """Tech-gated resources are hidden until prerequisites are researched."""
+        config = ProductionConfig()
+        config.world_types = {
+            "gas_giant": {
+                "gas_d2": {"base_yield": 2, "probability": 1.0, "requires_tech": ["deuterium_extraction"]},
+            }
+        }
+        config.planet_type_map = {"gas_giant": "gas_giant"}
+        pm = ProductionManager(config)
+
+        without_tech = pm.determine_extraction_resources("gas_giant", seed=123, researched_techs=set())
+        self.assertEqual(without_tech, [])
+
+        with_tech = pm.determine_extraction_resources(
+            "gas_giant", seed=123, researched_techs={"deuterium_extraction"},
+        )
+        self.assertEqual(with_tech[0]["resource_id"], "gas_d2")
 
 
 if __name__ == "__main__":
