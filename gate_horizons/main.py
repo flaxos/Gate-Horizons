@@ -44,6 +44,7 @@ from gate_horizons.ui.screens.trade_screen import TradeScreen
 from gate_horizons.ui.screens.production_screen import ProductionScreen
 from gate_horizons.ui.screens.logistics_screen import LogisticsScreen
 from gate_horizons.ui.screens.shipyard_screen import ShipyardScreen
+from gate_horizons.ui.screens.mission_screen import MissionScreen
 from gate_horizons.ui.screens.event_screen import EventPopup
 from gate_horizons.ui.widgets.save_load import LoadGamePopup
 
@@ -125,7 +126,7 @@ class GateHorizonsApp(App):
     _GAME_SCREENS = {
         "system_view", "colony_screen", "fleet_screen", "tech_screen",
         "trade_screen", "production_screen", "logistics_screen",
-        "shipyard_screen",
+        "shipyard_screen", "mission_screen",
     }
 
     def __init__(self, **kwargs):
@@ -174,6 +175,7 @@ class GateHorizonsApp(App):
         self.production_screen = ProductionScreen()
         self.logistics_screen = LogisticsScreen()
         self.shipyard_screen = ShipyardScreen()
+        self.mission_screen = MissionScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -185,6 +187,7 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.production_screen)
         self.sm.add_widget(self.logistics_screen)
         self.sm.add_widget(self.shipyard_screen)
+        self.sm.add_widget(self.mission_screen)
 
         self.sm.current = "main_menu"
 
@@ -338,6 +341,7 @@ class GateHorizonsApp(App):
         self.production_screen.set_game_state(self.game_state)
         self.logistics_screen.set_game_state(self.game_state)
         self.shipyard_screen.set_game_state(self.game_state)
+        self.mission_screen.set_game_state(self.game_state)
 
 
 def main():
