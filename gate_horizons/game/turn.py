@@ -375,12 +375,15 @@ class TurnProcessor:
                 if system and hasattr(game_state, "combat"):
                     encounter = game_state.combat.generate_random_encounter(system.tier)
                     if encounter:
-                        combat_result = game_state.combat.auto_resolve([ship], encounter)
-                        report.combat_encounters.append(combat_result)
-                        for resource, amount in combat_result.loot.items():
-                            game_state.resources.add(resource, amount)
-                        for destroyed_id in combat_result.ships_destroyed:
-                            game_state.fleet.destroy_ship(destroyed_id)
+                        if hasattr(game_state, "resolve_encounter"):
+                            game_state.resolve_encounter([ship], encounter, system, report)
+                        else:
+                            combat_result = game_state.combat.auto_resolve([ship], encounter)
+                            report.combat_encounters.append(combat_result)
+                            for resource, amount in combat_result.loot.items():
+                                game_state.resources.add(resource, amount)
+                            for destroyed_id in combat_result.ships_destroyed:
+                                game_state.fleet.destroy_ship(destroyed_id)
 
     def _process_mining(self, game_state, report: TurnReport) -> None:
         mining_output = {}
