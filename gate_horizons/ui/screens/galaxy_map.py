@@ -293,6 +293,9 @@ class GalaxyMapScreen(Screen):
             ("Tech", "tech_screen"),
             ("Colonies", "colony_screen"),
             ("Trade", "trade_screen"),
+            ("Prod", "production_screen"),
+            ("Logistics", "logistics_screen"),
+            ("Shipyard", "shipyard_screen"),
         ]
 
         for text, screen_name in nav_buttons:

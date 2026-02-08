@@ -200,7 +200,7 @@ class ShipyardManager:
                 if resources:
                     resources.spend("credits", amount)
             else:
-                inventory[res] = inventory.get(res, 0) - amount
+                inventory[res] = max(0, inventory.get(res, 0) - amount)
 
         facility = OrbitalFacility(
             facility_type=facility_type,
@@ -303,7 +303,7 @@ class ShipyardManager:
 
         # Consume components
         for comp, amount in components.items():
-            inventory[comp] = inventory.get(comp, 0) - amount
+            inventory[comp] = max(0, inventory.get(comp, 0) - amount)
 
         # Consume credits
         if credit_cost > 0 and resources:

@@ -254,7 +254,7 @@ class Factory:
 
             # Consume inputs
             for res, amount in inputs.items():
-                inventory[res] = inventory.get(res, 0) - amount
+                inventory[res] = max(0, inventory.get(res, 0) - amount)
 
         self.recipe_progress += 1
         recipe_time = recipe.get("time", 1)
