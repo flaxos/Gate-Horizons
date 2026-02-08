@@ -208,40 +208,56 @@ class StarMapWidget(Widget):
         self._redraw()
 
     def _draw_ship_paths(self, galaxy):
-        if not self.selected_ship:
+        ships_in_transit = [
+            ship for ship in self.game_state.fleet.ships.values()
+            if ship.path
+        ]
+        if not ships_in_transit:
             return
 
-        ship = self.game_state.fleet.ships.get(self.selected_ship)
-        if not ship or not ship.path:
-            return
+        for ship in ships_in_transit:
+            system_ids = [ship.location] + list(ship.path)
+            for system_id in system_ids:
+                system = galaxy.systems.get(system_id)
+                if not system or not system.discovered:
+                    break
+                if system_id not in self._node_positions:
+                    break
+            else:
+                points = []
+                for system_id in system_ids:
+                    sx, sy = self._node_positions[system_id]
+                    points.extend([sx, sy])
 
-        system_ids = [ship.location] + list(ship.path)
-        for system_id in system_ids:
-            system = galaxy.systems.get(system_id)
-            if not system or not system.discovered:
-                return
-            if system_id not in self._node_positions:
-                return
+                is_selected = ship.id == self.selected_ship
+                if is_selected:
+                    Color(0.4, 0.8, 1, 0.5)
+                    width = 1.6
+                    dash_length = dp(6)
+                    marker_color = (0.7, 0.95, 1, 0.9)
+                    marker_size = dp(8)
+                else:
+                    Color(0.35, 0.65, 0.9, 0.3)
+                    width = 1.2
+                    dash_length = dp(4)
+                    marker_color = (0.6, 0.85, 1, 0.45)
+                    marker_size = dp(6)
 
-        points = []
-        for system_id in system_ids:
-            sx, sy = self._node_positions[system_id]
-            points.extend([sx, sy])
+                Line(
+                    points=points,
+                    width=width,
+                    dash_length=dash_length,
+                    dash_offset=self._dash_offset,
+                )
 
-        Color(0.4, 0.8, 1, 0.5)
-        Line(
-            points=points,
-            width=1.5,
-            dash_length=dp(6),
-            dash_offset=self._dash_offset,
-        )
-
-        next_waypoint = ship.path[0] if ship.path else None
-        if next_waypoint:
-            wx, wy = self._node_positions[next_waypoint]
-            Color(0.7, 0.95, 1, 0.9)
-            marker = dp(8)
-            Ellipse(pos=(wx - marker / 2, wy - marker / 2), size=(marker, marker))
+                next_waypoint = ship.path[0] if ship.path else None
+                if next_waypoint:
+                    wx, wy = self._node_positions[next_waypoint]
+                    Color(*marker_color)
+                    Ellipse(
+                        pos=(wx - marker_size / 2, wy - marker_size / 2),
+                        size=(marker_size, marker_size),
+                    )
 
     def _apply_transform(self, x, y):
         return (
