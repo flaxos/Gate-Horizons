@@ -2,6 +2,7 @@
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
+from kivy.metrics import dp
 from kivy.properties import NumericProperty, StringProperty
 
 
@@ -15,6 +16,8 @@ class TopBar(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = "horizontal"
+        self.size_hint_y = None
+        self.height = dp(36)
         self.padding = [8, 4]
         self.spacing = 4
 
