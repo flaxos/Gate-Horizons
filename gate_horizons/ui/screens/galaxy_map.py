@@ -710,12 +710,10 @@ class GalaxyMapScreen(Screen):
                 ship.fuel = ship.stats.fuel_capacity
                 self.refresh()
         elif action.name == "Unload Cargo":
-            for resource, amount in list(ship.cargo.items()):
-                self.game_state.resources.add(resource, amount, ship.location)
-            ship.cargo.clear()
+            self.game_state.unload_ship_cargo_to_colony(ship_id)
             self.refresh()
         elif action.name == "Load Cargo":
-            # Load available resources up to capacity
+            self.game_state.load_ship_cargo_from_colony(ship_id)
             self.refresh()
         elif action.name == "Emergency Jettison":
             ship.cargo.clear()
