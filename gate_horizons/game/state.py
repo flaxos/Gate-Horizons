@@ -15,7 +15,7 @@ from .events import EventEngine
 from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
-from .production import ProductionManager, ProductionConfig, ExtractionSite
+from .production import ProductionManager, ProductionConfig, ExtractionSite, Factory
 from .logistics import LogisticsManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
@@ -93,7 +93,7 @@ class GameState:
 
             colony = state.colonies.establish_colony(
                 system_id="sol",
-                planet_id="earth",
+                planet_id="sol_earth",
                 name="Earth",
                 initial_pop=500,
                 level=2,  # Start as a Colony (level 2)
@@ -387,6 +387,120 @@ class GameState:
             build_time_reduction=build_time_reduction,
         )
         return order is not None
+
+    def can_afford_production_cost(self, inventory: dict, cost: dict) -> bool:
+        for resource, amount in cost.items():
+            if resource in ("turns",):
+                continue
+            if resource in RESOURCE_TYPES:
+                if self.resources.global_resources.get(resource, 0) < amount:
+                    return False
+            elif inventory.get(resource, 0) < amount:
+                return False
+        return True
+
+    def spend_production_cost(self, inventory: dict, cost: dict) -> bool:
+        if not self.can_afford_production_cost(inventory, cost):
+            return False
+        for resource, amount in cost.items():
+            if resource in ("turns",):
+                continue
+            if resource in RESOURCE_TYPES:
+                self.resources.spend(resource, amount)
+            else:
+                inventory[resource] = max(0, inventory.get(resource, 0) - amount)
+        return True
+
+    def build_factory(self, system_id: str) -> tuple:
+        """Start building a factory at a colony.
+
+        Returns (success: bool, message: str).
+        """
+        colony = self.colonies.colonies.get(system_id)
+        if not colony:
+            return False, "No colony at this system"
+
+        max_by_level = self.production.config.factory_balance.get(
+            "max_factories_per_colony_level", {}
+        )
+        max_factories = int(max_by_level.get(str(colony.level), 0))
+        if len(colony.factories) >= max_factories:
+            return False, "Factory limit reached for this colony level"
+
+        cost = self.production.config.factory_balance.get("factory_build_cost", {})
+        if not self.spend_production_cost(colony.production_inventory, cost):
+            return False, f"Cannot afford factory build cost: {cost}"
+
+        build_turns = self.production.config.factory_balance.get("factory_build_turns", 3)
+        colony.factories.append(
+            Factory(
+                building=True,
+                build_turns_remaining=build_turns,
+            )
+        )
+        self.log.append(f"Factory construction started at {colony.name}")
+        return True, "Factory construction started"
+
+    def build_extraction_site(self, system_id: str, resource_id: str) -> tuple:
+        """Start building an extraction site for a specific resource.
+
+        Returns (success: bool, message: str).
+        """
+        colony = self.colonies.colonies.get(system_id)
+        if not colony:
+            return False, "No colony at this system"
+
+        max_sites = self.production.config.extraction_balance.get(
+            "max_extraction_sites_per_colony", 0
+        )
+        if max_sites and len(colony.extraction_sites) >= max_sites:
+            return False, "Extraction site limit reached for this colony"
+
+        system = self.galaxy.systems.get(system_id)
+        planet = None
+        if system:
+            for candidate in system.planets:
+                if candidate.id == colony.planet_id:
+                    planet = candidate
+                    break
+        if not planet:
+            return False, "No planet data available for this colony"
+
+        researched = {t.id for t in self.tech.techs.values() if t.researched}
+        available = self.production.determine_extraction_resources(
+            planet.type,
+            seed=planet.id,
+            researched_techs=researched,
+        )
+        resource_info = next(
+            (res for res in available if res["resource_id"] == resource_id),
+            None,
+        )
+        if not resource_info:
+            return False, "Resource not available for extraction at this world"
+
+        cost = self.production.config.extraction_balance.get(
+            "extraction_site_build_cost", {}
+        )
+        if not self.spend_production_cost(colony.production_inventory, cost):
+            return False, f"Cannot afford extraction build cost: {cost}"
+
+        build_turns = self.production.config.extraction_balance.get(
+            "extraction_site_build_turns", 2
+        )
+        colony.extraction_sites.append(
+            ExtractionSite(
+                resource_id=resource_id,
+                base_yield=resource_info.get("base_yield", 1),
+                level=1,
+                building=True,
+                turns_remaining=build_turns,
+            )
+        )
+        self.log.append(
+            f"Extraction site ({resource_id}) construction started at {colony.name}"
+        )
+        return True, "Extraction site construction started"
 
     def create_trade_route(
         self,
