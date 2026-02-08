@@ -18,10 +18,11 @@ from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
 from .production import ProductionManager, ProductionConfig, ExtractionSite, Factory
 from .logistics import CargoRule, LogisticsManager, Waypoint
+from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 6
+CURRENT_SCHEMA_VERSION = 7
 
 
 # Default data paths (relative to gate_horizons package)
@@ -49,6 +50,7 @@ class GameState:
         self.production = ProductionManager()
         self.logistics = LogisticsManager()
         self.shipyard = ShipyardManager()
+        self.missions = MissionManager()
         self.pending_ship_actions: list[dict] = []
         self.encounter_resolution_mode: str = "auto"
         self.pending_encounters: list[dict] = []
@@ -1002,6 +1004,7 @@ class GameState:
             "production": self.production.to_dict(),
             "logistics": self.logistics.to_dict(),
             "shipyard": self.shipyard.to_dict(),
+            "missions": self.missions.to_dict(),
             "pending_ship_actions": list(self.pending_ship_actions),
             "encounter_resolution_mode": self.encounter_resolution_mode,
             "pending_encounters": list(self.pending_encounters),
@@ -1056,5 +1059,9 @@ class GameState:
         state.pending_ship_actions = list(data.get("pending_ship_actions", []))
         state.encounter_resolution_mode = data.get("encounter_resolution_mode", "auto")
         state.pending_encounters = list(data.get("pending_encounters", []))
+        if schema_version >= 7:
+            state.missions = MissionManager.from_dict(data.get("missions", {}))
+        else:
+            state.missions = MissionManager()
 
         return state
