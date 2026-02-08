@@ -1,11 +1,12 @@
 """Star map graph system for Gate Horizons."""
 
 import json
-from importlib.resources.abc import Traversable
 from typing import Union
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
+
+from .types import Traversable
 
 
 @dataclass

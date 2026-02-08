@@ -95,6 +95,23 @@ class ShipyardScreen(Screen):
             size_hint_y=None, height=dp(120),
         )
         self.queue_label.bind(size=self.queue_label.setter("text_size"))
+        self.queue_actions = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(36), spacing=dp(4),
+        )
+        cancel_btn = Button(
+            text="Cancel Oldest", font_size="10sp",
+            background_color=(0.35, 0.1, 0.1, 0.9),
+            color=(1, 0.6, 0.6, 1),
+        )
+        cancel_btn.bind(on_release=self._cancel_oldest_build)
+        rush_btn = Button(
+            text="Rush Active", font_size="10sp",
+            background_color=(0.2, 0.2, 0.35, 0.9),
+            color=(0.8, 0.85, 1, 1),
+        )
+        rush_btn.bind(on_release=self._rush_active_build)
+        self.queue_actions.add_widget(cancel_btn)
+        self.queue_actions.add_widget(rush_btn)
 
         # Facility build buttons
         self.facility_buttons = BoxLayout(
@@ -122,7 +139,10 @@ class ShipyardScreen(Screen):
         self.ship_buttons = BoxLayout(
             orientation="horizontal", size_hint_y=None, height=dp(40), spacing=dp(4),
         )
-        for blueprint in ["small_freighter", "medium_freighter", "colony_ship"]:
+        for blueprint in [
+            "scout", "miner", "small_freighter", "medium_freighter",
+            "corvette", "colony_ship", "large_freighter",
+        ]:
             btn = Button(
                 text=blueprint.replace("_", "\n").title(), font_size="10sp",
                 background_color=(0.2, 0.15, 0.3, 0.9),
@@ -138,6 +158,7 @@ class ShipyardScreen(Screen):
         details_box.add_widget(self.facilities_label)
         details_box.add_widget(self.facility_buttons)
         details_box.add_widget(self.queue_label)
+        details_box.add_widget(self.queue_actions)
         details_box.add_widget(self.ship_buttons_label)
         details_box.add_widget(self.ship_buttons)
         details_scroll.add_widget(details_box)
@@ -204,19 +225,20 @@ class ShipyardScreen(Screen):
         self.facilities_label.text = fac_text
 
         # Build queue
+        facilities = self.game_state.shipyard.facilities.get(system_id, [])
+        facility_ids = {f.id for f in facilities}
         queue = [
-            o for o in self.game_state.shipyard.build_orders
-            if any(
-                f.id == o.facility_id
-                for f in self.game_state.shipyard.facilities.get(system_id, [])
-            )
+            o for o in self.game_state.shipyard.get_build_queue_summary()
+            if o.get("facility_id") in facility_ids
         ]
         queue_text = "[b]Build Queue:[/b]\n"
         if queue:
             for o in queue:
+                status = o.get("status", "active")
+                progress = o.get("progress", 0.0)
                 queue_text += (
-                    f"  {o.ship_name} ({o.blueprint_id}) — "
-                    f"{o.turns_remaining} turns remaining\n"
+                    f"  {o.get('name')} ({o.get('blueprint')}) — "
+                    f"{o.get('turns_left')} turns [{status}] ({progress:.0f}%)\n"
                 )
         else:
             queue_text += "  (empty)\n"
@@ -243,6 +265,45 @@ class ShipyardScreen(Screen):
         self.game_state.build_ship_orbital(
             self.selected_system_id,
             instance.blueprint_id,
+        )
+        self.refresh()
+
+    def _cancel_oldest_build(self, instance):
+        if not self.game_state or not self.selected_system_id:
+            return
+        colony = self.game_state.colonies.colonies.get(self.selected_system_id)
+        if not colony:
+            return
+        queue = self.game_state.shipyard.get_build_queue_summary()
+        if not queue:
+            return
+        order_id = queue[0].get("id")
+        if not order_id:
+            return
+        self.game_state.shipyard.cancel_build(
+            order_id,
+            config=self.game_state.production.config.to_dict(),
+            inventory=colony.production_inventory,
+            resources=self.game_state.resources,
+        )
+        self.refresh()
+
+    def _rush_active_build(self, instance):
+        if not self.game_state or not self.selected_system_id:
+            return
+        queue = [
+            o for o in self.game_state.shipyard.get_build_queue_summary()
+            if o.get("status") == "active"
+        ]
+        if not queue:
+            return
+        order_id = queue[0].get("id")
+        if not order_id:
+            return
+        self.game_state.shipyard.rush_build(
+            order_id,
+            config=self.game_state.production.config.to_dict(),
+            resources=self.game_state.resources,
         )
         self.refresh()
 

@@ -401,12 +401,14 @@ class TurnProcessor:
         for system_id, colony in game_state.colonies.colonies.items():
             if not colony.extraction_sites:
                 continue
+            storage_caps = game_state.production.get_storage_caps(colony)
             mining_level = colony.infrastructure.get("mining", {}).get("level", 0)
             extracted = game_state.production.process_extraction(
                 extraction_sites=colony.extraction_sites,
                 inventory=colony.production_inventory,
                 mining_level=mining_level,
                 tech_mult=mining_mult,
+                storage_caps=storage_caps,
             )
             for res, amt in extracted.items():
                 total_extracted[res] = total_extracted.get(res, 0) + amt
@@ -422,9 +424,16 @@ class TurnProcessor:
         for system_id, colony in game_state.colonies.colonies.items():
             if not colony.factories:
                 continue
+            storage_caps = game_state.production.get_storage_caps(colony)
+            throughput_cap = game_state.production.get_factory_throughput(colony)
+            industry_level = colony.infrastructure.get("industry", {}).get("level", 0)
             produced = game_state.production.process_factories(
                 factories=colony.factories,
                 inventory=colony.production_inventory,
+                throughput_cap=throughput_cap,
+                industry_level=industry_level,
+                colony_level=colony.level,
+                storage_caps=storage_caps,
             )
             for res, amt in produced.items():
                 total_produced[res] = total_produced.get(res, 0) + amt
@@ -504,6 +513,15 @@ class TurnProcessor:
 
         for system_id, colony in game_state.colonies.colonies.items():
             consumption = colony.calculate_consumption()
+            if hasattr(game_state, "production"):
+                maintenance = game_state.production.config.factory_balance.get(
+                    "factory_maintenance_per_turn", 0,
+                )
+                if maintenance:
+                    active_factories = sum(
+                        1 for f in colony.factories if f.active and not f.building
+                    )
+                    consumption["credits"] = consumption.get("credits", 0) + active_factories * maintenance
             shortages = {}
 
             for resource, amount in consumption.items():
@@ -542,9 +560,12 @@ class TurnProcessor:
     def _process_logistics_shipments(self, game_state, report: TurnReport) -> None:
         """B5: Compute trade flows -> create in-transit shipments with latency."""
         if hasattr(game_state, "trade"):
+            tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
             shipment_reports = game_state.trade.compute_and_ship(
                 colonies=game_state.colonies if hasattr(game_state, "colonies") else None,
                 resources=game_state.resources if hasattr(game_state, "resources") else None,
+                fleet=game_state.fleet if hasattr(game_state, "fleet") else None,
+                tech_effects=tech_effects,
             )
             report.logistics_shipments = shipment_reports
 

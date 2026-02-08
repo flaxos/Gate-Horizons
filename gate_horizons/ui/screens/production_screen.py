@@ -116,7 +116,7 @@ class ProductionScreen(Screen):
         )
         for recipe in [
             "metal_alloys", "polymers", "fuel", "electronics",
-            "hull_segments", "reactor_parts", "habitat_modules", "cargo_frames",
+            "hull_plating", "drive_assemblies", "avionics", "hab_modules", "cargo_frames",
         ]:
             btn = Button(
                 text=recipe.replace("_", "\n"), font_size="9sp",
@@ -185,13 +185,14 @@ class ProductionScreen(Screen):
         # Inventory display
         inv = colony.production_inventory
         raw = {k: v for k, v in inv.items() if v > 0 or k in [
-            "ore_iron", "silicates", "water_ice", "gas_h2", "organics", "rare_metals",
+            "ore_iron", "silicates", "water_ice", "fissiles", "gas_h2", "gas_he3",
+            "gas_d2", "volatiles", "organics", "rare_metals", "exotics",
         ]}
         processed = {k: v for k, v in inv.items() if k in [
             "metal_alloys", "polymers", "fuel", "electronics",
         ]}
         components = {k: v for k, v in inv.items() if k in [
-            "hull_segments", "reactor_parts", "habitat_modules", "cargo_frames",
+            "hull_plating", "drive_assemblies", "avionics", "hab_modules", "cargo_frames",
         ]}
 
         inv_text = f"[b]Production Inventory — {colony.name}[/b]\n\n"
