@@ -103,6 +103,7 @@ class Ship:
         hull: int = 0,
         morale: int = 80,
         mission: str = None,
+        mission_target: str = None,
         trade_route: dict = None,
         mining: bool = False,
     ):
@@ -118,6 +119,7 @@ class Ship:
         self.hull = hull if hull else (self.stats.max_hull if self.stats else 30)
         self.morale = morale
         self.mission = mission
+        self.mission_target = mission_target
         self.trade_route = (
             TradeRoute.from_dict(trade_route)
             if isinstance(trade_route, dict) and trade_route
@@ -139,6 +141,7 @@ class Ship:
             "hull": self.hull,
             "morale": self.morale,
             "mission": self.mission,
+            "mission_target": self.mission_target,
             "trade_route": self.trade_route.to_dict() if isinstance(self.trade_route, TradeRoute) else self.trade_route,
             "mining": self.mining,
         }
@@ -146,7 +149,7 @@ class Ship:
     _INIT_FIELDS = {
         "id", "name", "ship_class", "location", "destination", "path",
         "stats", "cargo", "fuel", "hull", "morale", "mission",
-        "trade_route", "mining",
+        "mission_target", "trade_route", "mining",
     }
 
     @classmethod
