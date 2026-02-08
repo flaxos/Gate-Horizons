@@ -191,6 +191,7 @@ class TradeManager:
         manifest: dict = None,
         galaxy=None,
         ships: list = None,
+        colonies=None,
     ) -> Optional[TradeRoute]:
         """Create a new logistics route between two systems."""
         # Validate path exists
@@ -200,6 +201,15 @@ class TradeManager:
             if not path:
                 return None
             distance = len(path) - 1
+        if latency_turns is None or latency_turns <= 0:
+            latency_turns = distance
+
+        if capacity_per_turn is None or capacity_per_turn <= 0:
+            capacity_per_turn = self._infer_capacity_from_colonies(
+                source,
+                dest,
+                colonies,
+            )
 
         # Auto-compute latency from distance if not specified
         effective_latency = max(1, latency_turns if latency_turns > 1 else distance)
@@ -219,6 +229,24 @@ class TradeManager:
 
         self.routes[route.id] = route
         return route
+
+    def _infer_capacity_from_colonies(self, source: str, dest: str, colonies=None) -> int:
+        if not colonies:
+            return 10
+
+        source_colony = colonies.colonies.get(source)
+        dest_colony = colonies.colonies.get(dest)
+
+        capacities = []
+        if source_colony:
+            capacities.append(source_colony.get_logistics_capacity())
+        if dest_colony:
+            capacities.append(dest_colony.get_logistics_capacity())
+
+        if not capacities:
+            return 10
+
+        return min(capacities)
 
     def cancel_route(self, route_id: str) -> bool:
         if route_id in self.routes:

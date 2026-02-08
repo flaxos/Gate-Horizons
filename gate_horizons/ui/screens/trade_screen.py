@@ -302,9 +302,12 @@ class CreateRoutePopup(Popup):
         route = self.game_state.trade.create_route(
             source=self.selected_source,
             dest=self.selected_dest,
+            capacity_per_turn=0,
+            latency_turns=0,
             ships=self.selected_ships,
             manifest=manifest,
             galaxy=self.game_state.galaxy,
+            colonies=self.game_state.colonies,
         )
 
         if route:
