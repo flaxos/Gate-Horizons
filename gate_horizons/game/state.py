@@ -20,7 +20,7 @@ from .logistics import CargoRule, LogisticsManager, Waypoint
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 4
+CURRENT_SCHEMA_VERSION = 5
 
 
 # Default data paths (relative to gate_horizons package)
@@ -48,6 +48,7 @@ class GameState:
         self.production = ProductionManager()
         self.logistics = LogisticsManager()
         self.shipyard = ShipyardManager()
+        self.pending_ship_actions: list[dict] = []
 
     @classmethod
     def new_game(cls, difficulty: str = "normal") -> "GameState":
@@ -153,6 +154,223 @@ class GameState:
     def process_turn(self) -> TurnReport:
         """Process one game turn."""
         return self.turn_processor.process_turn(self)
+
+    def execute_ship_action(
+        self,
+        ship_id: str,
+        action_name: str,
+        params: Optional[dict] = None,
+    ) -> tuple[bool, str]:
+        """Dispatch a ship action and store its outcome for the next turn report."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found"
+
+        if ship.path:
+            return False, f"{ship.name} is currently in transit"
+
+        normalized = action_name.strip().lower()
+        handlers = {
+            "scan system": self._handle_scan_system,
+            "deploy probe": self._handle_deploy_probe,
+            "patrol": self._handle_patrol,
+            "escort": self._handle_escort,
+            "blockade": self._handle_blockade,
+            "repair": self._handle_repair,
+            "refuel": self._handle_refuel,
+        }
+        handler = handlers.get(normalized)
+        if not handler:
+            return False, f"Unsupported action: {action_name}"
+
+        success, message, report_entry = handler(ship, params or {})
+        if success and report_entry:
+            self.pending_ship_actions.append(report_entry)
+            self.log.append(report_entry.get("summary", message))
+        return success, message
+
+    def _handle_scan_system(self, ship, params: dict) -> tuple[bool, str, dict]:
+        system = self.galaxy.systems.get(ship.location)
+        if not system:
+            return False, "System not found", {}
+
+        discoveries = []
+        if not system.discovered:
+            system.discovered = True
+            discoveries.append(f"Discovered {system.name}")
+
+        if system.surveyed:
+            return False, f"{system.name} has already been surveyed", {}
+
+        system.surveyed = True
+        discoveries.append(f"Surveyed {system.name}")
+        return True, f"Survey completed in {system.name}", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Scan System",
+            "system_id": system.id,
+            "summary": f"{ship.name} surveyed {system.name}",
+            "discoveries": discoveries,
+        }
+
+    def _handle_deploy_probe(self, ship, params: dict) -> tuple[bool, str, dict]:
+        system = self.galaxy.systems.get(ship.location)
+        if not system:
+            return False, "System not found", {}
+
+        cost = {"credits": int(params.get("credits", 5))}
+        if not self.resources.can_afford(cost):
+            return False, f"Cannot afford probe deployment cost: {cost}", {}
+
+        self.resources.spend_dict(cost)
+
+        range_bonus = int(params.get("range_bonus", 1))
+        probe_range = max(1, ship.stats.sensor_range + range_bonus)
+        newly_found = self._reveal_systems_in_range(system.id, probe_range)
+        discoveries = [f"Detected {name}" for name in newly_found]
+        summary = f"{ship.name} deployed a probe from {system.name}"
+        if newly_found:
+            summary += f" (revealed {len(newly_found)} system(s))"
+
+        return True, "Probe deployed", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Deploy Probe",
+            "system_id": system.id,
+            "summary": summary,
+            "discoveries": discoveries,
+            "resources_spent": cost,
+        }
+
+    def _handle_patrol(self, ship, params: dict) -> tuple[bool, str, dict]:
+        ship.mission = "patrol"
+        return True, "Patrol initiated", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Patrol",
+            "system_id": ship.location,
+            "summary": f"{ship.name} began patrol duty in {ship.location}",
+        }
+
+    def _handle_escort(self, ship, params: dict) -> tuple[bool, str, dict]:
+        target_id = params.get("target_ship_id")
+        if not target_id:
+            return False, "Escort requires target_ship_id", {}
+
+        target_ship = self.fleet.ships.get(target_id)
+        if not target_ship:
+            return False, "Escort target not found", {}
+
+        ship.mission = "escort"
+        ship.mission_target = target_id
+        return True, f"Escorting {target_ship.name}", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Escort",
+            "system_id": ship.location,
+            "summary": f"{ship.name} is escorting {target_ship.name}",
+        }
+
+    def _handle_blockade(self, ship, params: dict) -> tuple[bool, str, dict]:
+        ship.mission = "blockade"
+        return True, "Blockade established", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Blockade",
+            "system_id": ship.location,
+            "summary": f"{ship.name} is blockading {ship.location}",
+        }
+
+    def _handle_repair(self, ship, params: dict) -> tuple[bool, str, dict]:
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return False, "No colony available for repairs", {}
+
+        has_spaceport = colony.infrastructure.get("spaceport", {}).get("level", 0) > 0
+        if not has_spaceport:
+            return False, "No spaceport available for repairs", {}
+
+        missing = ship.stats.max_hull - ship.hull
+        if missing <= 0:
+            return False, "Hull is already fully repaired", {}
+
+        repair_amount = min(int(params.get("amount", missing)), missing)
+        repair_cost = {"credits": repair_amount * 2}
+        if not self.resources.can_afford(repair_cost):
+            return False, f"Cannot afford repair cost: {repair_cost}", {}
+
+        self.resources.spend_dict(repair_cost)
+        ship.hull = min(ship.stats.max_hull, ship.hull + repair_amount)
+        return True, "Repairs completed", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Repair",
+            "system_id": ship.location,
+            "summary": f"{ship.name} repaired {repair_amount} hull at {colony.name}",
+            "resources_spent": repair_cost,
+        }
+
+    def _handle_refuel(self, ship, params: dict) -> tuple[bool, str, dict]:
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return False, "No colony available for refueling", {}
+
+        has_spaceport = colony.infrastructure.get("spaceport", {}).get("level", 0) > 0
+        if not has_spaceport:
+            return False, "No spaceport available for refueling", {}
+
+        missing = ship.stats.fuel_capacity - ship.fuel
+        if missing <= 0:
+            return False, "Fuel tanks are already full", {}
+
+        refuel_amount = min(int(params.get("amount", missing)), missing)
+        refuel_cost = {"energy": refuel_amount}
+        if not self.resources.can_afford(refuel_cost):
+            return False, f"Cannot afford refuel cost: {refuel_cost}", {}
+
+        self.resources.spend_dict(refuel_cost)
+        ship.fuel = min(ship.stats.fuel_capacity, ship.fuel + refuel_amount)
+        return True, "Refueling completed", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Refuel",
+            "system_id": ship.location,
+            "summary": f"{ship.name} refueled {refuel_amount} at {colony.name}",
+            "resources_spent": refuel_cost,
+        }
+
+    def _reveal_systems_in_range(self, center_id: str, range_remaining: int) -> list[str]:
+        if range_remaining <= 0:
+            return []
+
+        from collections import deque
+
+        newly_discovered = []
+        visited = {center_id}
+        queue = deque([(center_id, 0)])
+
+        while queue:
+            current_id, depth = queue.popleft()
+            if depth >= range_remaining:
+                continue
+
+            system = self.galaxy.systems.get(current_id)
+            if not system:
+                continue
+
+            for neighbor_id in system.gate_connections:
+                if neighbor_id in visited:
+                    continue
+                visited.add(neighbor_id)
+
+                neighbor = self.galaxy.systems.get(neighbor_id)
+                if neighbor and not neighbor.discovered:
+                    neighbor.discovered = True
+                    newly_discovered.append(neighbor.name)
+
+                queue.append((neighbor_id, depth + 1))
+
+        return newly_discovered
 
     def activate_gate(self, system_id: str) -> bool:
         """Activate a dormant gate, applying any tech-based cost reduction."""
@@ -692,6 +910,7 @@ class GameState:
             "production": self.production.to_dict(),
             "logistics": self.logistics.to_dict(),
             "shipyard": self.shipyard.to_dict(),
+            "pending_ship_actions": list(self.pending_ship_actions),
         }
 
     @classmethod
@@ -724,7 +943,7 @@ class GameState:
         state.difficulty = data.get("difficulty", "normal")
         state.log = list(data.get("log", []))
 
-        # Schema v4: production + logistics + shipyard subsystems
+        # Schema v4+: production + logistics + shipyard subsystems
         if schema_version >= 4:
             state.production = ProductionManager.from_dict(data.get("production", {}))
             state.logistics = LogisticsManager.from_dict(data.get("logistics", {}))
@@ -739,5 +958,7 @@ class GameState:
                 state.production.config.load_from_json(prod_path)
             except Exception:
                 pass  # Config may not exist in test environments
+
+        state.pending_ship_actions = list(data.get("pending_ship_actions", []))
 
         return state

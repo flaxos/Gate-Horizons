@@ -75,6 +75,7 @@ class TurnReport:
     factory_output: dict = field(default_factory=dict)
     freighter_route_reports: list = field(default_factory=list)
     shipyard_report: dict = field(default_factory=dict)
+    ship_actions: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -106,6 +107,7 @@ class TurnReport:
             "factory_output": dict(self.factory_output),
             "freighter_route_reports": self.freighter_route_reports,
             "shipyard_report": dict(self.shipyard_report),
+            "ship_actions": self.ship_actions,
         }
 
     def get_summary_lines(self) -> list:
@@ -121,6 +123,17 @@ class TurnReport:
                 lines.append(f"{len(arrived)} ship(s) arrived at destinations")
             if in_transit:
                 lines.append(f"{len(in_transit)} ship(s) in transit")
+
+        if self.ship_actions:
+            lines.append(f"{len(self.ship_actions)} ship action(s) completed")
+            for action in self.ship_actions:
+                summary = action.get("summary")
+                if summary:
+                    lines.append(summary)
+
+        if self.discoveries:
+            for discovery in self.discoveries:
+                lines.append(discovery)
 
         if self.mining_output:
             parts = [f"{amt} {res}" for res, amt in self.mining_output.items() if amt > 0]
@@ -219,6 +232,17 @@ class TurnProcessor:
         report.turn_number = clock.turn_number
         report.game_date = turn_to_date(clock.turn_number)
         game_state.game_time = report.game_date
+
+        if hasattr(game_state, "pending_ship_actions"):
+            report.ship_actions = list(game_state.pending_ship_actions)
+            game_state.pending_ship_actions = []
+            for action in report.ship_actions:
+                for discovery in action.get("discoveries", []):
+                    report.discoveries.append(discovery)
+                for resource, amount in action.get("resources_spent", {}).items():
+                    report.resources_spent[resource] = (
+                        report.resources_spent.get(resource, 0) + amount
+                    )
 
         # ============================================================
         # Phase A — Ship & Mining
