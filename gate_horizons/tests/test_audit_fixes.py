@@ -403,5 +403,22 @@ class Test12ColonyStockpilesVisible(unittest.TestCase):
             self.assertIn(resource, source)
 
 
+class Test13SystemViewColonizationGuards(unittest.TestCase):
+    """Test 13: System view should respect colonization tech/cost gating."""
+
+    def test_system_view_uses_found_colony_and_checks(self):
+        """system_view.py should use GameState founding helpers and checks."""
+        sv_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "system_view.py",
+        )
+        with open(sv_path) as f:
+            source = f.read()
+
+        self.assertIn("can_found_colony", source)
+        self.assertIn("get_founding_cost", source)
+        self.assertIn("found_colony", source)
+
+
 if __name__ == "__main__":
     unittest.main()

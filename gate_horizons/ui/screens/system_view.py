@@ -16,15 +16,57 @@ import math
 from ..widgets.resource_bar import TopBar
 
 
-COLONIZATION_COST = {"credits": 50, "metals": 30}
+class NoticePopup(Popup):
+    """Simple notification popup for action results."""
+
+    def __init__(self, title="Notice", message="", **kwargs):
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
+        content.add_widget(Label(
+            text=message,
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(48),
+            halign="center",
+            valign="middle",
+        ))
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.15, 0.2, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        ok_btn.bind(on_release=lambda x: self.dismiss())
+        content.add_widget(ok_btn)
+
+        super().__init__(
+            title=title,
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+            **kwargs,
+        )
 
 
 class ColonizeConfirmPopup(Popup):
     """Confirmation popup for establishing a colony."""
 
-    def __init__(self, planet_name="", cost=None, can_afford=True, on_confirm=None, **kwargs):
+    def __init__(
+        self,
+        planet_name="",
+        cost=None,
+        can_afford=True,
+        can_confirm=True,
+        reason_text=None,
+        on_confirm=None,
+        **kwargs,
+    ):
         self.confirm_callback = on_confirm
-        cost = cost or COLONIZATION_COST
+        cost = cost or {}
 
         content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
 
@@ -55,8 +97,17 @@ class ColonizeConfirmPopup(Popup):
                 height=dp(22),
             ))
 
+        if reason_text:
+            content.add_widget(Label(
+                text=reason_text,
+                font_size="11sp",
+                color=(1, 0.5, 0.3, 0.9),
+                size_hint_y=None,
+                height=dp(22),
+            ))
+
         content.add_widget(Label(
-            text="A new colony starts with 100 population.",
+            text="A new colony starts with 50 population.",
             font_size="11sp",
             color=(0.5, 0.7, 0.9, 0.8),
             size_hint_y=None,
@@ -68,9 +119,9 @@ class ColonizeConfirmPopup(Popup):
         confirm_btn = Button(
             text="Establish Colony",
             font_size="13sp",
-            background_color=(0.15, 0.4, 0.2, 0.9) if can_afford else (0.2, 0.2, 0.2, 0.5),
-            color=(0.3, 1, 0.5, 1) if can_afford else (0.4, 0.4, 0.4, 0.5),
-            disabled=not can_afford,
+            background_color=(0.15, 0.4, 0.2, 0.9) if can_confirm else (0.2, 0.2, 0.2, 0.5),
+            color=(0.3, 1, 0.5, 1) if can_confirm else (0.4, 0.4, 0.4, 0.5),
+            disabled=not can_confirm,
         )
         confirm_btn.bind(on_release=self._on_confirm)
         btn_row.add_widget(confirm_btn)
@@ -399,15 +450,25 @@ class SystemViewScreen(Screen):
 
             # Colonize button
             if planet.colonizable and self.system_id not in self.game_state.colonies.colonies:
-                can_afford = self.game_state.resources.can_afford(COLONIZATION_COST)
-                cost_text = ", ".join(f"{v} {k}" for k, v in COLONIZATION_COST.items())
+                cost = self.game_state.colonies.get_founding_cost()
+                researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
+                can_found, _ = self.game_state.colonies.can_found_colony(
+                    self.system_id,
+                    planet.id,
+                    galaxy=self.game_state.galaxy,
+                    researched_techs=researched,
+                )
+                can_afford = self.game_state.resources.can_afford(cost)
+                can_confirm = can_found and can_afford
+                cost_text = ", ".join(f"{v} {k}" for k, v in cost.items())
                 col_btn = Button(
                     text=f"Establish Colony ({cost_text})",
                     size_hint_y=None,
                     height=dp(32),
                     font_size="12sp",
-                    background_color=(0.15, 0.4, 0.2, 0.9) if can_afford else (0.2, 0.2, 0.2, 0.5),
-                    color=(0.3, 1, 0.5, 1) if can_afford else (0.4, 0.4, 0.4, 0.5),
+                    background_color=(0.15, 0.4, 0.2, 0.9) if can_confirm else (0.2, 0.2, 0.2, 0.5),
+                    color=(0.3, 1, 0.5, 1) if can_confirm else (0.4, 0.4, 0.4, 0.5),
+                    disabled=not can_confirm,
                 )
                 col_btn.planet_id = planet.id
                 col_btn.planet_name = planet.name
@@ -498,12 +559,28 @@ class SystemViewScreen(Screen):
     def _on_colonize(self, btn):
         if not self.game_state:
             return
-        can_afford = self.game_state.resources.can_afford(COLONIZATION_COST)
+        cost = self.game_state.colonies.get_founding_cost()
+        researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
+        can_found, reason = self.game_state.colonies.can_found_colony(
+            self.system_id,
+            btn.planet_id,
+            galaxy=self.game_state.galaxy,
+            researched_techs=researched,
+        )
+        can_afford = self.game_state.resources.can_afford(cost)
+        reason_text = None
+        if not can_found:
+            reason_text = reason
+        elif not can_afford:
+            reason_text = "Insufficient resources"
+        can_confirm = can_found and can_afford
 
         popup = ColonizeConfirmPopup(
             planet_name=btn.planet_name,
-            cost=COLONIZATION_COST,
+            cost=cost,
             can_afford=can_afford,
+            can_confirm=can_confirm,
+            reason_text=reason_text,
             on_confirm=lambda pid=btn.planet_id, pname=btn.planet_name: self._do_colonize(pid, pname),
         )
         popup.open()
@@ -511,19 +588,19 @@ class SystemViewScreen(Screen):
     def _do_colonize(self, planet_id, planet_name):
         if not self.game_state:
             return
-        if self.game_state.resources.can_afford(COLONIZATION_COST):
-            self.game_state.resources.spend_dict(COLONIZATION_COST)
-            self.game_state.colonies.establish_colony(
-                self.system_id,
-                planet_id,
-                planet_name,
-            )
-            # Update system tier
-            system = self.game_state.galaxy.systems.get(self.system_id)
-            if system and system.tier == 0:
-                system.tier = 3
-            self.top_bar.update(self.game_state)
-            self._update_info()
+        success, message = self.game_state.found_colony(
+            self.system_id,
+            planet_id,
+            name=planet_name,
+        )
+        if not success:
+            NoticePopup(title="Colonization Blocked", message=message).open()
+            return
+        system = self.game_state.galaxy.systems.get(self.system_id)
+        if system and system.tier == 0:
+            system.tier = 3
+        self.top_bar.update(self.game_state)
+        self._update_info()
 
     def _on_build_ship(self, btn):
         if not self.game_state:
