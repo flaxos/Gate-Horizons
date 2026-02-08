@@ -1,5 +1,7 @@
 """Galaxy map screen — the primary game screen for Gate Horizons."""
 
+import math
+
 from kivy.uix.screenmanager import Screen
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -55,6 +57,7 @@ class StarMapWidget(Widget):
         self._pinch_start_scale = None
         self._pinch_start_offset = None
         self._dash_offset = 0.0
+        self._pulse_t = 0.0
         Clock.schedule_interval(self._advance_dash, 1 / 45)
         self.bind(size=self._redraw, pos=self._redraw)
 
@@ -104,7 +107,8 @@ class StarMapWidget(Widget):
 
                     # Color by gate status
                     if system.gate_active and conn.gate_active:
-                        Color(0.15, 0.6, 0.8, 0.6)  # Cyan for active
+                        pulse = math.sin(self._pulse_t) * 0.08
+                        Color(0.15, 0.6, 0.8, 0.6 + pulse)  # Cyan for active
                     else:
                         Color(0.3, 0.3, 0.3, 0.4)  # Gray for dormant
 
@@ -145,8 +149,9 @@ class StarMapWidget(Widget):
 
                 # Colony indicator (inner dot)
                 if sid in self.game_state.colonies.colonies:
-                    Color(1, 1, 0.3, 0.9)
-                    small = node_size * 0.35
+                    pulse = math.sin(self._pulse_t) * 0.05
+                    Color(1, 1, 0.3, 0.88 + pulse)
+                    small = node_size * (0.35 + pulse)
                     Ellipse(pos=(sx - small / 2, sy - small / 2),
                             size=(small, small))
 
@@ -199,6 +204,7 @@ class StarMapWidget(Widget):
 
     def _advance_dash(self, dt):
         self._dash_offset = (self._dash_offset + dp(2.5)) % dp(120)
+        self._pulse_t += dt * 1.5
         self._redraw()
 
     def _draw_ship_paths(self, galaxy):
