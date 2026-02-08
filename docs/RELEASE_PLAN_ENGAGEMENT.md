@@ -1,4 +1,20 @@
 # Release Plan: Engagement Systems
+## Execution Plan
+1. **Deliver Phase 1: Order Execution + Refuel/Repair + Action Handlers**
+   - Implement order execution flow with validation and resolution steps.
+   - Add refuel and repair loops as baseline ship sustainment actions.
+   - Establish the action handler framework for engagement actions.
+2. **Deliver Phase 2: Mission System + Anomaly/Diplomacy Gating**
+   - Build mission definitions, acceptance, and resolution flows.
+   - Implement anomaly and diplomacy gating rules tied to narrative data.
+   - Integrate mission outcomes with action handlers.
+3. **Deliver Phase 3: Encounter Contract + Gate Damage/Capacity**
+   - Formalize encounter contracts with terms, rewards, and outcomes.
+   - Add gate damage and capacity mechanics affecting encounter availability.
+   - Ensure contract outcomes feed back into missions and order execution.
+4. **Docs + Next Release Plan**
+   - Update engagement documentation as phases complete.
+   - Create the next gameplay/feature-focused release plan based on the upcoming roadmap.
 
 ## Phase 1: Order Execution + Refuel/Repair + Action Handlers
 **Scope**
