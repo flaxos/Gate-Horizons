@@ -58,6 +58,8 @@ class ResultSpec:
     outcome: str
     loot: dict = field(default_factory=dict)
     asset_status: dict = field(default_factory=dict)
+    objective_results: dict = field(default_factory=dict)
+    casualties: dict = field(default_factory=dict)
     notes: str = ""
     mission_time: str = ""
 
@@ -69,9 +71,24 @@ class ResultSpec:
             outcome=data.get("outcome", "unknown"),
             loot=data.get("loot", {}) or {},
             asset_status=data.get("assetStatus", {}) or {},
+            objective_results=data.get("objectiveResults", {}) or {},
+            casualties=data.get("casualties", {}) or {},
             notes=data.get("notes", ""),
             mission_time=data.get("missionTime", ""),
         )
+
+    def to_dict(self) -> dict:
+        return {
+            "contractVersion": self.contract_version,
+            "encounterId": self.encounter_id,
+            "outcome": self.outcome,
+            "loot": dict(self.loot),
+            "assetStatus": dict(self.asset_status),
+            "objectiveResults": dict(self.objective_results),
+            "casualties": dict(self.casualties),
+            "notes": self.notes,
+            "missionTime": self.mission_time,
+        }
 
 
 @dataclass

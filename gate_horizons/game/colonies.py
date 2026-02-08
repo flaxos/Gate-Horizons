@@ -143,6 +143,8 @@ class Colony:
         production_inventory: dict = None,
         extraction_sites: list = None,
         factories: list = None,
+        resource_ledger: list = None,
+        last_bottlenecks: list = None,
     ):
         self.system_id = system_id
         self.planet_id = planet_id
@@ -167,6 +169,8 @@ class Colony:
         self.production_inventory = production_inventory or empty_production_inventory()
         self.extraction_sites = extraction_sites or []
         self.factories = factories or []
+        self.resource_ledger = list(resource_ledger or [])
+        self.last_bottlenecks = list(last_bottlenecks or [])
 
     def get_tier(self) -> int:
         """Map colony level to world tier for backward compatibility."""
@@ -553,6 +557,8 @@ class Colony:
             "production_inventory": dict(self.production_inventory),
             "extraction_sites": [s.to_dict() for s in self.extraction_sites],
             "factories": [f.to_dict() for f in self.factories],
+            "resource_ledger": list(self.resource_ledger),
+            "last_bottlenecks": list(self.last_bottlenecks),
         }
 
     @classmethod
@@ -605,6 +611,8 @@ class Colony:
             production_inventory=prod_inv,
             extraction_sites=extraction_sites,
             factories=factories,
+            resource_ledger=list(data.get("resource_ledger", [])),
+            last_bottlenecks=list(data.get("last_bottlenecks", [])),
         )
 
 

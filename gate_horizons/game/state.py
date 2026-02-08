@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from importlib import resources
+import json
 from typing import Optional
 from uuid import uuid4
+from pathlib import Path
 
 from .galaxy import GalaxyMap
 from .ships import FleetManager
@@ -247,12 +249,12 @@ class GameState:
         system_id = pending.get("system_id")
         if system_id:
             self._apply_gate_damage(system_id, defender, combat_result)
+            self._apply_encounter_outcome_effects(system_id, result_spec)
         self.log.append(f"Encounter {encounter_id} resolved manually")
         return True, "Encounter result applied"
 
     def _apply_manual_combat_result(self, combat_result, attacker_ships: list) -> None:
-        for resource, amount in combat_result.loot.items():
-            self.resources.add(resource, amount)
+        self._apply_resource_delta(combat_result.loot)
         if combat_result.intel_gained:
             self.resources.add("intel", combat_result.intel_gained)
         for ship in attacker_ships:
@@ -265,6 +267,125 @@ class GameState:
                         combat_result.ships_destroyed.append(ship.id)
         for destroyed_id in combat_result.ships_destroyed:
             self.fleet.destroy_ship(destroyed_id)
+
+    def _apply_resource_delta(self, delta: dict) -> None:
+        for resource, amount in (delta or {}).items():
+            if amount == 0:
+                continue
+            if amount > 0:
+                self.resources.add(resource, amount)
+            else:
+                self.resources.spend(resource, abs(amount))
+
+    def _apply_encounter_outcome_effects(self, system_id: str, result_spec: dict) -> None:
+        outcome = ""
+        if isinstance(result_spec, dict):
+            outcome = result_spec.get("outcome", "") or ""
+        outcome = outcome.lower()
+        stability_delta = {
+            "success": 2,
+            "victory": 2,
+            "partial_success": 1,
+            "partial": 1,
+            "failure": -2,
+            "defeat": -3,
+            "loss": -3,
+        }.get(outcome, 0)
+        if stability_delta == 0:
+            return
+        colony = self.colonies.colonies.get(system_id) if hasattr(self, "colonies") else None
+        if not colony:
+            return
+        colony.stability = max(0, min(100, colony.stability + stability_delta))
+        self.log.append(
+            f"{colony.name} stability {'+' if stability_delta > 0 else ''}{stability_delta} from encounter"
+        )
+
+    def export_encounter_spec(
+        self,
+        system_id: str,
+        encounter_type: str = "pirates",
+        encounter_id: Optional[str] = None,
+        exports_dir: str = "exports/encounters",
+    ) -> tuple[bool, str]:
+        system = self.galaxy.systems.get(system_id)
+        if not system:
+            return False, f"System {system_id} not found"
+        defender = self._build_placeholder_encounter(encounter_type)
+        if not defender:
+            return False, f"Unsupported encounter type: {encounter_type}"
+
+        attacker_ships = self.fleet.get_ships_at(system_id)
+        if not attacker_ships:
+            attacker_ships = list(self.fleet.ships.values())[:1]
+
+        encounter_id = encounter_id or f"enc-{uuid4().hex[:8]}"
+        encounter_spec = self.combat.create_encounter_spec(
+            attacker_ships=attacker_ships,
+            defender=defender,
+            system=system,
+            encounter_id=encounter_id,
+            intent=f"Resolve {defender.type} encounter",
+        )
+
+        pending_entry = {
+            "encounter_id": encounter_id,
+            "spec": encounter_spec.to_dict(),
+            "attacker_ship_ids": [ship.id for ship in attacker_ships],
+            "defender": defender.to_dict(),
+            "system_id": system_id,
+        }
+        self.pending_encounters.append(pending_entry)
+
+        export_path = Path(exports_dir)
+        export_path.mkdir(parents=True, exist_ok=True)
+        filepath = export_path / "EncounterSpec.json"
+        filepath.write_text(
+            json.dumps(encounter_spec.to_dict(), indent=2),
+            encoding="utf-8",
+        )
+        self.log.append(f"EncounterSpec exported to {filepath}")
+        return True, str(filepath)
+
+    def import_result_spec(
+        self,
+        imports_dir: str = "imports/results",
+        filename: str = "ResultSpec.json",
+    ) -> tuple[bool, str]:
+        path = Path(imports_dir) / filename
+        if not path.exists():
+            return False, f"ResultSpec not found at {path}"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return self.submit_encounter_result(data)
+
+    @staticmethod
+    def _build_placeholder_encounter(encounter_type: str) -> Optional[EncounterData]:
+        encounter_type = (encounter_type or "").lower()
+        if encounter_type == "pirates":
+            return EncounterData(
+                type="pirates",
+                strength=12,
+                description="Pirate raiders ambush the convoy.",
+                loot_table={"credits": [10, 30], "metals": [5, 15]},
+                flee_difficulty=0.3,
+            )
+        if encounter_type == "anomaly":
+            return EncounterData(
+                type="hazard",
+                strength=8,
+                description="Spatial anomaly destabilizes ship systems.",
+                loot_table={"intel": [2, 6]},
+                flee_difficulty=0.2,
+            )
+        if encounter_type == "rogue_ai":
+            return EncounterData(
+                type="rogue_ai",
+                strength=15,
+                description="A rogue AI drone squadron blocks the jump.",
+                loot_table={"metals": [6, 12], "intel": [1, 4]},
+                flee_difficulty=0.35,
+            )
+        return None
 
     def _apply_gate_damage(self, system_id: str, encounter, combat_result, report=None) -> None:
         system = self.galaxy.systems.get(system_id)
@@ -1067,6 +1188,9 @@ class GameState:
         capacity_per_turn: int = None,
         latency_turns: int = 1,
         assigned_ships: list = None,
+        auto_policy: str = "manual",
+        auto_allowlist: list = None,
+        auto_max_per_resource: dict = None,
     ) -> tuple[Optional[TradeRoute], str]:
         """Create a logistics trade route between two colonies.
 
@@ -1101,6 +1225,9 @@ class GameState:
             capacity_per_turn=capacity_per_turn,
             latency_turns=latency_turns,
             manifest=manifest,
+            auto_policy=auto_policy,
+            auto_allowlist=auto_allowlist,
+            auto_max_per_resource=auto_max_per_resource,
             galaxy=self.galaxy,
             ships=assigned_ships or [],
         )

@@ -75,6 +75,9 @@ class TradeRoute:
         risk_factor: float = 0.0,
         enabled: bool = True,
         resource_manifest: dict = None,
+        auto_policy: str = "manual",
+        auto_allowlist: list = None,
+        auto_max_per_resource: dict = None,
         # Legacy fields preserved for backward compatibility
         assigned_ships: list = None,
         active: bool = True,
@@ -91,6 +94,9 @@ class TradeRoute:
             "outbound": {},  # {resource: amount_per_turn} from source to dest
             "inbound": {},   # {resource: amount_per_turn} from dest to source
         }
+        self.auto_policy = auto_policy or "manual"
+        self.auto_allowlist = list(auto_allowlist or [])
+        self.auto_max_per_resource = dict(auto_max_per_resource or {})
         # Legacy compatibility
         self.assigned_ships = assigned_ships or []
         self.active = active
@@ -114,7 +120,12 @@ class TradeRoute:
             bonus += tech_effects.get("logistics_capacity_bonus", 0)
         return max(0, int((base_capacity + freighter_capacity) * bonus))
 
-    def calculate_throughput(self, fleet=None, tech_effects: dict = None) -> dict:
+    def calculate_throughput(
+        self,
+        fleet=None,
+        tech_effects: dict = None,
+        manifest_override: Optional[dict] = None,
+    ) -> dict:
         """Per-turn resource transfer, constrained by capacity.
 
         The fleet parameter is kept for backward compatibility but the
@@ -127,7 +138,8 @@ class TradeRoute:
         throughput = {"outbound": {}, "inbound": {}}
 
         for direction in ("outbound", "inbound"):
-            manifest = self.resource_manifest.get(direction, {})
+            manifest_source = manifest_override or self.resource_manifest
+            manifest = manifest_source.get(direction, {})
             total_requested = sum(manifest.values())
             if total_requested == 0:
                 continue
@@ -160,6 +172,9 @@ class TradeRoute:
             "resource_manifest": {
                 k: dict(v) for k, v in self.resource_manifest.items()
             },
+            "auto_policy": self.auto_policy,
+            "auto_allowlist": list(self.auto_allowlist),
+            "auto_max_per_resource": dict(self.auto_max_per_resource),
             "assigned_ships": list(self.assigned_ships),
             "active": self.active,
             "efficiency": self.efficiency,
@@ -168,7 +183,8 @@ class TradeRoute:
     _INIT_FIELDS = {
         "id", "source_system", "destination_system",
         "capacity_per_turn", "latency_turns", "risk_factor", "enabled",
-        "resource_manifest", "assigned_ships", "active", "efficiency",
+        "resource_manifest", "auto_policy", "auto_allowlist", "auto_max_per_resource",
+        "assigned_ships", "active", "efficiency",
     }
 
     @classmethod
@@ -180,6 +196,49 @@ class TradeManager:
     def __init__(self):
         self.routes: dict[str, TradeRoute] = {}
         self.in_transit: list[Shipment] = []  # Goods currently being shipped
+
+    @staticmethod
+    def _build_auto_manifest(route: TradeRoute, colonies=None, capacity: int = 0) -> dict:
+        if not colonies:
+            return {"outbound": {}, "inbound": {}}
+
+        source = colonies.colonies.get(route.source_system)
+        dest = colonies.colonies.get(route.destination_system)
+        if not source or not dest:
+            return {"outbound": {}, "inbound": {}}
+
+        caps = dest.get_storage_caps()
+        allowlist = list(route.auto_allowlist or caps.keys())
+        deficits = {}
+        for resource_id in allowlist:
+            cap = caps.get(resource_id, 0)
+            if cap <= 0:
+                continue
+            current = dest.stockpiles.get(resource_id, 0)
+            deficit = max(0, cap - current)
+            if deficit <= 0:
+                continue
+            max_per = route.auto_max_per_resource.get(resource_id, 0)
+            if max_per > 0:
+                deficit = min(deficit, max_per)
+            deficits[resource_id] = deficit
+
+        manifest = {"outbound": {}, "inbound": {}}
+        remaining = max(0, capacity)
+
+        for resource_id, deficit in sorted(deficits.items(), key=lambda item: item[1], reverse=True):
+            if remaining <= 0:
+                break
+            available = source.stockpiles.get(resource_id, 0)
+            if available <= 0:
+                continue
+            amount = min(deficit, available, remaining)
+            if amount <= 0:
+                continue
+            manifest["outbound"][resource_id] = amount
+            remaining -= amount
+
+        return manifest
 
     @staticmethod
     def _apply_gate_capacity(throughput: dict, capacity_limit: Optional[int]) -> dict:
@@ -209,6 +268,9 @@ class TradeManager:
         latency_turns: int = 1,
         risk_factor: float = 0.0,
         manifest: dict = None,
+        auto_policy: str = "manual",
+        auto_allowlist: list = None,
+        auto_max_per_resource: dict = None,
         galaxy=None,
         ships: list = None,
         colonies=None,
@@ -241,6 +303,9 @@ class TradeManager:
             latency_turns=effective_latency,
             risk_factor=risk_factor,
             resource_manifest=manifest or {"outbound": {}, "inbound": {}},
+            auto_policy=auto_policy,
+            auto_allowlist=auto_allowlist or [],
+            auto_max_per_resource=auto_max_per_resource or {},
             assigned_ships=list(ships or []),
         )
 
@@ -336,7 +401,18 @@ class TradeManager:
             if not route.enabled:
                 continue
 
-            throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
+            capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
+            manifest_override = None
+            if route.auto_policy and route.auto_policy != "manual":
+                manifest_override = self._build_auto_manifest(
+                    route, colonies=colonies, capacity=capacity,
+                )
+
+            throughput = route.calculate_throughput(
+                fleet=fleet,
+                tech_effects=tech_effects,
+                manifest_override=manifest_override,
+            )
             gate_capacity = None
             if galaxy:
                 gate_capacity = galaxy.get_path_capacity(

@@ -8,6 +8,9 @@ Define the strict, contract‑only integration between Gate Horizons (meta) and 
 - Spaceship Sim returns **ResultSpec.json** (mission outcomes).
 - No other data exchange is allowed.
 - Both sides must treat these files as immutable, versioned contracts.
+- Default folders:
+  - `exports/encounters/EncounterSpec.json`
+  - `imports/results/ResultSpec.json`
 
 ## EncounterSpec (Mission Request)
 **Owner:** Gate Horizons
@@ -67,6 +70,10 @@ Define the strict, contract‑only integration between Gate Horizons (meta) and 
   "notes": "Black box recovered but civilian shuttle destroyed."
 }
 ```
+
+### Result interpretation (Gate Horizons)
+- `loot.resources` may include negative numbers to represent resource losses.
+- Outcome drives a small colony stability delta on the encounter system (success = +2, partial = +1, failure = -2, defeat = -3).
 
 ## Validation Expectations
 - Contract versions must match the declared schema version.

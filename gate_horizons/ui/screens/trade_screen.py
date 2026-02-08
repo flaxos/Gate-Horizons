@@ -25,6 +25,7 @@ class CreateRoutePopup(Popup):
         self.selected_dest = None
         self.selected_ships = []
         self.manifest = {"outbound": {}, "inbound": {}}
+        self.auto_policy = "manual"
 
         content = BoxLayout(orientation="vertical", spacing=dp(6), padding=dp(10))
 
@@ -103,6 +104,39 @@ class CreateRoutePopup(Popup):
             self.manifest_inputs[res] = inp
             manifest_grid.add_widget(inp)
         content.add_widget(manifest_grid)
+
+        # Step 3b: Automation toggle
+        content.add_widget(Label(
+            text="Automation:",
+            font_size="12sp",
+            bold=True,
+            color=(0.6, 0.8, 1, 1),
+            size_hint_y=None,
+            height=dp(22),
+            halign="left",
+            text_size=(dp(400), None),
+        ))
+
+        self.auto_toggle_btn = Button(
+            text="Auto Deficit: OFF",
+            font_size="11sp",
+            size_hint_y=None,
+            height=dp(30),
+            background_color=(0.2, 0.2, 0.35, 0.9),
+            color=(0.85, 0.95, 1, 1),
+        )
+        self.auto_toggle_btn.bind(on_release=self._toggle_auto)
+        content.add_widget(self.auto_toggle_btn)
+
+        content.add_widget(Label(
+            text="Auto mode ships toward destination deficits. Resource inputs act as per-turn caps.",
+            font_size="10sp",
+            color=(0.5, 0.7, 0.9, 0.8),
+            size_hint_y=None,
+            height=dp(18),
+            halign="left",
+            text_size=(dp(420), None),
+        ))
 
         # Step 4: Available freighters
         content.add_widget(Label(
@@ -231,6 +265,18 @@ class CreateRoutePopup(Popup):
                     )
         self._update_status()
 
+    def _toggle_auto(self, *args):
+        if self.auto_policy == "manual":
+            self.auto_policy = "auto_deficit"
+            self.auto_toggle_btn.text = "Auto Deficit: ON"
+            self.auto_toggle_btn.background_color = (0.15, 0.35, 0.2, 0.9)
+            self.auto_toggle_btn.color = (0.3, 1, 0.5, 1)
+        else:
+            self.auto_policy = "manual"
+            self.auto_toggle_btn.text = "Auto Deficit: OFF"
+            self.auto_toggle_btn.background_color = (0.2, 0.2, 0.35, 0.9)
+            self.auto_toggle_btn.color = (0.85, 0.95, 1, 1)
+
     def _populate_freighters(self):
         self.ship_layout.clear_widgets()
         if not self.game_state:
@@ -296,23 +342,40 @@ class CreateRoutePopup(Popup):
         if not self.selected_ships:
             return
 
-        # Build manifest from inputs
-        outbound = {}
-        for res, inp in self.manifest_inputs.items():
-            try:
-                val = int(inp.text)
-                if val > 0:
-                    outbound[res] = val
-            except ValueError:
-                pass
+        auto_allowlist = []
+        auto_max_per_resource = {}
+        manifest = {"outbound": {}, "inbound": {}}
 
-        manifest = {"outbound": outbound, "inbound": {}}
+        if self.auto_policy != "manual":
+            for res, inp in self.manifest_inputs.items():
+                try:
+                    val = int(inp.text)
+                except ValueError:
+                    val = 0
+                if val > 0:
+                    auto_allowlist.append(res)
+                    auto_max_per_resource[res] = val
+            if not auto_allowlist:
+                auto_allowlist = list(self.manifest_inputs.keys())
+        else:
+            outbound = {}
+            for res, inp in self.manifest_inputs.items():
+                try:
+                    val = int(inp.text)
+                    if val > 0:
+                        outbound[res] = val
+                except ValueError:
+                    pass
+            manifest = {"outbound": outbound, "inbound": {}}
 
         route, message = self.game_state.create_trade_route(
             source=self.selected_source,
             dest=self.selected_dest,
             assigned_ships=self.selected_ships,
             manifest=manifest,
+            auto_policy=self.auto_policy,
+            auto_allowlist=auto_allowlist,
+            auto_max_per_resource=auto_max_per_resource,
         )
 
         if route:
@@ -434,11 +497,27 @@ class TradeScreen(Screen):
             dst = self.game_state.galaxy.systems.get(route.destination_system)
             src_name = src.name if src else route.source_system
             dst_name = dst.name if dst else route.destination_system
+            tech_effects = self.game_state.tech.get_effects() if self.game_state.tech else {}
+            effective_capacity = route.get_effective_capacity(
+                fleet=self.game_state.fleet,
+                tech_effects=tech_effects,
+            )
+            in_transit = [
+                s for s in self.game_state.trade.in_transit if s.route_id == route_id
+            ]
+            queue_len = len(in_transit)
+            next_arrival = (
+                min(s.turns_remaining for s in in_transit) if in_transit else None
+            )
+            cargo_summary = {}
+            for shipment in in_transit:
+                for res, amt in shipment.resources.items():
+                    cargo_summary[res] = cargo_summary.get(res, 0) + amt
 
             card = BoxLayout(
                 orientation="vertical",
                 size_hint_y=None,
-                height=dp(120),
+                height=dp(150),
                 padding=dp(8),
                 spacing=dp(3),
             )
@@ -475,6 +554,44 @@ class TradeScreen(Screen):
                 text_size=(dp(500), None),
             ))
 
+            policy_label = "Manual"
+            if route.auto_policy and route.auto_policy != "manual":
+                policy_label = "Auto (deficit)"
+            card.add_widget(Label(
+                text=f"Policy: {policy_label} | Capacity: {effective_capacity}/turn | Latency: {route.latency_turns}t",
+                font_size="10sp",
+                color=(0.6, 0.8, 1, 0.75),
+                size_hint_y=None,
+                height=dp(16),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+
+            eta_text = "N/A" if next_arrival is None else f"{next_arrival}t"
+            card.add_widget(Label(
+                text=f"Queue: {queue_len} | Next arrival ETA: {eta_text}",
+                font_size="10sp",
+                color=(0.5, 0.75, 0.95, 0.75),
+                size_hint_y=None,
+                height=dp(16),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+
+            if cargo_summary:
+                cargo_text = ", ".join(
+                    f"{amt} {res}" for res, amt in cargo_summary.items() if amt > 0
+                )
+                card.add_widget(Label(
+                    text=f"In transit: {cargo_text}",
+                    font_size="10sp",
+                    color=(0.7, 0.85, 1, 0.85),
+                    size_hint_y=None,
+                    height=dp(16),
+                    halign="left",
+                    text_size=(dp(500), None),
+                ))
+
             # Manifest
             outbound = route.resource_manifest.get("outbound", {})
             if outbound:
@@ -490,7 +607,17 @@ class TradeScreen(Screen):
                 ))
 
             # Throughput
-            throughput = route.calculate_throughput(self.game_state.fleet)
+            manifest_override = None
+            if route.auto_policy and route.auto_policy != "manual":
+                manifest_override = self.game_state.trade._build_auto_manifest(
+                    route,
+                    colonies=self.game_state.colonies,
+                    capacity=effective_capacity,
+                )
+            throughput = route.calculate_throughput(
+                fleet=self.game_state.fleet,
+                manifest_override=manifest_override,
+            )
             ob_tp = throughput.get("outbound", {})
             if ob_tp:
                 tp_text = ", ".join(f"{v} {k}/turn" for k, v in ob_tp.items() if v > 0)

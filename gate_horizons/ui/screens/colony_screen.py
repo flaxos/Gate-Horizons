@@ -332,6 +332,83 @@ class ColonyScreen(Screen):
 
         detail_content.add_widget(stock_grid)
 
+        # Net delta per turn
+        detail_content.add_widget(Label(
+            text="Net Delta / Turn",
+            font_size="14sp",
+            bold=True,
+            color=(0.6, 0.8, 1, 1),
+            size_hint_y=None,
+            height=dp(26),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
+
+        net_grid = GridLayout(
+            cols=2,
+            size_hint_y=None,
+            row_default_height=dp(24),
+            row_force_default=True,
+            spacing=dp(6),
+        )
+        net_grid.bind(minimum_height=net_grid.setter("height"))
+
+        latest_ledger = colony.resource_ledger[-1] if colony.resource_ledger else {}
+        net_values = latest_ledger.get("net", {}) if latest_ledger else {}
+        for resource in RESOURCE_TYPES:
+            delta = net_values.get(resource, 0)
+            sign = "+" if delta >= 0 else ""
+            color = (0.3, 1, 0.5, 0.9) if delta >= 0 else (1, 0.5, 0.3, 0.9)
+            net_grid.add_widget(Label(
+                text=resource_labels.get(resource, resource.title()),
+                font_size="11sp",
+                color=(0.8, 0.9, 1, 1),
+                halign="left",
+                text_size=(dp(140), None),
+            ))
+            net_grid.add_widget(Label(
+                text=f"{sign}{delta}",
+                font_size="11sp",
+                color=color,
+                halign="left",
+                text_size=(dp(140), None),
+            ))
+        detail_content.add_widget(net_grid)
+
+        # Bottlenecks
+        detail_content.add_widget(Label(
+            text="Bottlenecks",
+            font_size="14sp",
+            bold=True,
+            color=(0.6, 0.8, 1, 1),
+            size_hint_y=None,
+            height=dp(26),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
+        bottlenecks = colony.last_bottlenecks or []
+        if bottlenecks:
+            for item in bottlenecks:
+                detail_content.add_widget(Label(
+                    text=f"• {item}",
+                    font_size="11sp",
+                    color=(1, 0.6, 0.4, 0.9),
+                    size_hint_y=None,
+                    height=dp(20),
+                    halign="left",
+                    text_size=(dp(500), None),
+                ))
+        else:
+            detail_content.add_widget(Label(
+                text="No active bottlenecks.",
+                font_size="11sp",
+                color=(0.6, 0.75, 0.9, 0.8),
+                size_hint_y=None,
+                height=dp(18),
+                halign="left",
+                text_size=(dp(500), None),
+            ))
+
         # Colony upgrade section
         detail_content.add_widget(Label(
             text="Colony Upgrade",
