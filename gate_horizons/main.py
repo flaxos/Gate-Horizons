@@ -50,6 +50,7 @@ from gate_horizons.ui.screens.tactical_screen import TacticalScreen
 from gate_horizons.ui.screens.relations_screen import RelationsScreen
 from gate_horizons.ui.screens.event_screen import EventPopup
 from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
+from gate_horizons.ui.screens.turn_report_screen import TurnReportScreen
 from gate_horizons.ui.widgets.save_load import LoadGamePopup
 
 logger = logging.getLogger("gate_horizons.app")
@@ -131,7 +132,7 @@ class GateHorizonsApp(App):
         "system_view", "colony_screen", "fleet_screen", "tech_screen",
         "trade_screen", "production_screen", "logistics_screen",
         "shipyard_screen", "mission_screen", "encounter_screen", "tactical_screen",
-        "relations_screen", "gravity_well",
+        "relations_screen", "gravity_well", "turn_report",
     }
 
     def __init__(self, **kwargs):
@@ -185,6 +186,7 @@ class GateHorizonsApp(App):
         self.tactical_screen = TacticalScreen()
         self.relations_screen = RelationsScreen()
         self.gravity_well_screen = GravityWellScreen()
+        self.turn_report_screen = TurnReportScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -201,6 +203,7 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.tactical_screen)
         self.sm.add_widget(self.relations_screen)
         self.sm.add_widget(self.gravity_well_screen)
+        self.sm.add_widget(self.turn_report_screen)
 
         self.sm.current = "main_menu"
 
@@ -303,6 +306,18 @@ class GateHorizonsApp(App):
         if self.game_state:
             self._push_state_to_screens()
         self.sm.current = screen_name
+
+    def show_turn_report(self, report, pending_encounters, on_continue, on_view_encounters):
+        """Show the full-screen turn report summary."""
+        return_screen = self.sm.current
+        self.turn_report_screen.set_report(
+            report=report,
+            pending_encounters=pending_encounters,
+            on_continue=on_continue,
+            on_view_encounters=on_view_encounters,
+            return_screen=return_screen,
+        )
+        self.sm.current = "turn_report"
 
     def start_tactical_encounter(self, encounter_id: str):
         """Launch tactical combat for a pending encounter."""

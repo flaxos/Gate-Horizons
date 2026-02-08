@@ -15,7 +15,6 @@ from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
-from ..widgets.notification import TurnReportPopup
 from ..widgets.save_load import SaveGamePopup, LoadGamePopup
 from gate_horizons.game.resources import RESOURCE_TYPES
 
@@ -1031,13 +1030,15 @@ class GalaxyMapScreen(Screen):
         self.refresh()
 
         # Show turn report
-        popup = TurnReportPopup(
-            report=report,
-            on_continue=self._after_turn_report,
-            pending_encounters=len(self.game_state.pending_encounters),
-            on_view_encounters=self._open_encounters,
-        )
-        popup.open()
+        from kivy.app import App
+        app = App.get_running_app()
+        if app and hasattr(app, "show_turn_report"):
+            app.show_turn_report(
+                report=report,
+                pending_encounters=len(self.game_state.pending_encounters),
+                on_continue=self._after_turn_report,
+                on_view_encounters=self._open_encounters,
+            )
 
         # Show events if any
         self._pending_events = list(self.game_state.events.event_queue)

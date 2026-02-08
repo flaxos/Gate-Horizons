@@ -91,7 +91,7 @@ Explore frontier (Level 3) → Discover resources & contacts
   - Some gates are damaged — require repair before use
   - Gate capacity limits: mass throughput per turn
   - Strategic chokepoints where gates converge
-- **Mini-Map:** Planned zoomed-out view showing sphere of influence with color-coded tiers
+- **Mini-Map:** Implemented compact galaxy overview with the current system highlighted; sphere-of-influence overlay remains planned
 
 ### 4.2 Ship System
 Ships are your primary agency in the world. Each has capabilities that determine available contextual actions.

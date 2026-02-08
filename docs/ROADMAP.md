@@ -8,6 +8,9 @@
 - [x] Map keyboard shortcuts (WASD/arrows, +/-/Home, Esc/back)
 - [x] Selection highlight ring animation (system view bodies + ships)
 - [x] Ship movement lines on system map (dashed path to gate)
+- [x] Zoom-threshold auto-level switching (system ↔ body)
+- [x] Mini-map overlay (system view context)
+- [x] Turn report summary screen
 
 ## Priority Backlog
 
@@ -15,12 +18,6 @@
 No P0 items currently pending.
 
 ### P1 — High Impact, Medium Risk
-
-#### 4. Zoom-Threshold Auto-Level Switching
-- **Why:** Natural zoom UX — zooming deep into a system could auto-switch to body detail.
-- **Acceptance criteria:** At scale > 2.5x on a planet, auto-switch to body detail. At scale < 0.5x, auto-switch back to system view.
-- **Effort:** M
-- **Risk:** Medium — edge cases with rapid zoom, needs good thresholds and debounce.
 
 #### 5. Fleet Group Management
 - **Why:** Late-game fleet management is tedious with many individual ships.
@@ -35,18 +32,6 @@ No P0 items currently pending.
 - **Risk:** Medium — performance with many routes; needs throttling.
 
 ### P2 — Medium Impact
-
-#### 7. Mini-Map Overlay
-- **Why:** When zoomed into a system, lose context of galaxy position.
-- **Acceptance criteria:** Small galaxy overview in corner showing current system highlighted. Click to jump.
-- **Effort:** M
-- **Risk:** Low-Medium.
-
-#### 8. Turn Report Summary Screen
-- **Why:** Current turn report popup is small. Lots of info gets missed.
-- **Acceptance criteria:** Full-screen turn summary with sections: Research, Production, Colonies, Fleet, Events. Clickable entries that navigate to relevant screen.
-- **Effort:** M
-- **Risk:** Low.
 
 #### 9. Planet Comparison View
 - **Why:** When choosing where to colonise, comparing planets is manual.

@@ -32,9 +32,11 @@
 - Confirm each item is explicitly listed as planned in docs and not marked Shipped.
 
 ### NEXT3 (priority + rationale)
-1. **Keyboard shortcuts for map navigation (complete Esc/back)** — P0 UX item in `docs/ROADMAP.md`; partially shipped and low-risk to finish. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
-2. **Selection highlight ring animation** — P0 clarity item in `docs/ROADMAP.md`; canvas-only enhancement with minimal dependencies. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
-3. **Ship movement lines on system map** — P0 navigation clarity item in `docs/ROADMAP.md`; reuses existing galaxy map path style. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+1. **Zoom-threshold auto-level switching** — P1 UX item in `docs/ROADMAP.md`; minimal dependency and contained to Gravity Well map switching. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+2. **Mini-map overlay** — P2 navigation item in `docs/ROADMAP.md`; scoped to a compact galaxy context widget with current system highlight. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+3. **Turn report summary screen** — P2 clarity item in `docs/ROADMAP.md`; turns the popup into a full-screen summary with section shortcuts. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+
+**Deferrals:** Fleet group management and resource flow visualisation remain pending due to larger data-model or animation dependencies, so they do not meet the minimal-dependency rule for this NEXT3 batch. References: `docs/ROADMAP.md`.
 
 ### Milestones and file lists
 
@@ -48,19 +50,19 @@
   - `gate_horizons/tests/*`
   - Docs: `README.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`
 
-#### Milestone 1 — Map keyboard shortcuts parity (NEXT3 1/3)
-- Add Escape/back navigation shortcut and ensure shortcuts register on map screens.
-- Tests: UI loop tests (if applicable) and any new shortcut-specific coverage.
+#### Milestone 1 — Zoom-threshold auto-level switching (NEXT3 1/3)
+- Add zoom-based auto-switching between system and body levels with debounce thresholds.
+- Tests: UI map camera regression coverage for auto-switch thresholds.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 2 — Selection highlight ring animation (NEXT3 2/3)
-- Add pulsing selection ring for bodies and brighter pulse for selected ships.
-- Tests: coverage for selection state rendering metadata where practical.
+#### Milestone 2 — Mini-map overlay (NEXT3 2/3)
+- Add a compact galaxy overview widget to system view with current system highlighted.
+- Tests: UI map camera/overlay smoke tests or source checks.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 3 — Ship movement lines on system map (NEXT3 3/3)
-- Render dashed movement lines from ships to destinations in gravity well system view.
-- Tests: update UI map tests or add rendering metadata checks.
+#### Milestone 3 — Turn report summary screen (NEXT3 3/3)
+- Replace the compact popup with a full-screen turn report summary and section shortcuts.
+- Tests: update UI screen coverage for turn report flow.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
 ### Out of scope

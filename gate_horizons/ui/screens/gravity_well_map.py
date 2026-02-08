@@ -10,6 +10,7 @@ the MapCameraWidget base class.
 """
 
 import math
+import time
 
 from kivy.uix.screenmanager import Screen
 from kivy.uix.floatlayout import FloatLayout
@@ -508,6 +509,67 @@ class BodyDetailWidget(MapCameraWidget):
 
 
 # ======================================================================
+# Mini-map overlay (galaxy context)
+# ======================================================================
+
+class MiniMapWidget(Widget):
+    """Compact galaxy overview with current system highlighted."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.game_state = None
+        self.system_id = None
+        self.bind(size=self._redraw, pos=self._redraw)
+
+    def set_data(self, game_state, system_id):
+        self.game_state = game_state
+        self.system_id = system_id
+        self._redraw()
+
+    def _redraw(self, *args):
+        self.canvas.clear()
+        if not self.game_state:
+            return
+
+        systems = list(self.game_state.galaxy.systems.values())
+        if not systems:
+            return
+
+        min_x = min(s.x for s in systems)
+        max_x = max(s.x for s in systems)
+        min_y = min(s.y for s in systems)
+        max_y = max(s.y for s in systems)
+
+        span_x = max(1.0, max_x - min_x)
+        span_y = max(1.0, max_y - min_y)
+        pad = dp(6)
+        width = max(1.0, self.width - pad * 2)
+        height = max(1.0, self.height - pad * 2)
+
+        with self.canvas:
+            Color(0.03, 0.05, 0.1, 0.9)
+            Rectangle(pos=self.pos, size=self.size)
+
+            for system in systems:
+                nx = (system.x - min_x) / span_x
+                ny = (system.y - min_y) / span_y
+                sx = self.x + pad + nx * width
+                sy = self.y + pad + ny * height
+
+                if system.id == self.system_id:
+                    Color(0.3, 0.9, 1, 1)
+                    Ellipse(pos=(sx - dp(4), sy - dp(4)), size=(dp(8), dp(8)))
+                    Color(0.3, 0.9, 1, 0.5)
+                    Ellipse(pos=(sx - dp(7), sy - dp(7)), size=(dp(14), dp(14)))
+                else:
+                    if system.discovered:
+                        Color(0.6, 0.8, 1, 0.8)
+                    else:
+                        Color(0.2, 0.3, 0.4, 0.6)
+                    Ellipse(pos=(sx - dp(2), sy - dp(2)), size=(dp(4), dp(4)))
+
+
+# ======================================================================
 # Gravity Well Screen — the container with breadcrumb + level switching
 # ======================================================================
 
@@ -522,6 +584,9 @@ class GravityWellScreen(Screen):
     # Breadcrumb level constants
     LEVEL_SYSTEM = 1
     LEVEL_BODY = 2
+    AUTO_SWITCH_ZOOM_IN = 2.5
+    AUTO_SWITCH_ZOOM_OUT = 0.5
+    AUTO_SWITCH_DEBOUNCE_S = 0.35
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -530,6 +595,7 @@ class GravityWellScreen(Screen):
         self.system_id = None
         self._current_level = self.LEVEL_SYSTEM
         self._selected_body_id = None
+        self._last_auto_switch = 0.0
         self._build_ui()
 
     def _build_ui(self):
@@ -612,10 +678,17 @@ class GravityWellScreen(Screen):
             on_body_tap=self._on_body_tap,
             on_ship_tap=self._on_ship_tap,
             on_back=self._go_to_galaxy,
+            on_view_change=self._on_system_view_change,
+        )
+        self.mini_map = MiniMapWidget(
+            size_hint=(None, None),
+            size=(dp(160), dp(120)),
+            pos_hint={"x": 0.02, "y": 0.02},
         )
         self.body_detail = BodyDetailWidget(
             on_region_tap=self._on_region_tap,
             on_back=self._switch_to_system_level,
+            on_view_change=self._on_body_view_change,
         )
 
     def _build_legend(self):
@@ -676,6 +749,7 @@ class GravityWellScreen(Screen):
         self._current_level = self.LEVEL_SYSTEM
         self._selected_body_id = None
         self.top_bar.update(game_state)
+        self.mini_map.set_data(game_state, system_id)
         self._switch_to_system_level()
 
     def set_game_state(self, game_state):
@@ -685,6 +759,7 @@ class GravityWellScreen(Screen):
         if self._current_level == self.LEVEL_SYSTEM:
             self.system_map.game_state = game_state
             self.system_map._redraw()
+            self.mini_map.set_data(game_state, self.system_id)
         elif self._current_level == self.LEVEL_BODY:
             self.body_detail.game_state = game_state
             self.body_detail._redraw()
@@ -700,6 +775,8 @@ class GravityWellScreen(Screen):
         self.system_map.set_data(self.game_state, self.system_id)
         self.system_map.size_hint = (1, 1)
         self.map_container.add_widget(self.system_map)
+        self.mini_map.set_data(self.game_state, self.system_id)
+        self.map_container.add_widget(self.mini_map)
         self._update_breadcrumb()
         self._update_info_panel()
 
@@ -712,6 +789,30 @@ class GravityWellScreen(Screen):
         self.map_container.add_widget(self.body_detail)
         self._update_breadcrumb()
         self._update_info_panel()
+
+    def _can_auto_switch(self) -> bool:
+        now = time.monotonic()
+        if now - self._last_auto_switch < self.AUTO_SWITCH_DEBOUNCE_S:
+            return False
+        self._last_auto_switch = now
+        return True
+
+    def _on_system_view_change(self):
+        if self._current_level != self.LEVEL_SYSTEM or not self.game_state or not self.system_id:
+            return
+        system = self.game_state.galaxy.systems.get(self.system_id)
+        if not system or not system.surveyed:
+            return
+        if self.system_map._scale >= self.AUTO_SWITCH_ZOOM_IN and self._selected_body_id:
+            if self._can_auto_switch():
+                self._switch_to_body_level(self._selected_body_id)
+
+    def _on_body_view_change(self):
+        if self._current_level != self.LEVEL_BODY:
+            return
+        if self.body_detail._scale <= self.AUTO_SWITCH_ZOOM_OUT:
+            if self._can_auto_switch():
+                self._switch_to_system_level()
 
     # ------------------------------------------------------------------
     # Breadcrumb

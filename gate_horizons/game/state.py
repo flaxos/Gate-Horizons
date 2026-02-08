@@ -462,16 +462,6 @@ class GameState:
             intent=f"Resolve {defender.type} encounter",
         )
 
-        pending_entry = {
-            "encounter_id": encounter_id,
-            "spec": encounter_spec.to_dict(),
-            "attacker_ship_ids": [ship.id for ship in attacker_ships],
-            "defender": defender.to_dict(),
-            "system_id": system_id,
-            "branch_options": self._get_encounter_branches(defender),
-        }
-        self.pending_encounters.append(pending_entry)
-
         export_path = Path(exports_dir)
         export_path.mkdir(parents=True, exist_ok=True)
         filepath = export_path / "EncounterSpec.json"
@@ -479,6 +469,15 @@ class GameState:
         valid, message = self.combat.validate_encounter_spec(payload)
         if not valid:
             return False, message
+        pending_entry = {
+            "encounter_id": encounter_id,
+            "spec": payload,
+            "attacker_ship_ids": [ship.id for ship in attacker_ships],
+            "defender": defender.to_dict(),
+            "system_id": system_id,
+            "branch_options": self._get_encounter_branches(defender),
+        }
+        self.pending_encounters.append(pending_entry)
         filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         self.log.append(f"EncounterSpec exported to {filepath}")
         return True, str(filepath)
