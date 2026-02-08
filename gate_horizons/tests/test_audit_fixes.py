@@ -385,5 +385,23 @@ class Test11PushStateCoversAllScreens(unittest.TestCase):
             )
 
 
+class Test12ColonyStockpilesVisible(unittest.TestCase):
+    """Test 12: Colony screen surfaces stockpiles and caps."""
+
+    def test_colony_screen_includes_stockpile_section(self):
+        """Colony screen should render a stockpile section with storage caps."""
+        cs_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "colony_screen.py",
+        )
+        with open(cs_path) as f:
+            source = f.read()
+
+        self.assertIn("Stockpiles", source)
+        self.assertIn("get_storage_caps", source)
+        for resource in ["energy", "metals", "exotics", "credits", "intel"]:
+            self.assertIn(resource, source)
+
+
 if __name__ == "__main__":
     unittest.main()
