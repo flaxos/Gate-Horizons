@@ -3,20 +3,22 @@
 ## STAB-01 + NEXT3: Regression hardening and next roadmap triad
 
 ### Regression risk list (top 10)
-1. Encounter pipeline writes malformed ResultSpec payloads and fails to apply consequences.
-2. Tactical combat returns inconsistent victory/defeat results or leaves encounters pending.
-3. Diplomacy actions apply relation deltas but do not persist across save/load.
-4. Ship order execution fails for refuel/repair when colony or spaceport is missing.
-5. Turn processor skips ship orders or applies them twice on multi-turn loops.
-6. Save/load regression drops missions, diplomacy, or pending encounter state.
-7. Trade routes ignore gate capacity or negative gate status, causing invalid shipments.
-8. Event engine re-triggers one-time events after being queued.
-9. Tech effects not applied to derived systems (logistics capacity, construction time, sensor range).
-10. UI encounter navigation breaks return path to galaxy map or save/load.
+1. Gravity well map navigation fails to return to galaxy map or loses breadcrumb state.
+2. Intra-system movement incorrectly advances the turn or bypasses travel validation.
+3. Encounter pipeline writes malformed ResultSpec payloads and fails to apply consequences.
+4. Tactical combat returns inconsistent victory/defeat results or leaves encounters pending.
+5. Diplomacy actions apply relation deltas but do not persist across save/load.
+6. Ship order execution fails for refuel/repair when colony or spaceport is missing.
+7. Turn processor skips ship orders or applies them twice on multi-turn loops.
+8. Save/load regression drops missions, diplomacy, or pending encounter state.
+9. Trade routes ignore gate capacity or negative gate status, causing invalid shipments.
+10. Event engine re-triggers one-time events after being queued.
 
 ### Bugfix checklist + acceptance tests
 - Validate encounter branch outputs and ResultSpec application.
   - Acceptance: `pytest gate_horizons/tests/test_encounter_contract.py gate_horizons/tests/test_encounter_branching.py`
+- Validate intra-system movement does not advance turns or skip travel rules.
+  - Acceptance: `pytest gate_horizons/tests/test_intra_system_movement.py`
 - Confirm ship order execution and refuel/repair handlers are deterministic and validated.
   - Acceptance: `pytest gate_horizons/tests/test_ship_construction.py gate_horizons/tests/test_audit_fixes.py`
 - Save/load round-trip preserves diplomacy, missions, encounters, and logistics.
@@ -25,13 +27,13 @@
   - Acceptance: manual smoke test steps in release notes.
 
 ### Next 3 selection rule
-- Source docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`, `docs/FEATURE_STATUS.md`.
+- Source docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/ROADMAP.md`.
 - Select highest-priority items that are planned and not shipped, with minimal dependencies.
 
 ### NEXT3 (priority + rationale)
-1. **Full tech tree (20–30 techs)** — Phase 2 gameplay scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Required to make progression meaningful and is data-focused (low dependency).
-2. **Procedural galaxy generation** — Phase 2 exploration scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Enables replayability without replacing current demo template.
-3. **Expanded event library (100+ events)** — Phase 2 content scope in `PROJECT_PLAN.md` and `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md`. Adds depth without new systems.
+1. **Keyboard shortcuts for map navigation (complete Esc/back)** — P0 UX item in `docs/ROADMAP.md`; partially shipped and low-risk to finish.
+2. **Selection highlight ring animation** — P0 clarity item in `docs/ROADMAP.md`; canvas-only enhancement with minimal dependencies.
+3. **Ship movement lines on system map** — P0 navigation clarity item in `docs/ROADMAP.md`; reuses existing galaxy map path style.
 
 ### Milestones and file lists
 
@@ -45,29 +47,26 @@
   - `gate_horizons/tests/*`
   - Docs: `README.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`
 
-#### Milestone 1 — Full tech tree (NEXT3 1/3)
-- Expand `gate_horizons/data/tech_tree.json` to 20–30 techs.
-- Ensure effects are wired to existing systems (logistics, sensors, construction).
-- Tests: update/add tech effect tests as needed.
-- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+#### Milestone 1 — Map keyboard shortcuts parity (NEXT3 1/3)
+- Add Escape/back navigation shortcut and ensure shortcuts register on map screens.
+- Tests: UI loop tests (if applicable) and any new shortcut-specific coverage.
+- Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 2 — Procedural galaxy generation (NEXT3 2/3)
-- Add deterministic procedural galaxy generator (seeded) in `gate_horizons/game/galaxy.py`.
-- Add optional entrypoint to create procedural galaxies without breaking demo template flow.
-- Tests: add generator tests for system count/connectivity.
-- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+#### Milestone 2 — Selection highlight ring animation (NEXT3 2/3)
+- Add pulsing selection ring for bodies and brighter pulse for selected ships.
+- Tests: coverage for selection state rendering metadata where practical.
+- Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 3 — Expanded event library (NEXT3 3/3)
-- Expand exploration events to 100+ entries in `gate_horizons/data/events/`.
-- Maintain consistent schema and tag coverage for gating.
-- Tests: add data validation tests (schema + count).
-- Docs: `README.md`, `PROJECT_PLAN.md`, `DESIGN_SUMMARY.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`.
+#### Milestone 3 — Ship movement lines on system map (NEXT3 3/3)
+- Render dashed movement lines from ships to destinations in gravity well system view.
+- Tests: update UI map tests or add rendering metadata checks.
+- Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
 ### Out of scope
 - Android build + Buildozer packaging.
 - Real-time tactical runtime integration.
 - New gameplay systems beyond the NEXT3 list.
-- Economy overhaul or procedural narrative generation.
+- Economy overhaul, piracy systems, or procedural narrative generation.
 
 ### Rollback plan
 - Each milestone is an isolated commit for targeted revert.

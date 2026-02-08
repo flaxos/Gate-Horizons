@@ -91,7 +91,7 @@ Explore frontier (Level 3) → Discover resources & contacts
   - Some gates are damaged — require repair before use
   - Gate capacity limits: mass throughput per turn
   - Strategic chokepoints where gates converge
-- **Mini-Map:** Zoomed out view showing sphere of influence with color-coded tiers
+- **Mini-Map:** Planned zoomed-out view showing sphere of influence with color-coded tiers
 
 ### 4.2 Ship System
 Ships are your primary agency in the world. Each has capabilities that determine available contextual actions.
@@ -187,7 +187,7 @@ Encounters trigger when ships interact with points of interest or hostile entiti
   - **Engineering:** Ship hulls, mining efficiency, construction speed
   - **Sensors:** Scan range, anomaly detection, tactical bonuses
   - **Xenology:** Diplomacy bonuses, alien tech integration, cultural understanding
-- **Demo Slice:** ~20 techs total (5 per branch, 3 tiers each)
+- **Demo Slice:** 24 techs total (4 branches, multiple tiers)
 
 ### 4.8 Events & Narrative
 - **Pre-generated content library** (built with LLM during development, stored as JSON)
@@ -300,14 +300,15 @@ gate_horizons/
 - **Auto-resolve combat** with probability display
 - **Tactical hex combat MVP** (turn-based)
 - **Diplomacy relations** with encounter options and persistence
-- **10-15 pre-generated events** that fire based on game state
-- **Simple tech tree** (10 unlocks across 2 branches)
+- **100+ pre-generated exploration events** that fire based on game state
+- **24-tech research tree** across 4 branches
 - **Turn processing** that ticks all systems forward
 - **Save/Load** functionality
-- **Mini-map** with sphere of influence visualization
 
 ### What's NOT in Demo Slice
-- Full tech tree (Phase 2)
+- Mini-map with sphere-of-influence overlay
+- Piracy/trade disruption events
+- Diplomacy-based trade agreements
 - AI-generated art (Phase 3)
 - Sound/music (Phase 3)
 - Android APK build (Phase 2 — develop on desktop first)

@@ -5,6 +5,7 @@
 ### Stabilisation Pass
 - Reality sync: update engagement release plan and feature status tracking.
 - Refresh README implemented/future lists to match shipped systems.
+- Align roadmap, plans, and feature status with gravity well map work and pending UX items.
 
 ### NEXT3 Milestone 1 — Full tech tree
 - Expanded tech tree to 24 techs with new tier upgrades and effects.
