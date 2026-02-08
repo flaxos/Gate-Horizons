@@ -438,7 +438,13 @@ class TurnProcessor:
             if result.arrived or result.current_location:
                 system = game_state.galaxy.systems.get(result.current_location)
                 if system and hasattr(game_state, "combat"):
-                    encounter = game_state.combat.generate_random_encounter(system.tier)
+                    gate_capacity = None
+                    if hasattr(game_state, "galaxy"):
+                        gate_capacity = game_state.galaxy.get_gate_effective_capacity(system.id)
+                    encounter = game_state.combat.generate_random_encounter(
+                        system.tier,
+                        gate_capacity=gate_capacity,
+                    )
                     if encounter:
                         if hasattr(game_state, "resolve_encounter"):
                             game_state.resolve_encounter([ship], encounter, system, report)

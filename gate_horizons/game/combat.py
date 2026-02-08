@@ -84,6 +84,7 @@ class CombatResult:
     narrative: str = ""
     xp_gained: int = 0
     fled: bool = False
+    gate_impact: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -95,6 +96,7 @@ class CombatResult:
             "narrative": self.narrative,
             "xp_gained": self.xp_gained,
             "fled": self.fled,
+            "gate_impact": dict(self.gate_impact),
         }
 
 
@@ -309,10 +311,20 @@ class CombatResolver:
             "The engagement does not go in your favor. Your ships sustain heavy damage."
         )
 
-    def generate_random_encounter(self, system_tier: int) -> Optional[EncounterData]:
+    def generate_random_encounter(
+        self,
+        system_tier: int,
+        gate_capacity: Optional[int] = None,
+    ) -> Optional[EncounterData]:
         """Generate a random encounter based on system tier."""
         # Higher tier (frontier) = more encounters
         encounter_chance = {1: 0.02, 2: 0.05, 3: 0.1}.get(system_tier, 0.05)
+
+        if gate_capacity is not None:
+            if gate_capacity <= 0:
+                return None
+            capacity_factor = min(1.0, max(0.1, gate_capacity / 100))
+            encounter_chance *= capacity_factor
 
         if random.random() > encounter_chance:
             return None

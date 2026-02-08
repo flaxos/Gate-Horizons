@@ -174,6 +174,8 @@ class GameState:
         mode = (self.encounter_resolution_mode or "auto").lower()
         if mode == "auto":
             combat_result = self.combat.auto_resolve(attacker_ships, encounter)
+            if system:
+                self._apply_gate_damage(system.id, encounter, combat_result, report)
             report.combat_encounters.append(combat_result)
             for resource, amount in combat_result.loot.items():
                 self.resources.add(resource, amount)
@@ -231,6 +233,9 @@ class GameState:
         defender = EncounterData.from_dict(pending.get("defender", {}))
         combat_result = self.combat.result_from_spec(attacker_ships, defender, result_spec)
         self._apply_manual_combat_result(combat_result, attacker_ships)
+        system_id = pending.get("system_id")
+        if system_id:
+            self._apply_gate_damage(system_id, defender, combat_result)
         self.log.append(f"Encounter {encounter_id} resolved manually")
         return True, "Encounter result applied"
 
@@ -249,6 +254,44 @@ class GameState:
                         combat_result.ships_destroyed.append(ship.id)
         for destroyed_id in combat_result.ships_destroyed:
             self.fleet.destroy_ship(destroyed_id)
+
+    def _apply_gate_damage(self, system_id: str, encounter, combat_result, report=None) -> None:
+        system = self.galaxy.systems.get(system_id)
+        if not system or not encounter:
+            return
+
+        strength = max(0, int(getattr(encounter, "strength", 0) or 0))
+        if strength <= 0:
+            return
+
+        base_damage = min(0.25, 0.01 + strength * 0.002)
+        if combat_result.victory:
+            damage = base_damage * 0.5
+        elif combat_result.fled:
+            damage = base_damage * 0.75
+        else:
+            damage = base_damage
+
+        if damage <= 0:
+            return
+
+        before = system.gate_status
+        system.gate_status = max(0.0, system.gate_status - damage)
+        self.galaxy.invalidate_cache()
+        impact = {
+            "system_id": system_id,
+            "gate_status_before": round(before, 3),
+            "gate_status_after": round(system.gate_status, 3),
+            "damage": round(damage, 3),
+        }
+        combat_result.gate_impact = impact
+        if report is not None:
+            report.warnings.append(
+                f"Gate in {system.name} suffered {impact['damage']:.2f} damage"
+            )
+        self.log.append(
+            f"Gate in {system.name} damaged ({impact['damage']:.2f}); status {impact['gate_status_after']:.2f}"
+        )
 
     def execute_ship_action(
         self,
@@ -367,6 +410,7 @@ class GameState:
             "patrol": self._handle_patrol,
             "escort": self._handle_escort,
             "blockade": self._handle_blockade,
+            "investigate anomaly": self._handle_investigate_anomaly,
             "repair": self._handle_repair,
             "refuel": self._handle_refuel,
         }
@@ -461,6 +505,24 @@ class GameState:
             "action": "Blockade",
             "system_id": ship.location,
             "summary": f"{ship.name} is blockading {ship.location}",
+        }
+
+    def _handle_investigate_anomaly(self, ship, params: dict) -> tuple[bool, str, dict]:
+        event = self.investigate_anomaly(ship.location)
+        if not event:
+            return False, "No anomalies available to investigate", {}
+
+        summary = f"{ship.name} investigated an anomaly in {ship.location}"
+        if getattr(event, "title", ""):
+            summary = f"{summary} ({event.title})"
+        return True, "Anomaly investigated", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Investigate Anomaly",
+            "system_id": ship.location,
+            "summary": summary,
+            "anomaly_investigated": True,
+            "event_triggered": getattr(event, "id", ""),
         }
 
     def _handle_repair(self, ship, params: dict) -> tuple[bool, str, dict]:

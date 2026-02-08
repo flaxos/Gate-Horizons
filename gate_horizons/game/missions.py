@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 from uuid import uuid4
 import random
 
@@ -16,11 +17,29 @@ MISSION_TEMPLATES = [
         "reward": {"credits": 25, "intel": 2},
     },
     {
+        "category": "anomaly",
+        "title": "Investigate the Unknown",
+        "description": "Investigate 1 anomaly.",
+        "requirement": {"metric": "anomalies_investigated", "target": 1},
+        "reward": {"intel": 3, "exotics": 5},
+        "gating": {"requires_anomaly": True},
+        "tags": ["anomaly"],
+    },
+    {
         "category": "trade",
         "title": "Open Trade Lanes",
         "description": "Execute 1 trade transfer this turn.",
         "requirement": {"metric": "trade_transfers", "target": 1},
         "reward": {"credits": 30, "energy": 10},
+    },
+    {
+        "category": "diplomacy",
+        "title": "Open Diplomatic Channels",
+        "description": "Trigger 1 diplomacy event.",
+        "requirement": {"metric": "diplomacy_events", "target": 1},
+        "reward": {"credits": 40, "intel": 1},
+        "gating": {"requires_diplomacy": True},
+        "tags": ["diplomacy"],
     },
     {
         "category": "build",
@@ -94,7 +113,9 @@ class MissionManager:
         if len(self.active_missions) >= self.max_active:
             return []
 
-        template = self._pick_template()
+        template = self._pick_template(game_state)
+        if not template:
+            return []
         mission = self._create_mission(template, game_state.turn_number)
         self.active_missions.append(mission)
         return [mission]
@@ -112,11 +133,18 @@ class MissionManager:
                 completed.append(mission)
         return completed
 
-    def _pick_template(self) -> dict:
+    def _pick_template(self, game_state) -> Optional[dict]:
         active_categories = {m.category for m in self.active_missions}
-        available = [t for t in MISSION_TEMPLATES if t["category"] not in active_categories]
+        available = [
+            t
+            for t in MISSION_TEMPLATES
+            if t["category"] not in active_categories
+            and self._template_available(t, game_state)
+        ]
         if not available:
-            available = list(MISSION_TEMPLATES)
+            available = [t for t in MISSION_TEMPLATES if self._template_available(t, game_state)]
+        if not available:
+            return None
         return random.choice(available)
 
     def _create_mission(self, template: dict, created_turn: int) -> Mission:
@@ -156,8 +184,64 @@ class MissionManager:
                 elif isinstance(encounter, dict):
                     if encounter.get("victory") is True or encounter.get("outcome") == "victory":
                         progress_gain += 1
+        elif metric == "anomalies_investigated":
+            progress_gain = sum(
+                1
+                for action in report.ship_actions
+                if action.get("anomaly_investigated")
+            )
+        elif metric == "diplomacy_events":
+            for event in report.events_triggered:
+                if hasattr(event, "tags") and "diplomacy" in event.tags:
+                    progress_gain += 1
+                elif isinstance(event, dict):
+                    if "diplomacy" in (event.get("tags") or []):
+                        progress_gain += 1
 
         mission.progress += progress_gain
+
+    def _template_available(self, template: dict, game_state) -> bool:
+        gating = template.get("gating", {}) or {}
+        tags = set(template.get("tags") or [])
+
+        if gating.get("requires_diplomacy") or "diplomacy" in tags:
+            if not self._has_diplomacy_available(game_state):
+                return False
+
+        if gating.get("requires_anomaly") or "anomaly" in tags:
+            if not self._has_uninvestigated_anomaly(game_state):
+                return False
+
+        return True
+
+    @staticmethod
+    def _has_uninvestigated_anomaly(game_state) -> bool:
+        galaxy = getattr(game_state, "galaxy", None)
+        if not galaxy:
+            return False
+        for system in galaxy.systems.values():
+            for anomaly in system.anomalies:
+                if isinstance(anomaly, dict):
+                    if not anomaly.get("investigated"):
+                        return True
+                else:
+                    return True
+        return False
+
+    @staticmethod
+    def _has_diplomacy_available(game_state) -> bool:
+        if not game_state or not hasattr(game_state, "tech"):
+            return False
+        tech_effects = game_state.tech.get_effects()
+        if not tech_effects.get("unlock_diplomacy", False):
+            return False
+        events = getattr(game_state, "events", None)
+        if not events:
+            return False
+        for event in events.available_events:
+            if "diplomacy" in (event.tags or []):
+                return True
+        return False
 
     def _apply_reward(self, game_state, mission: Mission) -> None:
         if not hasattr(game_state, "resources"):
