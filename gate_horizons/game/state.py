@@ -265,9 +265,12 @@ class GameState:
 
     def submit_encounter_result(self, result_spec: dict) -> tuple[bool, str]:
         """Apply a ResultSpec for a pending manual encounter."""
+        if not isinstance(result_spec, dict):
+            return False, "ResultSpec payload must be a dict"
         valid, message = self.combat.validate_result_spec(result_spec)
         if not valid:
             return False, message
+        result_spec = self._normalize_result_spec(result_spec)
         encounter_id = result_spec.get("encounterId") if isinstance(result_spec, dict) else None
         if not encounter_id:
             return False, "ResultSpec missing encounterId"
@@ -300,6 +303,57 @@ class GameState:
         self._apply_relation_changes(result_spec)
         self.log.append(f"Encounter {encounter_id} resolved manually")
         return True, "Encounter result applied"
+
+    @staticmethod
+    def _normalize_result_spec(result_spec: dict) -> dict:
+        normalized = dict(result_spec)
+        for key in ("assetStatus", "objectiveResults", "casualties"):
+            if key in normalized and normalized[key] is not None and not isinstance(normalized[key], dict):
+                normalized[key] = {}
+
+        loot = normalized.get("loot")
+        if loot is None:
+            return normalized
+        if not isinstance(loot, dict):
+            normalized["loot"] = {"resources": {}}
+        else:
+            loot_copy = dict(loot)
+            resources = loot_copy.get("resources")
+            safe_resources = {}
+            if isinstance(resources, dict):
+                for resource, amount in resources.items():
+                    if not resource:
+                        continue
+                    try:
+                        amount_value = int(amount)
+                    except (TypeError, ValueError):
+                        continue
+                    if amount_value != 0:
+                        safe_resources[resource] = amount_value
+            loot_copy["resources"] = safe_resources
+            if "intel" in loot_copy:
+                try:
+                    loot_copy["intel"] = int(loot_copy.get("intel") or 0)
+                except (TypeError, ValueError):
+                    loot_copy["intel"] = 0
+            normalized["loot"] = loot_copy
+
+        relations = normalized.get("relations")
+        if relations is None:
+            return normalized
+        if not isinstance(relations, dict):
+            normalized["relations"] = {}
+        else:
+            safe_relations = {}
+            for faction_id, delta in relations.items():
+                if not faction_id:
+                    continue
+                try:
+                    safe_relations[faction_id] = int(delta)
+                except (TypeError, ValueError):
+                    continue
+            normalized["relations"] = safe_relations
+        return normalized
 
     def resolve_diplomacy_action(self, encounter_id: str, action: str) -> tuple[bool, str]:
         """Resolve a pending encounter through diplomacy."""
@@ -1567,7 +1621,17 @@ class GameState:
         state.pending_ship_actions = list(pending_actions) if isinstance(pending_actions, list) else []
         state.pending_ship_orders = list(pending_orders) if isinstance(pending_orders, list) else []
         state.encounter_resolution_mode = data.get("encounter_resolution_mode", "auto")
-        state.pending_encounters = list(pending_encounters) if isinstance(pending_encounters, list) else []
+        if isinstance(pending_encounters, list):
+            filtered_encounters = [
+                entry
+                for entry in pending_encounters
+                if isinstance(entry, dict)
+                and isinstance(entry.get("encounter_id"), str)
+                and entry.get("encounter_id")
+            ]
+        else:
+            filtered_encounters = []
+        state.pending_encounters = filtered_encounters
         rng_seed = int(data.get("rng_seed", 0) or 0)
         rng_state = data.get("rng_state")
         state.rng_seed = rng_seed

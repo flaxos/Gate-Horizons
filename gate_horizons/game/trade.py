@@ -260,6 +260,65 @@ class TradeManager:
                 scaled[direction][resource] = max(0, int(amount * scale))
         return scaled
 
+    def build_flow_segments(
+        self,
+        colonies=None,
+        fleet=None,
+        tech_effects: dict = None,
+        galaxy=None,
+    ) -> list[dict]:
+        segments: list[dict] = []
+        for route in self.routes.values():
+            if not route.enabled:
+                continue
+
+            capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
+            manifest_override = None
+            if route.auto_policy and route.auto_policy != "manual":
+                manifest_override = self._build_auto_manifest(
+                    route,
+                    colonies=colonies,
+                    capacity=capacity,
+                )
+
+            throughput = route.calculate_throughput(
+                fleet=fleet,
+                tech_effects=tech_effects,
+                manifest_override=manifest_override,
+            )
+
+            if galaxy:
+                gate_capacity = galaxy.get_path_capacity(
+                    route.source_system,
+                    route.destination_system,
+                )
+                throughput = self._apply_gate_capacity(throughput, gate_capacity)
+
+            directions = {
+                "outbound": (route.source_system, route.destination_system),
+                "inbound": (route.destination_system, route.source_system),
+            }
+            for direction, (source, destination) in directions.items():
+                resources = throughput.get(direction, {})
+                if not resources:
+                    continue
+                dominant_resource, amount = max(
+                    resources.items(),
+                    key=lambda item: item[1],
+                )
+                if amount <= 0:
+                    continue
+                segments.append(
+                    {
+                        "source": source,
+                        "destination": destination,
+                        "direction": direction,
+                        "resource": dominant_resource,
+                        "amount": amount,
+                    }
+                )
+        return segments
+
     def create_route(
         self,
         source: str,

@@ -86,12 +86,14 @@ Explore frontier (Level 3) → Discover resources & contacts
 ### 4.1 Star Map & Navigation
 - **Structure:** Node-based graph; each node is a star system, edges are gate connections
 - **Fog of War:** Unexplored systems show as unknown nodes; surveying reveals details
+  and system bodies render as silhouettes until surveyed
 - **Gate Mechanics:**
   - Gates have activation costs (energy/exotic materials)
   - Some gates are damaged — require repair before use
   - Gate capacity limits: mass throughput per turn
   - Strategic chokepoints where gates converge
 - **Mini-Map:** Implemented compact galaxy overview with the current system highlighted; sphere-of-influence overlay remains planned
+- **Planet Comparison View:** Side-by-side comparison of candidate bodies to support colonisation decisions
 
 ### 4.2 Ship System
 Ships are your primary agency in the world. Each has capabilities that determine available contextual actions.
@@ -140,6 +142,8 @@ Ships are your primary agency in the world. Each has capabilities that determine
   allowlists + per-resource caps.
 - **Throughput Visibility:** Route UI displays capacity, latency, in-transit cargo,
   queue depth, and next arrival ETA.
+- **Resource Flow Visualization:** Galaxy map overlay shows active trade routes with
+  direction and dominant resource type.
 - **Colony Ledger:** Per-turn net delta (production - consumption - exports + imports)
   plus top bottlenecks.
 

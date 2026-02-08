@@ -21,10 +21,16 @@
 | Zoom-threshold auto-level switching | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Auto-switch between system and body levels based on zoom thresholds. |
 | Mini-map overlay | `PROJECT_PLAN.md`, `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Compact galaxy context overlay when viewing a system. |
 | Turn report summary screen | `docs/ROADMAP.md` | `gate_horizons/ui/screens/turn_report_screen.py`, `gate_horizons/ui/screens/galaxy_map.py` | Shipped | Full-screen summary with section shortcuts replacing the popup. |
-| Fog of war visualization on system map | `docs/ROADMAP.md` | — | Future | Unsurveyed bodies shown as silhouettes until surveyed. |
+| Fleet group management | `docs/ROADMAP.md` | — | Future | Planned grouping of multiple ships with shared orders. |
+| Resource flow visualisation | `docs/ROADMAP.md` | `gate_horizons/game/trade.py`, `gate_horizons/ui/screens/galaxy_map.py`, `gate_horizons/tests/test_trade_flow_overlay.py` | Shipped | Galaxy map flow overlays show active trade route directions and dominant resources. |
+| Planet comparison view | `docs/ROADMAP.md` | `gate_horizons/game/planet_comparison.py`, `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_planet_comparison_view.py` | Shipped | Comparison popup for up to three bodies with key colonisation stats. |
+| Fog of war visualization on system map | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_ui_fog_of_war_system_map.py` | Shipped | Unsurveyed bodies render as silhouettes with redacted details. |
 | Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | — | Future | Planned for demo slice polish. |
 | Piracy/trade disruption events | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned as part of broader event coverage. |
 | Diplomacy-based trade agreements | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned diplomacy extension beyond current relations/actions. |
+| Sub-body objects (moons, stations, asteroid mining) | `docs/ROADMAP.md` | — | Future | Planned data-model expansion for moons and sub-bodies. |
+| Real-time system animation | `docs/ROADMAP.md` | — | Future | Planned orbital animation for system view. |
+| Sound effects and music | `docs/ROADMAP.md` | — | Future | Planned UI and ambient audio layer. |
 | Selection highlight ring animation | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Pulsing selection rings for bodies and ships on the system view. |
 | Ship movement lines on system map | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Dashed movement line from ship row to gate when a path is active. |
 | Procedural galaxy generation | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/game/galaxy.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_galaxy_generation.py` | Shipped | Seeded generator with deterministic connectivity. |

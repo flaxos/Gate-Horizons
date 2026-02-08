@@ -32,11 +32,11 @@
 - Confirm each item is explicitly listed as planned in docs and not marked Shipped.
 
 ### NEXT3 (priority + rationale)
-1. **Zoom-threshold auto-level switching** — P1 UX item in `docs/ROADMAP.md`; minimal dependency and contained to Gravity Well map switching. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
-2. **Mini-map overlay** — P2 navigation item in `docs/ROADMAP.md`; scoped to a compact galaxy context widget with current system highlight. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
-3. **Turn report summary screen** — P2 clarity item in `docs/ROADMAP.md`; turns the popup into a full-screen summary with section shortcuts. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`.
+1. **Resource flow visualisation** — P1 in `docs/ROADMAP.md`; uses existing trade/logistics data without a new data model, so it meets the minimal-dependency rule. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`, `PROJECT_PLAN.md`.
+2. **Planet comparison view** — P2 in `docs/ROADMAP.md`; UI-only comparison using existing planet metadata, low dependency. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`, `PROJECT_PLAN.md`.
+3. **Fog of war visualization on system map** — P2 in `docs/ROADMAP.md`; scoped to visual treatment and survey flags already present in system data. References: `docs/ROADMAP.md`, `docs/FEATURE_STATUS.md`, `PROJECT_PLAN.md`.
 
-**Deferrals:** Fleet group management and resource flow visualisation remain pending due to larger data-model or animation dependencies, so they do not meet the minimal-dependency rule for this NEXT3 batch. References: `docs/ROADMAP.md`.
+**Deferrals:** Fleet group management remains pending because it requires a new data model for fleet grouping and command batching, which violates the minimal-dependency rule for this NEXT3 batch. References: `docs/ROADMAP.md`.
 
 ### Milestones and file lists
 
@@ -50,19 +50,31 @@
   - `gate_horizons/tests/*`
   - Docs: `README.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`
 
-#### Milestone 1 — Zoom-threshold auto-level switching (NEXT3 1/3)
-- Add zoom-based auto-switching between system and body levels with debounce thresholds.
-- Tests: UI map camera regression coverage for auto-switch thresholds.
+#### Milestone 1 — Resource flow visualisation (NEXT3 1/3)
+- Show trade/logistics flows as line overlays between colonies on the galaxy map.
+- Acceptance criteria:
+  - Trade routes render directionally with per-resource color or legend key.
+  - Lines reflect active routes only and update after turn processing.
+  - Overlay can be toggled on/off without affecting turn flow.
+  - Tests cover overlay data mapping from trade routes.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 2 — Mini-map overlay (NEXT3 2/3)
-- Add a compact galaxy overview widget to system view with current system highlighted.
-- Tests: UI map camera/overlay smoke tests or source checks.
+#### Milestone 2 — Planet comparison view (NEXT3 2/3)
+- Add a comparison panel for 2–3 selected planets with key stats.
+- Acceptance criteria:
+  - Player can select up to 3 planets/bodies and open a comparison view.
+  - Comparison shows resources, habitability, gravity, and traits.
+  - View exits back to the previous map without losing selection state.
+  - Tests validate comparison data extraction for multiple bodies.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
-#### Milestone 3 — Turn report summary screen (NEXT3 3/3)
-- Replace the compact popup with a full-screen turn report summary and section shortcuts.
-- Tests: update UI screen coverage for turn report flow.
+#### Milestone 3 — Fog of war visualization on system map (NEXT3 3/3)
+- Show unsurveyed bodies as silhouettes with hidden details until surveyed.
+- Acceptance criteria:
+  - Unsurveyed bodies display with placeholder visuals and redacted labels.
+  - Surveyed bodies display full details and normal visuals.
+  - Toggle respects save/load and does not alter game state.
+  - Tests cover survey flag mapping to render state.
 - Docs: `README.md`, `PROJECT_PLAN.md`, `docs/FEATURE_STATUS.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`.
 
 ### Out of scope
