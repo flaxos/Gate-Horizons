@@ -427,6 +427,7 @@ class LogisticsScreen(Screen):
         self.route_detail_label = Label(
             text="Select a route to view details",
             font_size="12sp", color=(0.8, 0.8, 0.8, 1),
+            markup=True,
             halign="left", valign="top",
             size_hint_y=None, height=dp(300),
         )
@@ -434,6 +435,7 @@ class LogisticsScreen(Screen):
 
         self.ship_status_label = Label(
             text="", font_size="12sp", color=(0.7, 0.9, 0.7, 1),
+            markup=True,
             halign="left", valign="top",
             size_hint_y=None, height=dp(150),
         )

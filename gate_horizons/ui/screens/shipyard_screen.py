@@ -83,6 +83,7 @@ class ShipyardScreen(Screen):
         self.facilities_label = Label(
             text="Select a system to view orbital facilities",
             font_size="12sp", color=(0.8, 0.8, 0.8, 1),
+            markup=True,
             halign="left", valign="top",
             size_hint_y=None, height=dp(120),
         )
@@ -91,6 +92,7 @@ class ShipyardScreen(Screen):
         # Build queue section
         self.queue_label = Label(
             text="", font_size="12sp", color=(0.9, 0.7, 0.3, 1),
+            markup=True,
             halign="left", valign="top",
             size_hint_y=None, height=dp(120),
         )
@@ -131,6 +133,7 @@ class ShipyardScreen(Screen):
         self.ship_buttons_label = Label(
             text="[b]Build Ships (component-based):[/b]",
             font_size="12sp", color=(0.8, 0.8, 0.8, 1),
+            markup=True,
             size_hint_y=None, height=dp(24),
             halign="left",
         )
