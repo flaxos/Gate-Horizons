@@ -150,20 +150,29 @@ Encounters trigger when ships interact with points of interest or hostile entiti
 - Compare fleet strength vs encounter difficulty
 - Base win probability shown to player (e.g., 73%)
 - Roll result ± 15% variance
-- Quick resolution, standard rewards
+- Quick resolution, standard rewards (available for debugging/manual use)
+
+#### Branching Resolution (Shipped)
+- Encounters branch into **tactical**, **diplomacy**, or **evasion** paths.
+- Branch selection uses the EncounterSpec/ResultSpec pipeline and applies consequences.
 
 #### Manual Tactical Mode (Mini-Game)
-- **Grid:** 8×6 hex grid
+- **Grid:** 10×8 hex grid (MVP)
 - **Turn-Based:** Move → Action → Enemy Turn
-- **Ship Placement:** Position your ships at start
-- **Actions:** Fire weapons, use abilities (scan, shield boost, ram), move
-- **Terrain:** Asteroids (cover), nebula (stealth), gate proximity (escape route)
-- **Rewards:** Manual wins give 20% bonus loot/intel + possible special finds
+- **Ship Placement:** Auto-placed for MVP (player vs. enemy)
+- **Actions:** Fire weapons, move, wait/end turn
+- **Terrain:** Asteroids (cover), nebula (movement/accuracy modifiers)
+- **Rewards:** Tactical wins grant salvage per encounter loot table
 - **Encounter Types:**
   - Combat (pirates, hostile aliens, rival factions)
   - Evasion (escape superior forces, navigate hazard)
   - Diplomacy (negotiate with aliens — dialogue choices affect outcome)
   - Salvage (explore derelict — risk/reward room-by-room)
+
+#### Diplomacy Foundations (MVP)
+- **Relations:** Factions maintain a relation score with tiers (hostile/neutral/friendly).
+- **Actions:** Aid, threaten, negotiate; outcomes adjust relations and apply small resource deltas.
+- **Encounter Options:** Diplomacy choices appear for encounters with known factions.
 
 #### EncounterSpec/ResultSpec Handshake
 - Gate Horizons exports `EncounterSpec.json` to `exports/encounters/` for tactical resolution.
@@ -289,6 +298,8 @@ gate_horizons/
 - **Basic colony management** (build infrastructure, assign population)
 - **Trade routes** between owned systems
 - **Auto-resolve combat** with probability display
+- **Tactical hex combat MVP** (turn-based)
+- **Diplomacy relations** with encounter options and persistence
 - **10-15 pre-generated events** that fire based on game state
 - **Simple tech tree** (10 unlocks across 2 branches)
 - **Turn processing** that ticks all systems forward
@@ -296,9 +307,7 @@ gate_horizons/
 - **Mini-map** with sphere of influence visualization
 
 ### What's NOT in Demo Slice
-- Tactical mini-game (Phase 2)
 - Full tech tree (Phase 2)
-- Alien diplomacy system (Phase 2)
 - AI-generated art (Phase 3)
 - Sound/music (Phase 3)
 - Android APK build (Phase 2 — develop on desktop first)
@@ -320,9 +329,8 @@ gate_horizons/
 | 3 | Polish & loop | Trade routes, mini-map, tech tree (basic), tutorial flow, balancing |
 
 ### Phase 2: Feature Complete (Target: 3-4 weeks after Phase 1)
-- Tactical hex combat mini-game
 - Full tech tree (20-30 techs)
-- Alien factions with diplomacy
+- Expanded diplomacy with alien factions
 - Expanded event library (100+ events)
 - Galaxy generation (procedural)
 - Android build via Buildozer

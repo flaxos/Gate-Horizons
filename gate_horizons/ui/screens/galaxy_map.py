@@ -468,6 +468,8 @@ class GalaxyMapScreen(Screen):
             ("🚀 Fleet", "fleet_screen"),
             ("🧬 Tech", "tech_screen"),
             ("🎯 Missions", "mission_screen"),
+            ("⚔ Encounters", "encounter_screen"),
+            ("🤝 Relations", "relations_screen"),
             ("🏛 Colonies", "colony_screen"),
             ("💱 Trade", "trade_screen"),
             ("🏭 Prod", "production_screen"),
@@ -1032,6 +1034,8 @@ class GalaxyMapScreen(Screen):
         popup = TurnReportPopup(
             report=report,
             on_continue=self._after_turn_report,
+            pending_encounters=len(self.game_state.pending_encounters),
+            on_view_encounters=self._open_encounters,
         )
         popup.open()
 
@@ -1048,6 +1052,12 @@ class GalaxyMapScreen(Screen):
             app = App.get_running_app()
             if app and hasattr(app, "auto_save"):
                 app.auto_save()
+
+    def _open_encounters(self):
+        from kivy.app import App
+        app = App.get_running_app()
+        if app:
+            app.switch_screen("encounter_screen")
 
     def _on_view_colony(self, btn):
         from kivy.app import App

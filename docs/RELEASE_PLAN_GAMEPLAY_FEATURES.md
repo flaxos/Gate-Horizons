@@ -1,15 +1,16 @@
 # Release Plan: Gameplay & Feature Growth
 
 ## Phase 1: Tactical Encounters + Diplomacy Foundation
+**Status**: Shipped MVP
 **Scope**
 - Deliver tactical hex combat mini-game with core actions and terrain effects.
 - Introduce alien faction diplomacy basics (relations, choices, outcomes).
-- Expand encounter narratives to support tactical and diplomatic paths.
+- Encounter narratives branch through tactical, diplomacy, and evasion paths (MVP pipeline).
 
 **Success criteria**
 - Players can opt into manual tactical resolution with meaningful choices.
 - Diplomatic interactions influence encounter outcomes and faction standing.
-- Encounter narratives branch cleanly for combat, diplomacy, and evasion.
+- Encounter branching routes cleanly for combat, diplomacy, and evasion.
 
 **Dependencies / notes**
 - Builds on engagement systems (orders, missions, encounter contracts).

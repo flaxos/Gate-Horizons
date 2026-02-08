@@ -12,6 +12,7 @@ class EncounterData:
     description: str = ""
     loot_table: dict = field(default_factory=dict)
     flee_difficulty: float = 0.3  # chance to fail to escape
+    faction_id: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -20,6 +21,7 @@ class EncounterData:
             "description": self.description,
             "loot_table": dict(self.loot_table),
             "flee_difficulty": self.flee_difficulty,
+            "faction_id": self.faction_id,
         }
 
     @classmethod
@@ -231,7 +233,7 @@ class CombatResolver:
             encounter_id=encounter_id,
             strategic_context={
                 "systemId": system_id,
-                "factionContext": [],
+                "factionContext": [defender.faction_id] if defender.faction_id else [],
                 "intent": intent or defender.description or f"Resolve {defender.type} encounter",
                 "timeWindow": "1w",
             },
@@ -357,6 +359,7 @@ class CombatResolver:
                 description="A band of pirate raiders emerges from behind an asteroid field.",
                 loot_table={"credits": [5, 20], "metals": [2, 10]},
                 flee_difficulty=0.3,
+                faction_id="pirates",
             ),
             EncounterData(
                 type="alien_patrol",
@@ -364,6 +367,7 @@ class CombatResolver:
                 description="Unknown alien vessels move to intercept your ships.",
                 loot_table={"exotics": [1, 5], "intel": [3, 8]},
                 flee_difficulty=0.4,
+                faction_id="alien_patrol",
             ),
             EncounterData(
                 type="rogue_ai",
@@ -371,6 +375,7 @@ class CombatResolver:
                 description="Automated combat drones activate and target your fleet.",
                 loot_table={"metals": [5, 15], "intel": [2, 6]},
                 flee_difficulty=0.2,
+                faction_id="rogue_ai",
             ),
         ]
 

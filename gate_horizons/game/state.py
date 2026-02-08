@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from importlib import resources
+import hashlib
+import random
 import json
 from typing import Optional
 from uuid import uuid4
@@ -14,6 +16,7 @@ from .resources import ResourceManager, RESOURCE_TYPES
 from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
 from .trade import TradeManager, TradeRoute
 from .combat import CombatResolver, EncounterData
+from .diplomacy import DiplomacyManager
 from .events import EventEngine
 from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
@@ -24,7 +27,7 @@ from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 8
+CURRENT_SCHEMA_VERSION = 9
 
 
 # Default data paths (relative to gate_horizons package)
@@ -53,6 +56,7 @@ class GameState:
         self.logistics = LogisticsManager()
         self.shipyard = ShipyardManager()
         self.missions = MissionManager()
+        self.diplomacy = DiplomacyManager()
         self.pending_ship_actions: list[dict] = []
         self.pending_ship_orders: list[dict] = []
         self.encounter_resolution_mode: str = "auto"
@@ -157,6 +161,8 @@ class GameState:
                 if neighbor:
                     neighbor.discovered = True
 
+        state.encounter_resolution_mode = "tactical"
+
         return state
 
     def process_turn(self) -> TurnReport:
@@ -173,27 +179,6 @@ class GameState:
 
     def resolve_encounter(self, attacker_ships: list, encounter, system, report) -> None:
         """Resolve an encounter using the configured resolution mode."""
-        mode = (self.encounter_resolution_mode or "auto").lower()
-        if mode == "auto":
-            encounter_id = f"enc-{uuid4().hex[:8]}"
-            encounter_spec = self.combat.create_encounter_spec(
-                attacker_ships=attacker_ships,
-                defender=encounter,
-                system=system,
-                encounter_id=encounter_id,
-            )
-            combat_result = self.combat.auto_resolve(attacker_ships, encounter)
-            combat_result.encounter_id = encounter_id
-            combat_result.encounter_contract = encounter_spec.to_dict()
-            if system:
-                self._apply_gate_damage(system.id, encounter, combat_result, report)
-            report.combat_encounters.append(combat_result)
-            for resource, amount in combat_result.loot.items():
-                self.resources.add(resource, amount)
-            for destroyed_id in combat_result.ships_destroyed:
-                self.fleet.destroy_ship(destroyed_id)
-            return
-
         encounter_id = f"enc-{uuid4().hex[:8]}"
         encounter_spec = self.combat.create_encounter_spec(
             attacker_ships=attacker_ships,
@@ -201,21 +186,24 @@ class GameState:
             system=system,
             encounter_id=encounter_id,
         )
+        branch_options = self._get_encounter_branches(encounter)
         pending_entry = {
             "encounter_id": encounter_id,
             "spec": encounter_spec.to_dict(),
             "attacker_ship_ids": [ship.id for ship in attacker_ships],
             "defender": encounter.to_dict(),
             "system_id": getattr(system, "id", ""),
+            "branch_options": branch_options,
         }
         self.pending_encounters.append(pending_entry)
-        self.log.append(f"Encounter {encounter_id} awaiting manual resolution")
+        self.log.append(f"Encounter {encounter_id} awaiting resolution")
         report.combat_encounters.append(
             {
                 "encounter_id": encounter_id,
-                "status": "pending_manual",
-                "narrative": "Encounter pending tactical resolution.",
+                "status": "pending_resolution",
+                "narrative": "Encounter pending resolution.",
                 "encounter_spec": encounter_spec.to_dict(),
+                "branch_options": branch_options,
             }
         )
 
@@ -250,8 +238,83 @@ class GameState:
         if system_id:
             self._apply_gate_damage(system_id, defender, combat_result)
             self._apply_encounter_outcome_effects(system_id, result_spec)
+        self._apply_relation_changes(result_spec)
         self.log.append(f"Encounter {encounter_id} resolved manually")
         return True, "Encounter result applied"
+
+    def resolve_diplomacy_action(self, encounter_id: str, action: str) -> tuple[bool, str]:
+        """Resolve a pending encounter through diplomacy."""
+        pending_index = next(
+            (
+                index
+                for index, entry in enumerate(self.pending_encounters)
+                if entry.get("encounter_id") == encounter_id
+            ),
+            None,
+        )
+        if pending_index is None:
+            return False, f"No pending encounter with id {encounter_id}"
+        pending = self.pending_encounters[pending_index]
+        defender = pending.get("defender", {})
+        faction_id = defender.get("faction_id") or defender.get("type", "unknown")
+        outcome = self.diplomacy.resolve_action(faction_id, action)
+        result_spec = {
+            "contractVersion": "1.0",
+            "encounterId": encounter_id,
+            "outcome": "success" if outcome.relation_delta >= 0 else "failure",
+            "loot": {"resources": dict(outcome.resource_delta)},
+            "assetStatus": {},
+            "objectiveResults": {},
+            "casualties": {},
+            "notes": outcome.summary,
+            "missionTime": "",
+            "relations": {faction_id: outcome.relation_delta},
+        }
+        return self.submit_encounter_result(result_spec)
+
+    def resolve_evasion(self, encounter_id: str) -> tuple[bool, str]:
+        """Resolve a pending encounter through evasion."""
+        pending_index = next(
+            (
+                index
+                for index, entry in enumerate(self.pending_encounters)
+                if entry.get("encounter_id") == encounter_id
+            ),
+            None,
+        )
+        if pending_index is None:
+            return False, f"No pending encounter with id {encounter_id}"
+        pending = self.pending_encounters[pending_index]
+        attacker_ship_ids = pending.get("attacker_ship_ids", [])
+        ships = [self.fleet.ships[ship_id] for ship_id in attacker_ship_ids if ship_id in self.fleet.ships]
+        defender = EncounterData.from_dict(pending.get("defender", {}))
+        avg_speed = sum(ship.stats.speed for ship in ships) / max(1, len(ships))
+        seed = int(hashlib.sha256(encounter_id.encode("utf-8")).hexdigest()[:8], 16)
+        rng = random.Random(seed)
+        flee_bonus = avg_speed * 0.1
+        roll = rng.random()
+        success = roll > defender.flee_difficulty - flee_bonus
+        status = {}
+        if not success and ships:
+            status[ships[0].id] = "damaged"
+        result_spec = {
+            "contractVersion": "1.0",
+            "encounterId": encounter_id,
+            "outcome": "retreat" if success else "failure",
+            "loot": {"resources": {}},
+            "assetStatus": status,
+            "objectiveResults": {},
+            "casualties": {},
+            "notes": "Evasion successful." if success else "Evasion failed; ships took damage.",
+            "missionTime": "",
+        }
+        return self.submit_encounter_result(result_spec)
+
+    def _get_encounter_branches(self, encounter: EncounterData) -> list[str]:
+        branches = ["tactical", "evasion"]
+        if hasattr(self, "diplomacy") and encounter.faction_id in self.diplomacy.relations:
+            branches.append("diplomacy")
+        return branches
 
     def _apply_manual_combat_result(self, combat_result, attacker_ships: list) -> None:
         self._apply_resource_delta(combat_result.loot)
@@ -301,6 +364,18 @@ class GameState:
             f"{colony.name} stability {'+' if stability_delta > 0 else ''}{stability_delta} from encounter"
         )
 
+    def _apply_relation_changes(self, result_spec: dict) -> None:
+        if not hasattr(self, "diplomacy"):
+            return
+        if not isinstance(result_spec, dict):
+            return
+        relations = result_spec.get("relations") or {}
+        if not isinstance(relations, dict):
+            return
+        for faction_id, delta in relations.items():
+            if faction_id:
+                self.diplomacy.adjust_score(faction_id, int(delta))
+
     def export_encounter_spec(
         self,
         system_id: str,
@@ -334,6 +409,7 @@ class GameState:
             "attacker_ship_ids": [ship.id for ship in attacker_ships],
             "defender": defender.to_dict(),
             "system_id": system_id,
+            "branch_options": self._get_encounter_branches(defender),
         }
         self.pending_encounters.append(pending_entry)
 
@@ -368,6 +444,7 @@ class GameState:
                 description="Pirate raiders ambush the convoy.",
                 loot_table={"credits": [10, 30], "metals": [5, 15]},
                 flee_difficulty=0.3,
+                faction_id="pirates",
             )
         if encounter_type == "anomaly":
             return EncounterData(
@@ -376,6 +453,7 @@ class GameState:
                 description="Spatial anomaly destabilizes ship systems.",
                 loot_table={"intel": [2, 6]},
                 flee_difficulty=0.2,
+                faction_id="anomaly",
             )
         if encounter_type == "rogue_ai":
             return EncounterData(
@@ -384,6 +462,7 @@ class GameState:
                 description="A rogue AI drone squadron blocks the jump.",
                 loot_table={"metals": [6, 12], "intel": [1, 4]},
                 flee_difficulty=0.35,
+                faction_id="rogue_ai",
             )
         return None
 
@@ -1341,6 +1420,7 @@ class GameState:
             "logistics": self.logistics.to_dict(),
             "shipyard": self.shipyard.to_dict(),
             "missions": self.missions.to_dict(),
+            "diplomacy": self.diplomacy.to_dict(),
             "pending_ship_actions": list(self.pending_ship_actions),
             "pending_ship_orders": list(self.pending_ship_orders),
             "encounter_resolution_mode": self.encounter_resolution_mode,
@@ -1401,5 +1481,9 @@ class GameState:
             state.missions = MissionManager.from_dict(data.get("missions", {}))
         else:
             state.missions = MissionManager()
+        if schema_version >= 9:
+            state.diplomacy = DiplomacyManager.from_dict(data.get("diplomacy", {}))
+        else:
+            state.diplomacy = DiplomacyManager()
 
         return state
