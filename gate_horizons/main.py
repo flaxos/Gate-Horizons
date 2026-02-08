@@ -32,6 +32,7 @@ from kivy.core.window import Window
 from kivy.metrics import dp
 from gate_horizons.game.state import GameState
 from gate_horizons.game.save_load import SaveManager
+from gate_horizons.game.settings import SettingsManager, GameSettings
 
 from gate_horizons.ui.screens.main_menu import MainMenuScreen
 from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
@@ -131,6 +132,8 @@ class GateHorizonsApp(App):
         super().__init__(**kwargs)
         self.game_state = None
         self.save_manager = None
+        self.settings_manager = None
+        self.settings = None
         self.galaxy_map_screen = None
         self._exit_popup = None
 
@@ -154,6 +157,8 @@ class GateHorizonsApp(App):
         )
         os.makedirs(save_dir, exist_ok=True)
         self.save_manager = SaveManager(os.path.join(save_dir, "saves.db"))
+        self.settings_manager = SettingsManager(os.path.join(save_dir, "settings.json"))
+        self.settings = self.settings_manager.load()
 
         # Screen manager
         self.sm = ScreenManager(transition=FadeTransition(duration=0.2))
@@ -301,8 +306,16 @@ class GateHorizonsApp(App):
 
     def auto_save(self):
         """Auto-save the current game."""
+        if not self.settings or not self.settings.autosave_enabled:
+            return
         if self.game_state and self.save_manager:
             self.save_manager.auto_save(self.game_state)
+
+    def apply_settings(self, settings: GameSettings):
+        """Persist updated settings from the UI."""
+        self.settings = settings
+        if self.settings_manager:
+            self.settings_manager.save(settings)
 
     def _on_event_resolved(self):
         """Called after an event is resolved. Show next pending event or refresh."""
