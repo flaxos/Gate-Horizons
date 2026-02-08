@@ -2,6 +2,7 @@
 
 import unittest
 
+from gate_horizons.game.state import GameState
 from gate_horizons.game.trade import TradeManager, TradeRoute
 from gate_horizons.game.ships import FleetManager
 from gate_horizons.game.colonies import ColonyManager
@@ -62,6 +63,37 @@ class TestTradeCapacity(unittest.TestCase):
         arrivals = trade.process_arrivals(colonies=colonies)
         self.assertEqual(len(arrivals), 1)
         self.assertEqual(col_b.stockpiles["metals"], 5)
+
+    def test_auto_capacity_and_latency_from_colonies(self):
+        state = GameState.new_game()
+        colony_a = state.colonies.colonies["sol"]
+        colony_b = state.colonies.establish_colony(
+            system_id="alpha_centauri",
+            planet_id="ac_haven",
+            name="Haven",
+            initial_pop=80,
+            level=1,
+        )
+        colony_b.infrastructure["logistics"]["level"] = 1
+
+        expected_capacity = min(
+            colony_a.get_logistics_capacity(),
+            colony_b.get_logistics_capacity(),
+        )
+        expected_latency = max(1, state.galaxy.get_distance("sol", "alpha_centauri"))
+
+        route = state.trade.create_route(
+            source="sol",
+            dest="alpha_centauri",
+            capacity_per_turn=0,
+            latency_turns=0,
+            galaxy=state.galaxy,
+            colonies=state.colonies,
+        )
+
+        self.assertIsNotNone(route)
+        self.assertEqual(route.capacity_per_turn, expected_capacity)
+        self.assertEqual(route.latency_turns, expected_latency)
 
 
 if __name__ == "__main__":
