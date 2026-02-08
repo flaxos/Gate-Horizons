@@ -9,7 +9,7 @@ from .galaxy import GalaxyMap
 from .ships import FleetManager
 from .resources import ResourceManager, RESOURCE_TYPES
 from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
-from .trade import TradeManager
+from .trade import TradeManager, TradeRoute
 from .combat import CombatResolver
 from .events import EventEngine
 from .tech import TechTree
@@ -546,11 +546,21 @@ class GameState:
         capacity_per_turn: int = None,
         latency_turns: int = 1,
         assigned_ships: list = None,
-    ) -> Optional:
+    ) -> tuple[Optional[TradeRoute], str]:
         """Create a logistics trade route between two colonies.
 
+        Requires Logistics I (logistics_1) to be researched.
         If capacity_per_turn is None, auto-compute from source colony logistics.
+
+        Returns (route, message).
         """
+        tech_effects = self.tech.get_effects()
+        trade_routes_unlocked = tech_effects.get("unlock_trade_routes")
+        if trade_routes_unlocked is None:
+            tech = self.tech.techs.get("logistics_1")
+            trade_routes_unlocked = bool(tech and tech.researched)
+        if not trade_routes_unlocked:
+            return None, "Trade routes require Logistics I research."
         # Compute capacity from colony infrastructure if not specified
         if capacity_per_turn is None:
             source_colony = self.colonies.colonies.get(source)
@@ -558,14 +568,13 @@ class GameState:
                 capacity_per_turn = source_colony.get_logistics_capacity()
 
                 # Apply tech bonuses
-                tech_effects = self.tech.get_effects()
                 logistics_bonus = tech_effects.get("logistics_capacity_bonus", 0)
                 if logistics_bonus > 0:
                     capacity_per_turn = int(capacity_per_turn * (1 + logistics_bonus))
             else:
                 capacity_per_turn = 10
 
-        return self.trade.create_route(
+        route = self.trade.create_route(
             source=source,
             dest=dest,
             capacity_per_turn=capacity_per_turn,
@@ -574,6 +583,9 @@ class GameState:
             galaxy=self.galaxy,
             ships=assigned_ships or [],
         )
+        if not route:
+            return None, "No valid path between systems."
+        return route, "Trade route created."
 
     def create_freighter_route(
         self,

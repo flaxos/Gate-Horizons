@@ -280,6 +280,15 @@ class CreateRoutePopup(Popup):
     def _on_create(self, *args):
         if not self.game_state:
             return
+        tech_effects = self.game_state.tech.get_effects()
+        trade_routes_unlocked = tech_effects.get("unlock_trade_routes")
+        if trade_routes_unlocked is None:
+            tech = self.game_state.tech.techs.get("logistics_1")
+            trade_routes_unlocked = bool(tech and tech.researched)
+        if not trade_routes_unlocked:
+            self.status_label.text = "Trade routes require Logistics I research."
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
         if not self.selected_source or not self.selected_dest:
             return
         if self.selected_source == self.selected_dest:
@@ -299,15 +308,11 @@ class CreateRoutePopup(Popup):
 
         manifest = {"outbound": outbound, "inbound": {}}
 
-        route = self.game_state.trade.create_route(
+        route, message = self.game_state.create_trade_route(
             source=self.selected_source,
             dest=self.selected_dest,
-            capacity_per_turn=0,
-            latency_turns=0,
-            ships=self.selected_ships,
+            assigned_ships=self.selected_ships,
             manifest=manifest,
-            galaxy=self.game_state.galaxy,
-            colonies=self.game_state.colonies,
         )
 
         if route:
@@ -322,7 +327,7 @@ class CreateRoutePopup(Popup):
             if self.create_callback:
                 self.create_callback()
         else:
-            self.status_label.text = "No path between systems!"
+            self.status_label.text = message
             self.status_label.color = (1, 0.3, 0.2, 1)
 
 
@@ -526,8 +531,29 @@ class TradeScreen(Screen):
             card.add_widget(ctrl_row)
             self.route_list.add_widget(card)
 
+    def _trade_routes_unlocked(self):
+        if not self.game_state:
+            return False
+        tech_effects = self.game_state.tech.get_effects()
+        trade_routes_unlocked = tech_effects.get("unlock_trade_routes")
+        if trade_routes_unlocked is None:
+            tech = self.game_state.tech.techs.get("logistics_1")
+            trade_routes_unlocked = bool(tech and tech.researched)
+        return bool(trade_routes_unlocked)
+
     def _on_create_route(self, *args):
         if not self.game_state:
+            return
+        if not self._trade_routes_unlocked():
+            Popup(
+                title="Trade Routes Locked",
+                content=Label(
+                    text="Research Logistics I to unlock trade routes.",
+                    font_size="12sp",
+                    color=(1, 0.6, 0.4, 1),
+                ),
+                size_hint=(0.6, 0.3),
+            ).open()
             return
         popup = CreateRoutePopup(
             game_state=self.game_state,
