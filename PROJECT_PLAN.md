@@ -136,6 +136,12 @@ Ships are your primary agency in the world. Each has capabilities that determine
 - **Vulnerability:** Can be raided, disrupted by gate damage, blockaded
 - **Auto-Management:** Once set, trade routes operate automatically each turn
 - **Supply/Demand:** Colonies generate and consume different resources; surpluses traded
+- **Auto-Deficit Policy:** Optional automation ships toward destination deficits using
+  allowlists + per-resource caps.
+- **Throughput Visibility:** Route UI displays capacity, latency, in-transit cargo,
+  queue depth, and next arrival ETA.
+- **Colony Ledger:** Per-turn net delta (production - consumption - exports + imports)
+  plus top bottlenecks.
 
 ### 4.6 Encounter System
 Encounters trigger when ships interact with points of interest or hostile entities.
@@ -158,6 +164,12 @@ Encounters trigger when ships interact with points of interest or hostile entiti
   - Evasion (escape superior forces, navigate hazard)
   - Diplomacy (negotiate with aliens — dialogue choices affect outcome)
   - Salvage (explore derelict — risk/reward room-by-room)
+
+#### EncounterSpec/ResultSpec Handshake
+- Gate Horizons exports `EncounterSpec.json` to `exports/encounters/` for tactical resolution.
+- External tactical results return via `ResultSpec.json` in `imports/results/`.
+- Results apply deterministic consequences: ship damage/loss, resource changes,
+  intel rewards, and colony stability shifts based on outcome.
 
 ### 4.7 Tech Tree
 - **Unlocked with Intel resource** + turn investment

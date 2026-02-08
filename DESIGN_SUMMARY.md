@@ -119,6 +119,10 @@ Each colony has:
 - Effective capacity per turn = base infrastructure cap + sum of assigned freighter capacity,
   scaled by logistics tech bonuses.
 - Latency is handled via the in-transit queue (turns-to-arrival).
+- Routes support **auto-deficit policies** with allowlists and per-resource caps to
+  move goods based on destination needs each turn.
+- Each turn records a **colony resource ledger** (production, consumption, imports,
+  exports, net) and surfaces bottlenecks in the colony UI.
 
 ---
 

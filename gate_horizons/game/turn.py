@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .clock import GameClock
+from .resources import RESOURCE_TYPES
 
 
 MONTHS = [
@@ -81,6 +82,8 @@ class TurnReport:
     missions_generated: list = field(default_factory=list)
     missions_completed: list = field(default_factory=list)
     missions_active: list = field(default_factory=list)
+    colony_ledger_entries: dict = field(default_factory=dict)
+    colony_ledger_summary: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -117,6 +120,8 @@ class TurnReport:
             "missions_generated": self.missions_generated,
             "missions_completed": self.missions_completed,
             "missions_active": self.missions_active,
+            "colony_ledger_entries": dict(self.colony_ledger_entries),
+            "colony_ledger_summary": self.colony_ledger_summary,
         }
 
     def get_summary_lines(self) -> list:
@@ -350,6 +355,9 @@ class TurnProcessor:
         if clock.mark_processed("logistics_shipments"):
             self._process_logistics_shipments(game_state, report)
 
+        if clock.mark_processed("colony_ledger"):
+            self._finalize_colony_ledger(game_state, report)
+
         # ============================================================
         # Phase C — Construction & Research
         # ============================================================
@@ -405,6 +413,8 @@ class TurnProcessor:
         # Add to log
         if clock.mark_processed("turn_log"):
             game_state.log.append(f"Turn {report.turn_number}: {report.game_date}")
+            if report.colony_ledger_summary:
+                game_state.log.append(f"Ledger: {report.colony_ledger_summary}")
 
         return report
 
@@ -583,6 +593,27 @@ class TurnProcessor:
         )
         report.freighter_route_reports = route_reports
 
+    @staticmethod
+    def _ensure_colony_ledger_entry(report: TurnReport, system_id: str) -> dict:
+        entry = report.colony_ledger_entries.setdefault(
+            system_id,
+            {
+                "production": {},
+                "consumption": {},
+                "imports": {},
+                "exports": {},
+                "net": {},
+                "bottlenecks": [],
+            },
+        )
+        return entry
+
+    @staticmethod
+    def _add_resource_delta(bucket: dict, resource: str, amount: int) -> None:
+        if amount == 0:
+            return
+        bucket[resource] = bucket.get(resource, 0) + amount
+
     # ================================================================
     # Phase B — Colony Logistics (5-step deterministic order)
     # ================================================================
@@ -594,6 +625,13 @@ class TurnProcessor:
                 colonies=game_state.colonies if hasattr(game_state, "colonies") else None,
             )
             report.logistics_arrivals = arrivals
+            for arrival in arrivals:
+                system_id = arrival.get("to_world")
+                if not system_id:
+                    continue
+                ledger_entry = self._ensure_colony_ledger_entry(report, system_id)
+                for resource, amount in (arrival.get("delivered") or {}).items():
+                    self._add_resource_delta(ledger_entry["imports"], resource, amount)
 
     def _process_colony_production(self, game_state, report: TurnReport) -> None:
         """B2: Compute colony production -> add to stockpiles (respect storage caps)."""
@@ -606,6 +644,7 @@ class TurnProcessor:
 
         for system_id, colony in game_state.colonies.colonies.items():
             production = colony.calculate_production()
+            ledger_entry = self._ensure_colony_ledger_entry(report, system_id)
 
             # Apply tech bonuses
             if industry_bonus > 1.0:
@@ -629,6 +668,7 @@ class TurnProcessor:
                 if added > 0:
                     colony.stockpiles[resource] = current + added
                     report.resources_gained[resource] = report.resources_gained.get(resource, 0) + added
+                    self._add_resource_delta(ledger_entry["production"], resource, added)
 
     def _process_colony_consumption(self, game_state, report: TurnReport) -> None:
         """B3: Compute colony consumption/upkeep -> subtract from stockpiles."""
@@ -637,6 +677,7 @@ class TurnProcessor:
 
         for system_id, colony in game_state.colonies.colonies.items():
             consumption = colony.calculate_consumption()
+            ledger_entry = self._ensure_colony_ledger_entry(report, system_id)
             if hasattr(game_state, "production"):
                 maintenance = game_state.production.config.factory_balance.get(
                     "factory_maintenance_per_turn", 0,
@@ -655,6 +696,7 @@ class TurnProcessor:
                 consumed = min(amount, available)
                 colony.stockpiles[resource] = available - consumed
                 report.resources_spent[resource] = report.resources_spent.get(resource, 0) + consumed
+                self._add_resource_delta(ledger_entry["consumption"], resource, consumed)
 
                 # Record shortage if can't fully cover consumption
                 deficit = amount - consumed
@@ -693,6 +735,80 @@ class TurnProcessor:
                 galaxy=game_state.galaxy if hasattr(game_state, "galaxy") else None,
             )
             report.logistics_shipments = shipment_reports
+            for shipment in shipment_reports:
+                shipped = shipment.get("shipped", {}) or {}
+                source = shipment.get("source")
+                destination = shipment.get("destination")
+                for key, amount in shipped.items():
+                    if amount <= 0:
+                        continue
+                    if key.startswith("outbound_") and source:
+                        resource = key.split("outbound_", 1)[1]
+                        ledger_entry = self._ensure_colony_ledger_entry(report, source)
+                        self._add_resource_delta(ledger_entry["exports"], resource, amount)
+                    elif key.startswith("inbound_") and destination:
+                        resource = key.split("inbound_", 1)[1]
+                        ledger_entry = self._ensure_colony_ledger_entry(report, destination)
+                        self._add_resource_delta(ledger_entry["exports"], resource, amount)
+
+    def _finalize_colony_ledger(self, game_state, report: TurnReport) -> None:
+        if not hasattr(game_state, "colonies"):
+            return
+
+        summary_parts = []
+        for system_id, colony in game_state.colonies.colonies.items():
+            entry = self._ensure_colony_ledger_entry(report, system_id)
+            net = {}
+            for resource in RESOURCE_TYPES:
+                production = entry["production"].get(resource, 0)
+                consumption = entry["consumption"].get(resource, 0)
+                imports = entry["imports"].get(resource, 0)
+                exports = entry["exports"].get(resource, 0)
+                net_value = production - consumption - exports + imports
+                if net_value != 0:
+                    net[resource] = net_value
+            entry["net"] = net
+
+            shortages = report.shortage_reports.get(system_id, {}).get("shortages", {})
+            bottlenecks = []
+            if shortages:
+                top_shortages = sorted(
+                    shortages.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )[:3]
+                for resource, deficit in top_shortages:
+                    bottlenecks.append(
+                        f"Shortage: {resource.replace('_', ' ').title()} (-{deficit})"
+                    )
+            entry["bottlenecks"] = bottlenecks
+
+            snapshot = {
+                "turn": report.turn_number,
+                "date": report.game_date,
+                "production": dict(entry["production"]),
+                "consumption": dict(entry["consumption"]),
+                "imports": dict(entry["imports"]),
+                "exports": dict(entry["exports"]),
+                "net": dict(entry["net"]),
+                "bottlenecks": list(entry["bottlenecks"]),
+            }
+            colony.resource_ledger.append(snapshot)
+            colony.resource_ledger = colony.resource_ledger[-10:]
+            colony.last_bottlenecks = list(bottlenecks)
+
+            if net:
+                net_parts = []
+                for resource, value in list(net.items())[:3]:
+                    sign = "+" if value >= 0 else ""
+                    net_parts.append(f"{resource}:{sign}{value}")
+                if net_parts:
+                    summary_parts.append(f"{colony.name} [{', '.join(net_parts)}]")
+
+        report.colony_ledger_entries = {
+            sid: dict(entry) for sid, entry in report.colony_ledger_entries.items()
+        }
+        report.colony_ledger_summary = "; ".join(summary_parts)
 
     # ================================================================
     # Phase C — Construction & Research
