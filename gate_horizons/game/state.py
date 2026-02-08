@@ -173,7 +173,16 @@ class GameState:
         """Resolve an encounter using the configured resolution mode."""
         mode = (self.encounter_resolution_mode or "auto").lower()
         if mode == "auto":
+            encounter_id = f"enc-{uuid4().hex[:8]}"
+            encounter_spec = self.combat.create_encounter_spec(
+                attacker_ships=attacker_ships,
+                defender=encounter,
+                system=system,
+                encounter_id=encounter_id,
+            )
             combat_result = self.combat.auto_resolve(attacker_ships, encounter)
+            combat_result.encounter_id = encounter_id
+            combat_result.encounter_contract = encounter_spec.to_dict()
             if system:
                 self._apply_gate_damage(system.id, encounter, combat_result, report)
             report.combat_encounters.append(combat_result)
@@ -232,6 +241,8 @@ class GameState:
         ]
         defender = EncounterData.from_dict(pending.get("defender", {}))
         combat_result = self.combat.result_from_spec(attacker_ships, defender, result_spec)
+        combat_result.encounter_id = pending.get("encounter_id", "")
+        combat_result.encounter_contract = dict(pending.get("spec", {}) or {})
         self._apply_manual_combat_result(combat_result, attacker_ships)
         system_id = pending.get("system_id")
         if system_id:
@@ -361,11 +372,35 @@ class GameState:
                 order["status"] = "failed"
                 warning = f"Order {order_id} failed: ship not found"
                 report.warnings.append(warning)
+                report.ship_orders.append(
+                    {
+                        "order_id": order_id,
+                        "ship_id": ship_id,
+                        "ship_name": "Unknown",
+                        "action": order.get("action"),
+                        "status": order["status"],
+                        "result": warning,
+                        "submitted_turn": order.get("submitted_turn"),
+                        "summary": warning,
+                    }
+                )
                 continue
 
             if ship.path:
                 order["status"] = "delayed"
                 remaining_orders.append(order)
+                report.ship_orders.append(
+                    {
+                        "order_id": order_id,
+                        "ship_id": ship_id,
+                        "ship_name": ship.name,
+                        "action": order.get("action"),
+                        "status": order["status"],
+                        "result": "Ship in transit",
+                        "submitted_turn": order.get("submitted_turn"),
+                        "summary": f"Order {order_id} delayed: {ship.name} in transit",
+                    }
+                )
                 continue
 
             handler = self._get_ship_action_handler(order.get("action", ""))
@@ -373,6 +408,18 @@ class GameState:
                 order["status"] = "failed"
                 warning = f"Order {order_id} failed: unsupported action"
                 report.warnings.append(warning)
+                report.ship_orders.append(
+                    {
+                        "order_id": order_id,
+                        "ship_id": ship_id,
+                        "ship_name": ship.name,
+                        "action": order.get("action"),
+                        "status": order["status"],
+                        "result": warning,
+                        "submitted_turn": order.get("submitted_turn"),
+                        "summary": warning,
+                    }
+                )
                 continue
 
             success, message, report_entry = handler(ship, order.get("params", {}) or {})
@@ -385,6 +432,18 @@ class GameState:
             elif not success:
                 warning = f"Order {order_id} failed: {message}"
                 report.warnings.append(warning)
+            report.ship_orders.append(
+                {
+                    "order_id": order_id,
+                    "ship_id": ship_id,
+                    "ship_name": ship.name,
+                    "action": order.get("action"),
+                    "status": order["status"],
+                    "result": order.get("result"),
+                    "submitted_turn": order.get("submitted_turn"),
+                    "summary": message if not success else report_entry.get("summary", message),
+                }
+            )
 
         self.pending_ship_orders = remaining_orders
 
