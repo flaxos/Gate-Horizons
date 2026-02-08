@@ -590,6 +590,7 @@ class TurnProcessor:
                 resources=game_state.resources if hasattr(game_state, "resources") else None,
                 fleet=game_state.fleet if hasattr(game_state, "fleet") else None,
                 tech_effects=tech_effects,
+                galaxy=game_state.galaxy if hasattr(game_state, "galaxy") else None,
             )
             report.logistics_shipments = shipment_reports
 
@@ -791,6 +792,36 @@ class TurnProcessor:
                     report.warnings.append(f"Colony {colony.name} is unhappy ({colony.happiness}%)")
                 if colony.stability < 30:
                     report.warnings.append(f"Colony {colony.name} stability critical ({colony.stability}%)")
+
+        if hasattr(game_state, "galaxy"):
+            for system in game_state.galaxy.systems.values():
+                if not system.discovered:
+                    continue
+                if not system.gate_active or system.gate_status <= 0 or system.gate_capacity <= 0:
+                    report.warnings.append(f"Gate at {system.name} is offline")
+                elif system.gate_status < 1.0:
+                    effective = game_state.galaxy.get_gate_effective_capacity(system.id)
+                    percent = int(system.gate_status * 100)
+                    report.warnings.append(
+                        f"Gate at {system.name} operating at {percent}% capacity ({effective} throughput)"
+                    )
+
+        if hasattr(game_state, "trade") and hasattr(game_state, "galaxy"):
+            for route in game_state.trade.routes.values():
+                if not route.enabled:
+                    continue
+                capacity = game_state.galaxy.get_path_capacity(
+                    route.source_system,
+                    route.destination_system,
+                )
+                if capacity <= 0:
+                    report.warnings.append(
+                        f"Trade route {route.source_system} → {route.destination_system} disrupted by gate damage"
+                    )
+                elif capacity < route.capacity_per_turn:
+                    report.warnings.append(
+                        f"Trade route {route.source_system} → {route.destination_system} limited to {capacity} throughput"
+                    )
 
     def _check_milestones(self, game_state, report: TurnReport) -> None:
         num_colonies = len(game_state.colonies.colonies) if hasattr(game_state, "colonies") else 0

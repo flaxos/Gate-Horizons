@@ -57,6 +57,9 @@ class StarSystem:
         gate_connections: list = None,
         gate_active: bool = True,
         gate_activation_cost: dict = None,
+        gate_status: float = 1.0,
+        gate_capacity: int = 100,
+        gate_repair_cost: dict = None,
         anomalies: list = None,
     ):
         self.id = id
@@ -75,6 +78,9 @@ class StarSystem:
         self.gate_connections = gate_connections or []
         self.gate_active = gate_active
         self.gate_activation_cost = gate_activation_cost or {}
+        self.gate_status = max(0.0, min(1.0, float(gate_status)))
+        self.gate_capacity = max(0, int(gate_capacity))
+        self.gate_repair_cost = gate_repair_cost or {}
         self.anomalies = anomalies or []
 
     def to_dict(self) -> dict:
@@ -92,6 +98,9 @@ class StarSystem:
             "gate_connections": list(self.gate_connections),
             "gate_active": self.gate_active,
             "gate_activation_cost": dict(self.gate_activation_cost),
+            "gate_status": self.gate_status,
+            "gate_capacity": self.gate_capacity,
+            "gate_repair_cost": dict(self.gate_repair_cost),
             "anomalies": list(self.anomalies),
         }
 
@@ -107,7 +116,8 @@ class StarSystem:
         valid_keys = {
             "id", "name", "x", "y", "discovered", "surveyed", "tier",
             "planets", "stationed_ships", "colony", "gate_connections",
-            "gate_active", "gate_activation_cost", "anomalies",
+            "gate_active", "gate_activation_cost", "gate_status",
+            "gate_capacity", "gate_repair_cost", "anomalies",
         }
         d = {k: v for k, v in d.items() if k in valid_keys}
         return cls(**d)
@@ -157,7 +167,13 @@ class GalaxyMap:
         neighbors = []
         for sid in system.gate_connections:
             neighbor = self.systems.get(sid)
-            if neighbor and system.gate_active and neighbor.gate_active:
+            if not neighbor:
+                continue
+            if not self.is_gate_operational(system.id):
+                continue
+            if not self.is_gate_operational(neighbor.id):
+                continue
+            if system.gate_active and neighbor.gate_active:
                 neighbors.append(neighbor)
         return neighbors
 
@@ -246,6 +262,90 @@ class GalaxyMap:
             res: max(0, int(amount * (1.0 - reduction)))
             for res, amount in system.gate_activation_cost.items()
         }
+
+    def repair_gate(
+        self,
+        system_id: str,
+        resources: "ResourceManager" = None,
+        amount: float = 1.0,
+        cost_reduction: float = 0.0,
+    ) -> bool:
+        """Repair a damaged gate by a fractional amount (0.0-1.0)."""
+        system = self.systems.get(system_id)
+        if not system:
+            return False
+
+        missing = max(0.0, 1.0 - system.gate_status)
+        if missing <= 0:
+            return False
+
+        repair_amount = max(0.0, min(1.0, float(amount), missing))
+        if repair_amount <= 0:
+            return False
+
+        if resources and system.gate_repair_cost:
+            reduction = max(0.0, min(1.0, cost_reduction))
+            effective_cost = {
+                res: max(0, int(amount * repair_amount * (1.0 - reduction)))
+                for res, amount in system.gate_repair_cost.items()
+            }
+            if not resources.can_afford(effective_cost):
+                return False
+            for res, amount in effective_cost.items():
+                resources.spend(res, amount)
+
+        system.gate_status = min(1.0, system.gate_status + repair_amount)
+        self._path_cache.clear()
+        return True
+
+    def get_gate_repair_cost(
+        self,
+        system_id: str,
+        amount: float = 1.0,
+        cost_reduction: float = 0.0,
+    ) -> dict:
+        """Return effective repair cost for a fractional repair amount."""
+        system = self.systems.get(system_id)
+        if not system:
+            return {}
+        missing = max(0.0, 1.0 - system.gate_status)
+        if missing <= 0:
+            return {}
+        repair_amount = max(0.0, min(1.0, float(amount), missing))
+        if repair_amount <= 0:
+            return {}
+        reduction = max(0.0, min(1.0, cost_reduction))
+        return {
+            res: max(0, int(amount * repair_amount * (1.0 - reduction)))
+            for res, amount in system.gate_repair_cost.items()
+        }
+
+    def get_gate_effective_capacity(self, system_id: str) -> int:
+        system = self.systems.get(system_id)
+        if not system or not system.gate_active:
+            return 0
+        capacity = max(0, int(system.gate_capacity))
+        status = max(0.0, min(1.0, system.gate_status))
+        return max(0, int(capacity * status))
+
+    def is_gate_operational(self, system_id: str) -> bool:
+        return self.get_gate_effective_capacity(system_id) > 0
+
+    def get_path_capacity(self, from_id: str, to_id: str) -> int:
+        """Return the minimum effective gate capacity along a path."""
+        path = self.get_path(from_id, to_id)
+        if not path:
+            return 0
+        capacities = [
+            self.get_gate_effective_capacity(system_id)
+            for system_id in path
+        ]
+        if not capacities:
+            return 0
+        return min(capacities)
+
+    def can_support_throughput(self, from_id: str, to_id: str, amount: int) -> bool:
+        return self.get_path_capacity(from_id, to_id) >= amount
 
     def get_systems_by_tier(self, tier: int) -> list:
         return [s for s in self.systems.values() if s.tier == tier]

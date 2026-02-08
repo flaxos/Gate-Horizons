@@ -181,6 +181,26 @@ class TradeManager:
         self.routes: dict[str, TradeRoute] = {}
         self.in_transit: list[Shipment] = []  # Goods currently being shipped
 
+    @staticmethod
+    def _apply_gate_capacity(throughput: dict, capacity_limit: Optional[int]) -> dict:
+        if capacity_limit is None:
+            return throughput
+        if capacity_limit <= 0:
+            return {"outbound": {}, "inbound": {}}
+
+        total = sum(throughput.get("outbound", {}).values()) + sum(
+            throughput.get("inbound", {}).values()
+        )
+        if total <= capacity_limit or total == 0:
+            return throughput
+
+        scale = capacity_limit / total
+        scaled = {"outbound": {}, "inbound": {}}
+        for direction in ("outbound", "inbound"):
+            for resource, amount in throughput.get(direction, {}).items():
+                scaled[direction][resource] = max(0, int(amount * scale))
+        return scaled
+
     def create_route(
         self,
         source: str,
@@ -290,7 +310,15 @@ class TradeManager:
         self.in_transit = still_in_transit
         return arrivals
 
-    def compute_and_ship(self, colonies=None, resources=None, fleet=None, tech_effects: dict = None, rng=None) -> list:
+    def compute_and_ship(
+        self,
+        colonies=None,
+        resources=None,
+        fleet=None,
+        tech_effects: dict = None,
+        rng=None,
+        galaxy=None,
+    ) -> list:
         """Step 5 of turn resolution: compute trade flows and create shipments.
 
         For each active route:
@@ -309,6 +337,13 @@ class TradeManager:
                 continue
 
             throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
+            gate_capacity = None
+            if galaxy:
+                gate_capacity = galaxy.get_path_capacity(
+                    route.source_system,
+                    route.destination_system,
+                )
+                throughput = self._apply_gate_capacity(throughput, gate_capacity)
             report = {
                 "route_id": route.id,
                 "source": route.source_system,
@@ -317,6 +352,13 @@ class TradeManager:
                 "lost_to_risk": {},
                 "disrupted": False,
             }
+            if gate_capacity is not None and gate_capacity <= 0:
+                report["disrupted"] = True
+                report["disruption_reason"] = "gate_capacity"
+                reports.append(report)
+                continue
+            if gate_capacity is not None:
+                report["gate_capacity"] = gate_capacity
 
             # Process outbound (source -> destination)
             outbound_resources = {}
@@ -409,7 +451,7 @@ class TradeManager:
 
         return reports
 
-    def process_turn(self, resources=None, fleet=None, tech_effects: dict = None) -> list:
+    def process_turn(self, resources=None, fleet=None, tech_effects: dict = None, galaxy=None) -> list:
         """Legacy method: process trade routes with immediate transfer.
 
         Kept for backward compatibility. New code should use
@@ -422,6 +464,13 @@ class TradeManager:
                 continue
 
             throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
+            gate_capacity = None
+            if galaxy:
+                gate_capacity = galaxy.get_path_capacity(
+                    route.source_system,
+                    route.destination_system,
+                )
+                throughput = self._apply_gate_capacity(throughput, gate_capacity)
             report = {
                 "route_id": route.id,
                 "source": route.source_system,
@@ -429,6 +478,13 @@ class TradeManager:
                 "transferred": {},
                 "disrupted": False,
             }
+            if gate_capacity is not None and gate_capacity <= 0:
+                report["disrupted"] = True
+                report["disruption_reason"] = "gate_capacity"
+                reports.append(report)
+                continue
+            if gate_capacity is not None:
+                report["gate_capacity"] = gate_capacity
 
             if resources:
                 for resource, amount in throughput.get("outbound", {}).items():
