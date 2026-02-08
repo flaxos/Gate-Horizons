@@ -7,7 +7,7 @@ from typing import Optional
 
 from .galaxy import GalaxyMap
 from .ships import FleetManager
-from .resources import ResourceManager
+from .resources import ResourceManager, RESOURCE_TYPES
 from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
 from .trade import TradeManager
 from .combat import CombatResolver
@@ -256,6 +256,76 @@ class GameState:
 
         self.log.append(f"Upgraded {colony.name} to {level_name} (level {colony.level})")
         return True, f"{colony.name} upgraded to {level_name}"
+
+    def load_ship_cargo_from_colony(self, ship_id: str, manifest: Optional[dict] = None) -> dict:
+        """Load ship cargo from local colony resources.
+
+        If manifest is None, loads the most abundant resources first.
+        Returns a dict of resources loaded.
+        """
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return {}
+
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return {}
+
+        system_resources = self.resources.per_system_resources.get(ship.location, {})
+        if not system_resources:
+            return {}
+
+        available = {
+            res: min(
+                self.resources.global_resources.get(res, 0),
+                system_resources.get(res, 0),
+            )
+            for res in RESOURCE_TYPES
+        }
+
+        if manifest:
+            resource_order = [res for res in manifest.keys() if res in available]
+        else:
+            resource_order = sorted(
+                available,
+                key=lambda res: (-available[res], res),
+            )
+
+        loaded = {}
+        remaining_capacity = ship.cargo_free
+        for res in resource_order:
+            if remaining_capacity <= 0:
+                break
+            desired = manifest.get(res, available[res]) if manifest else available[res]
+            if desired <= 0:
+                continue
+            amount = min(desired, available[res], remaining_capacity)
+            spent = self.resources.spend_and_return_actual(res, amount, ship.location)
+            if spent <= 0:
+                continue
+            ship.add_cargo(res, spent)
+            loaded[res] = loaded.get(res, 0) + spent
+            remaining_capacity -= spent
+        return loaded
+
+    def unload_ship_cargo_to_colony(self, ship_id: str) -> dict:
+        """Unload ship cargo into local colony resources."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return {}
+
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return {}
+
+        unloaded = {}
+        for resource, amount in list(ship.cargo.items()):
+            if resource not in RESOURCE_TYPES or amount <= 0:
+                continue
+            self.resources.add(resource, amount, ship.location)
+            ship.remove_cargo(resource, amount)
+            unloaded[resource] = amount
+        return unloaded
 
     def build_ship(self, system_id: str, ship_class: str, name: str = None) -> bool:
         """Start constructing a ship at a colony's spaceport."""
