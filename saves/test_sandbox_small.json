@@ -1,0 +1,1859 @@
+{
+  "schema_version": 9,
+  "galaxy": {
+    "systems": [
+      {
+        "id": "sys_01",
+        "name": "Sector 01",
+        "x": 500.14,
+        "y": 188.04,
+        "discovered": true,
+        "surveyed": true,
+        "tier": 2,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_01_p1",
+            "name": "Sector 01-1",
+            "type": "volcanic",
+            "resources": {},
+            "colonizable": true,
+            "description": "",
+            "habitability": 0.29,
+            "gravity": 0.67,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_02",
+          "sys_03",
+          "sys_04"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 106,
+        "gate_repair_cost": {},
+        "anomalies": []
+      },
+      {
+        "id": "sys_02",
+        "name": "Sector 02",
+        "x": 478.39,
+        "y": 449.53,
+        "discovered": true,
+        "surveyed": true,
+        "tier": 1,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_02_p1",
+            "name": "Sector 02-1",
+            "type": "toxic",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.34,
+            "gravity": 1.18,
+            "baseline_output": {},
+            "traits": []
+          },
+          {
+            "id": "sys_02_p2",
+            "name": "Sector 02-2",
+            "type": "volcanic",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.75,
+            "gravity": 1.23,
+            "baseline_output": {},
+            "traits": []
+          },
+          {
+            "id": "sys_02_p3",
+            "name": "Sector 02-3",
+            "type": "desert",
+            "resources": {},
+            "colonizable": true,
+            "description": "",
+            "habitability": 0.35,
+            "gravity": 0.97,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_01",
+          "sys_03",
+          "sys_06"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 71,
+        "gate_repair_cost": {},
+        "anomalies": []
+      },
+      {
+        "id": "sys_03",
+        "name": "Sector 03",
+        "x": 963.97,
+        "y": 262.96,
+        "discovered": true,
+        "surveyed": true,
+        "tier": 1,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_03_p1",
+            "name": "Sector 03-1",
+            "type": "barren",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.48,
+            "gravity": 0.82,
+            "baseline_output": {},
+            "traits": []
+          },
+          {
+            "id": "sys_03_p2",
+            "name": "Sector 03-2",
+            "type": "rocky",
+            "resources": {},
+            "colonizable": true,
+            "description": "",
+            "habitability": 0.45,
+            "gravity": 1.35,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_02",
+          "sys_04",
+          "sys_01"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 65,
+        "gate_repair_cost": {},
+        "anomalies": []
+      },
+      {
+        "id": "sys_04",
+        "name": "Sector 04",
+        "x": 560.57,
+        "y": 566.13,
+        "discovered": false,
+        "surveyed": false,
+        "tier": 4,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_04_p1",
+            "name": "Sector 04-1",
+            "type": "barren",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.29,
+            "gravity": 1.36,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_03",
+          "sys_05",
+          "sys_01"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 105,
+        "gate_repair_cost": {},
+        "anomalies": []
+      },
+      {
+        "id": "sys_05",
+        "name": "Sector 05",
+        "x": 247.24,
+        "y": 507.59,
+        "discovered": false,
+        "surveyed": false,
+        "tier": 2,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_05_p1",
+            "name": "Sector 05-1",
+            "type": "ice",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.23,
+            "gravity": 0.62,
+            "baseline_output": {},
+            "traits": []
+          },
+          {
+            "id": "sys_05_p2",
+            "name": "Sector 05-2",
+            "type": "toxic",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.68,
+            "gravity": 0.94,
+            "baseline_output": {},
+            "traits": []
+          },
+          {
+            "id": "sys_05_p3",
+            "name": "Sector 05-3",
+            "type": "desert",
+            "resources": {},
+            "colonizable": true,
+            "description": "",
+            "habitability": 0.3,
+            "gravity": 1.09,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_04",
+          "sys_06"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 84,
+        "gate_repair_cost": {},
+        "anomalies": []
+      },
+      {
+        "id": "sys_06",
+        "name": "Sector 06",
+        "x": 422.89,
+        "y": 362.64,
+        "discovered": false,
+        "surveyed": false,
+        "tier": 2,
+        "stars": [],
+        "planets": [
+          {
+            "id": "sys_06_p1",
+            "name": "Sector 06-1",
+            "type": "volcanic",
+            "resources": {},
+            "colonizable": false,
+            "description": "",
+            "habitability": 0.51,
+            "gravity": 1.04,
+            "baseline_output": {},
+            "traits": []
+          }
+        ],
+        "stationed_ships": [],
+        "colony": null,
+        "gate_connections": [
+          "sys_05",
+          "sys_02"
+        ],
+        "gate_active": true,
+        "gate_activation_cost": {},
+        "gate_status": 1.0,
+        "gate_capacity": 112,
+        "gate_repair_cost": {},
+        "anomalies": []
+      }
+    ]
+  },
+  "fleet": {
+    "ships": {
+      "22a3c1ce": {
+        "id": "22a3c1ce",
+        "name": "ISS Pathfinder",
+        "ship_class": "scout",
+        "location": "sys_01",
+        "destination": null,
+        "path": [],
+        "stats": {
+          "max_hull": 30,
+          "speed": 3,
+          "cargo_capacity": 10,
+          "freight_capacity": 0,
+          "sensor_range": 3,
+          "fuel_capacity": 12,
+          "combat_power": 5,
+          "maintenance_cost": 3,
+          "abilities": [
+            "scan",
+            "probe_deploy",
+            "investigate",
+            "retreat_boost"
+          ]
+        },
+        "cargo": {},
+        "fuel": 12,
+        "hull": 30,
+        "morale": 80,
+        "mission": null,
+        "mission_target": null,
+        "trade_route": null,
+        "mining": false
+      },
+      "3d9eea1d": {
+        "id": "3d9eea1d",
+        "name": "ISS Sentinel",
+        "ship_class": "corvette",
+        "location": "sys_01",
+        "destination": null,
+        "path": [],
+        "stats": {
+          "max_hull": 60,
+          "speed": 2,
+          "cargo_capacity": 15,
+          "freight_capacity": 0,
+          "sensor_range": 2,
+          "fuel_capacity": 10,
+          "combat_power": 20,
+          "maintenance_cost": 7,
+          "abilities": [
+            "patrol",
+            "escort",
+            "intercept",
+            "blockade",
+            "engage"
+          ]
+        },
+        "cargo": {},
+        "fuel": 10,
+        "hull": 60,
+        "morale": 80,
+        "mission": null,
+        "mission_target": null,
+        "trade_route": null,
+        "mining": false
+      },
+      "2674e79d": {
+        "id": "2674e79d",
+        "name": "ISS Hauler",
+        "ship_class": "freighter",
+        "location": "sys_01",
+        "destination": null,
+        "path": [],
+        "stats": {
+          "max_hull": 50,
+          "speed": 1,
+          "cargo_capacity": 100,
+          "freight_capacity": 10,
+          "sensor_range": 1,
+          "fuel_capacity": 8,
+          "combat_power": 2,
+          "maintenance_cost": 5,
+          "abilities": [
+            "load_cargo",
+            "unload_cargo",
+            "set_trade_route",
+            "emergency_jettison"
+          ]
+        },
+        "cargo": {},
+        "fuel": 8,
+        "hull": 50,
+        "morale": 80,
+        "mission": null,
+        "mission_target": null,
+        "trade_route": null,
+        "mining": false
+      }
+    },
+    "ship_templates": {
+      "scout": {
+        "name": "Pathfinder-class Scout",
+        "max_hull": 30,
+        "speed": 3,
+        "cargo_capacity": 10,
+        "sensor_range": 3,
+        "fuel_capacity": 12,
+        "combat_power": 5,
+        "maintenance_cost": 3,
+        "build_cost": {
+          "credits": 50,
+          "metals": 20
+        },
+        "build_turns": 2,
+        "abilities": [
+          "scan",
+          "probe_deploy",
+          "investigate",
+          "retreat_boost"
+        ]
+      },
+      "freighter": {
+        "name": "Hauler-class Freighter",
+        "max_hull": 50,
+        "speed": 1,
+        "cargo_capacity": 100,
+        "freight_capacity": 10,
+        "sensor_range": 1,
+        "fuel_capacity": 8,
+        "combat_power": 2,
+        "maintenance_cost": 5,
+        "build_cost": {
+          "credits": 80,
+          "metals": 40
+        },
+        "build_turns": 3,
+        "abilities": [
+          "load_cargo",
+          "unload_cargo",
+          "set_trade_route",
+          "emergency_jettison"
+        ]
+      },
+      "miner": {
+        "name": "Excavator-class Miner",
+        "max_hull": 40,
+        "speed": 1,
+        "cargo_capacity": 60,
+        "sensor_range": 1,
+        "fuel_capacity": 10,
+        "combat_power": 3,
+        "maintenance_cost": 4,
+        "build_cost": {
+          "credits": 60,
+          "metals": 35
+        },
+        "build_turns": 3,
+        "abilities": [
+          "prospect",
+          "extract",
+          "basic_refine",
+          "auto_mine"
+        ]
+      },
+      "corvette": {
+        "name": "Sentinel-class Corvette",
+        "max_hull": 60,
+        "speed": 2,
+        "cargo_capacity": 15,
+        "sensor_range": 2,
+        "fuel_capacity": 10,
+        "combat_power": 20,
+        "maintenance_cost": 7,
+        "build_cost": {
+          "credits": 100,
+          "metals": 50
+        },
+        "build_turns": 4,
+        "abilities": [
+          "patrol",
+          "escort",
+          "intercept",
+          "blockade",
+          "engage"
+        ]
+      },
+      "small_freighter": {
+        "name": "Tramp-class Light Freighter",
+        "max_hull": 40,
+        "speed": 2,
+        "cargo_capacity": 80,
+        "freight_capacity": 8,
+        "sensor_range": 1,
+        "fuel_capacity": 10,
+        "combat_power": 2,
+        "maintenance_cost": 4,
+        "build_cost": {
+          "credits": 60,
+          "metals": 30
+        },
+        "build_turns": 4,
+        "abilities": [
+          "load_cargo",
+          "unload_cargo",
+          "set_trade_route"
+        ]
+      },
+      "medium_freighter": {
+        "name": "Merchantman-class Freighter",
+        "max_hull": 60,
+        "speed": 1,
+        "cargo_capacity": 200,
+        "freight_capacity": 16,
+        "sensor_range": 1,
+        "fuel_capacity": 12,
+        "combat_power": 3,
+        "maintenance_cost": 7,
+        "build_cost": {
+          "credits": 120,
+          "metals": 60
+        },
+        "build_turns": 6,
+        "abilities": [
+          "load_cargo",
+          "unload_cargo",
+          "set_trade_route",
+          "emergency_jettison"
+        ]
+      },
+      "large_freighter": {
+        "name": "Atlas-class Heavy Freighter",
+        "max_hull": 80,
+        "speed": 1,
+        "cargo_capacity": 320,
+        "freight_capacity": 24,
+        "sensor_range": 1,
+        "fuel_capacity": 14,
+        "combat_power": 3,
+        "maintenance_cost": 9,
+        "build_cost": {
+          "credits": 220,
+          "metals": 110
+        },
+        "build_turns": 8,
+        "abilities": [
+          "load_cargo",
+          "unload_cargo",
+          "set_trade_route",
+          "emergency_jettison"
+        ]
+      },
+      "colony_ship": {
+        "name": "Ark-class Colony Ship",
+        "max_hull": 100,
+        "speed": 1,
+        "cargo_capacity": 300,
+        "sensor_range": 1,
+        "fuel_capacity": 20,
+        "combat_power": 2,
+        "maintenance_cost": 12,
+        "build_cost": {
+          "credits": 300,
+          "metals": 150
+        },
+        "build_turns": 12,
+        "abilities": [
+          "load_cargo",
+          "unload_cargo",
+          "establish_colony"
+        ]
+      }
+    }
+  },
+  "resources": {
+    "global_resources": {
+      "energy": 80,
+      "metals": 60,
+      "exotics": 5,
+      "credits": 150,
+      "intel": 10
+    },
+    "per_system_resources": {},
+    "income_cache": {},
+    "expense_cache": {}
+  },
+  "colonies": {
+    "colonies": {
+      "sys_01": {
+        "system_id": "sys_01",
+        "planet_id": "sys_01_p1",
+        "name": "Sector 01-1",
+        "population": 500,
+        "happiness": 75,
+        "infrastructure": {
+          "housing": {
+            "level": 3,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "industry": {
+            "level": 2,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "defense": {
+            "level": 1,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "research": {
+            "level": 1,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "spaceport": {
+            "level": 1,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "power": {
+            "level": 2,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "mining": {
+            "level": 1,
+            "building": false,
+            "turns_remaining": 0
+          },
+          "logistics": {
+            "level": 1,
+            "building": false,
+            "turns_remaining": 0
+          }
+        },
+        "build_queue": [],
+        "shipyard_queue": [],
+        "level": 2,
+        "stability": 80,
+        "stockpiles": {
+          "energy": 40,
+          "metals": 30,
+          "exotics": 3,
+          "credits": 50,
+          "intel": 5
+        },
+        "owner_faction": "player",
+        "upgrade_progress": 0,
+        "world_traits": [
+          "frontier"
+        ],
+        "shortage_turns": 0,
+        "production_inventory": {
+          "ore_iron": 10,
+          "silicates": 0,
+          "water_ice": 0,
+          "fissiles": 0,
+          "gas_h2": 0,
+          "gas_he3": 0,
+          "gas_d2": 0,
+          "volatiles": 0,
+          "organics": 0,
+          "rare_metals": 0,
+          "exotics": 0,
+          "metal_alloys": 8,
+          "polymers": 0,
+          "fuel": 0,
+          "electronics": 0,
+          "hull_plating": 0,
+          "drive_assemblies": 0,
+          "avionics": 0,
+          "hab_modules": 0,
+          "cargo_frames": 0
+        },
+        "extraction_sites": [
+          {
+            "id": "9a142eee",
+            "resource_id": "ore_iron",
+            "base_yield": 3,
+            "level": 1,
+            "active": true,
+            "building": false,
+            "turns_remaining": 0
+          },
+          {
+            "id": "7bbc38a9",
+            "resource_id": "silicates",
+            "base_yield": 2,
+            "level": 1,
+            "active": true,
+            "building": false,
+            "turns_remaining": 0
+          }
+        ],
+        "factories": [],
+        "resource_ledger": [],
+        "last_bottlenecks": []
+      }
+    }
+  },
+  "trade": {
+    "routes": {},
+    "in_transit": []
+  },
+  "combat": {
+    "combat_accuracy_bonus": 0.0
+  },
+  "events": {
+    "triggered_events": [],
+    "event_queue": []
+  },
+  "tech": {
+    "techs": {
+      "efficient_drives": {
+        "id": "efficient_drives",
+        "name": "Efficient Drives",
+        "description": "Improve fuel efficiency for all ships by 20%",
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "fuel_efficiency": 1.2
+        },
+        "prerequisites": [],
+        "branch": "propulsion",
+        "tier": "tier1",
+        "researched": true,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "gate_resonance": {
+        "id": "gate_resonance",
+        "name": "Gate Resonance Tuning",
+        "description": "Reduce gate activation energy cost by 30%",
+        "cost": {
+          "intel": 15,
+          "turns": 4
+        },
+        "effect": {
+          "gate_cost_reduction": 0.3
+        },
+        "prerequisites": [],
+        "branch": "propulsion",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "burst_drives": {
+        "id": "burst_drives",
+        "name": "Burst Acceleration",
+        "description": "+1 speed for Scout and Corvette classes",
+        "cost": {
+          "intel": 25,
+          "exotics": 5,
+          "turns": 5
+        },
+        "effect": {
+          "speed_bonus": {
+            "scout": 1,
+            "corvette": 1
+          }
+        },
+        "prerequisites": [
+          "efficient_drives"
+        ],
+        "branch": "propulsion",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "long_range_drives": {
+        "id": "long_range_drives",
+        "name": "Long-Range Drives",
+        "description": "Improve fuel efficiency for all ships by 40%",
+        "cost": {
+          "intel": 28,
+          "turns": 5
+        },
+        "effect": {
+          "fuel_efficiency": 1.4
+        },
+        "prerequisites": [
+          "burst_drives"
+        ],
+        "branch": "propulsion",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "slipstream_calibration": {
+        "id": "slipstream_calibration",
+        "name": "Slipstream Calibration",
+        "description": "Reduce gate activation energy cost by 50%",
+        "cost": {
+          "intel": 30,
+          "turns": 5
+        },
+        "effect": {
+          "gate_cost_reduction": 0.5
+        },
+        "prerequisites": [
+          "gate_resonance"
+        ],
+        "branch": "propulsion",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "reinforced_hulls": {
+        "id": "reinforced_hulls",
+        "name": "Reinforced Hulls",
+        "description": "+20% hull points for all ships",
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "hull_bonus": 1.2
+        },
+        "prerequisites": [],
+        "branch": "engineering",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "rapid_construction": {
+        "id": "rapid_construction",
+        "name": "Rapid Construction",
+        "description": "-1 turn for all ship and building construction",
+        "cost": {
+          "intel": 12,
+          "turns": 3
+        },
+        "effect": {
+          "build_time_reduction": 1
+        },
+        "prerequisites": [],
+        "branch": "engineering",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "advanced_mining": {
+        "id": "advanced_mining",
+        "name": "Advanced Mining Rigs",
+        "description": "+50% mining yield for Miner-class ships",
+        "cost": {
+          "intel": 20,
+          "exotics": 3,
+          "turns": 4
+        },
+        "effect": {
+          "mining_yield": 1.5
+        },
+        "prerequisites": [
+          "reinforced_hulls"
+        ],
+        "branch": "engineering",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "industrial_processing": {
+        "id": "industrial_processing",
+        "name": "Industrial Processing",
+        "description": "Enables ore-to-metals conversion. +30% industry output at colonies",
+        "cost": {
+          "intel": 18,
+          "turns": 4
+        },
+        "effect": {
+          "industry_bonus": 1.3
+        },
+        "prerequisites": [
+          "rapid_construction"
+        ],
+        "branch": "engineering",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "hardened_plating": {
+        "id": "hardened_plating",
+        "name": "Hardened Plating",
+        "description": "+35% hull points for all ships",
+        "cost": {
+          "intel": 26,
+          "turns": 5
+        },
+        "effect": {
+          "hull_bonus": 1.35
+        },
+        "prerequisites": [
+          "reinforced_hulls"
+        ],
+        "branch": "engineering",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "automation_lines": {
+        "id": "automation_lines",
+        "name": "Automation Lines",
+        "description": "-2 turns for ship and building construction",
+        "cost": {
+          "intel": 24,
+          "turns": 5
+        },
+        "effect": {
+          "build_time_reduction": 2
+        },
+        "prerequisites": [
+          "rapid_construction"
+        ],
+        "branch": "engineering",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "deep_core_extractors": {
+        "id": "deep_core_extractors",
+        "name": "Deep Core Extractors",
+        "description": "+75% mining yield for Miner-class ships",
+        "cost": {
+          "intel": 28,
+          "exotics": 6,
+          "turns": 6
+        },
+        "effect": {
+          "mining_yield": 1.75
+        },
+        "prerequisites": [
+          "advanced_mining"
+        ],
+        "branch": "engineering",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "deep_scan": {
+        "id": "deep_scan",
+        "name": "Deep Scanning Arrays",
+        "description": "+1 sensor range for all ships, reveal hidden anomalies",
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "sensor_bonus": 1,
+          "reveal_hidden": true
+        },
+        "prerequisites": [],
+        "branch": "sensors",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "predictive_analysis": {
+        "id": "predictive_analysis",
+        "name": "Predictive Threat Analysis",
+        "description": "+15% combat auto-resolve accuracy",
+        "cost": {
+          "intel": 20,
+          "turns": 4
+        },
+        "effect": {
+          "combat_accuracy_bonus": 0.15
+        },
+        "prerequisites": [
+          "deep_scan"
+        ],
+        "branch": "sensors",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "research_acceleration": {
+        "id": "research_acceleration",
+        "name": "Research Acceleration",
+        "description": "Intel synergy: +1 intel per turn per colony with research lab",
+        "cost": {
+          "intel": 22,
+          "turns": 4
+        },
+        "effect": {
+          "research_bonus": 1
+        },
+        "prerequisites": [
+          "deep_scan"
+        ],
+        "branch": "sensors",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "long_range_arrays": {
+        "id": "long_range_arrays",
+        "name": "Long-Range Sensor Arrays",
+        "description": "+1 sensor range for all ships",
+        "cost": {
+          "intel": 24,
+          "turns": 4
+        },
+        "effect": {
+          "sensor_bonus": 1
+        },
+        "prerequisites": [
+          "predictive_analysis"
+        ],
+        "branch": "sensors",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "battlefield_simulation": {
+        "id": "battlefield_simulation",
+        "name": "Battlefield Simulation",
+        "description": "+25% combat auto-resolve accuracy",
+        "cost": {
+          "intel": 26,
+          "turns": 5
+        },
+        "effect": {
+          "combat_accuracy_bonus": 0.25
+        },
+        "prerequisites": [
+          "predictive_analysis"
+        ],
+        "branch": "sensors",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "signal_decryption": {
+        "id": "signal_decryption",
+        "name": "Signal Decryption",
+        "description": "Can decode alien transmissions, unlocking diplomacy events",
+        "cost": {
+          "intel": 15,
+          "turns": 4
+        },
+        "effect": {
+          "unlock_diplomacy": true
+        },
+        "prerequisites": [],
+        "branch": "xenology",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "cultural_exchange": {
+        "id": "cultural_exchange",
+        "name": "Cultural Exchange Protocols",
+        "description": "+30% favorable diplomacy outcomes",
+        "cost": {
+          "intel": 25,
+          "exotics": 5,
+          "turns": 5
+        },
+        "effect": {
+          "diplomacy_bonus": 0.3
+        },
+        "prerequisites": [
+          "signal_decryption"
+        ],
+        "branch": "xenology",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "colonisation": {
+        "id": "colonisation",
+        "name": "Colonisation",
+        "description": "Unlocks founding outposts on colonizable worlds",
+        "cost": {
+          "intel": 12,
+          "turns": 3
+        },
+        "effect": {
+          "unlock_colonisation": true
+        },
+        "prerequisites": [],
+        "branch": "expansion",
+        "tier": "tier1",
+        "researched": true,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "logistics_1": {
+        "id": "logistics_1",
+        "name": "Logistics I",
+        "description": "Enables trade routes between colonies. Base capacity 10/turn",
+        "cost": {
+          "intel": 10,
+          "turns": 3
+        },
+        "effect": {
+          "logistics_capacity_bonus": 0,
+          "unlock_trade_routes": true
+        },
+        "prerequisites": [],
+        "branch": "expansion",
+        "tier": "tier1",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "logistics_2": {
+        "id": "logistics_2",
+        "name": "Logistics II",
+        "description": "Increases route capacity by 50%. Enables logistics hubs",
+        "cost": {
+          "intel": 20,
+          "exotics": 3,
+          "turns": 4
+        },
+        "effect": {
+          "logistics_capacity_bonus": 0.5,
+          "unlock_logistics_hub": true
+        },
+        "prerequisites": [
+          "logistics_1"
+        ],
+        "branch": "expansion",
+        "tier": "tier2",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "logistics_3": {
+        "id": "logistics_3",
+        "name": "Logistics III",
+        "description": "Doubles route capacity. Enables auto-balancing supply routes",
+        "cost": {
+          "intel": 30,
+          "exotics": 8,
+          "turns": 6
+        },
+        "effect": {
+          "logistics_capacity_bonus": 1.0,
+          "unlock_auto_balance": true
+        },
+        "prerequisites": [
+          "logistics_2"
+        ],
+        "branch": "expansion",
+        "tier": "tier3",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      },
+      "logistics_4": {
+        "id": "logistics_4",
+        "name": "Logistics IV",
+        "description": "Increases route capacity by 150%. Enables rapid auto-balancing.",
+        "cost": {
+          "intel": 40,
+          "exotics": 12,
+          "turns": 7
+        },
+        "effect": {
+          "logistics_capacity_bonus": 1.5,
+          "unlock_auto_balance": true
+        },
+        "prerequisites": [
+          "logistics_3"
+        ],
+        "branch": "expansion",
+        "tier": "tier4",
+        "researched": false,
+        "researching": false,
+        "turns_remaining": 0
+      }
+    },
+    "active_research": null,
+    "research_queue": []
+  },
+  "game_clock": {
+    "current_tick": 0,
+    "turn_number": 5,
+    "last_processed_tick": {}
+  },
+  "turn_number": 5,
+  "game_time": "June 2157",
+  "difficulty": "normal",
+  "log": [
+    "Sandbox save generated for testing"
+  ],
+  "production": {
+    "config": {
+      "resource_definitions": {
+        "ore_iron": {
+          "name": "Metal Ores",
+          "tier": "raw",
+          "category": "metals"
+        },
+        "silicates": {
+          "name": "Silicates",
+          "tier": "raw",
+          "category": "silicates"
+        },
+        "water_ice": {
+          "name": "Water Ice",
+          "tier": "raw",
+          "category": "water"
+        },
+        "fissiles": {
+          "name": "Fissiles",
+          "tier": "raw",
+          "category": "fissiles"
+        },
+        "gas_h2": {
+          "name": "Hydrogen",
+          "tier": "raw",
+          "category": "hydrogen"
+        },
+        "gas_he3": {
+          "name": "Helium-3",
+          "tier": "raw",
+          "category": "helium"
+        },
+        "gas_d2": {
+          "name": "Deuterium",
+          "tier": "raw",
+          "category": "hydrogen",
+          "requires_tech": [
+            "deuterium_extraction"
+          ]
+        },
+        "volatiles": {
+          "name": "Volatiles",
+          "tier": "raw",
+          "category": "volatiles"
+        },
+        "organics": {
+          "name": "Organics",
+          "tier": "raw",
+          "category": "organics"
+        },
+        "rare_metals": {
+          "name": "Rare Metals",
+          "tier": "raw",
+          "category": "metals"
+        },
+        "exotics": {
+          "name": "Exotics",
+          "tier": "raw",
+          "category": "exotics",
+          "requires_tech": [
+            "exotics_extraction"
+          ]
+        },
+        "metal_alloys": {
+          "name": "Metal Alloys",
+          "tier": "processed"
+        },
+        "polymers": {
+          "name": "Polymers",
+          "tier": "processed"
+        },
+        "fuel": {
+          "name": "Fuel",
+          "tier": "processed"
+        },
+        "electronics": {
+          "name": "Electronics",
+          "tier": "processed"
+        },
+        "hull_plating": {
+          "name": "Hull Plating",
+          "tier": "components"
+        },
+        "drive_assemblies": {
+          "name": "Drive Assemblies",
+          "tier": "components"
+        },
+        "avionics": {
+          "name": "Avionics",
+          "tier": "components"
+        },
+        "hab_modules": {
+          "name": "Hab Modules",
+          "tier": "components"
+        },
+        "cargo_frames": {
+          "name": "Cargo Frames",
+          "tier": "components"
+        }
+      },
+      "body_type_resources": {},
+      "world_types": {
+        "terrestrial": {
+          "ore_iron": {
+            "base_yield": 4,
+            "probability": 1.0
+          },
+          "silicates": {
+            "base_yield": 3,
+            "probability": 0.9
+          },
+          "water_ice": {
+            "base_yield": 2,
+            "probability": 0.6
+          },
+          "fissiles": {
+            "base_yield": 1,
+            "probability": 0.2
+          },
+          "organics": {
+            "base_yield": 2,
+            "probability": 0.3
+          },
+          "rare_metals": {
+            "base_yield": 1,
+            "probability": 0.15
+          }
+        },
+        "gas_giant": {
+          "gas_h2": {
+            "base_yield": 6,
+            "probability": 1.0
+          },
+          "gas_he3": {
+            "base_yield": 2,
+            "probability": 0.3
+          },
+          "gas_d2": {
+            "base_yield": 1,
+            "probability": 0.15,
+            "requires_tech": [
+              "deuterium_extraction"
+            ]
+          }
+        },
+        "ice_body": {
+          "volatiles": {
+            "base_yield": 5,
+            "probability": 1.0
+          },
+          "water_ice": {
+            "base_yield": 4,
+            "probability": 0.8
+          },
+          "organics": {
+            "base_yield": 2,
+            "probability": 0.4
+          }
+        },
+        "exotic": {
+          "exotics": {
+            "base_yield": 1,
+            "probability": 0.08,
+            "requires_tech": [
+              "exotics_extraction"
+            ]
+          },
+          "rare_metals": {
+            "base_yield": 2,
+            "probability": 0.3
+          }
+        }
+      },
+      "planet_type_map": {
+        "rocky": "terrestrial",
+        "garden": "terrestrial",
+        "volcanic": "terrestrial",
+        "oceanic": "terrestrial",
+        "barren": "terrestrial",
+        "desert": "terrestrial",
+        "toxic": "terrestrial",
+        "asteroid_belt": "terrestrial",
+        "atmospheric": "terrestrial",
+        "ice": "ice_body",
+        "gas_giant": "gas_giant",
+        "artificial": "exotic",
+        "exotic": "exotic"
+      },
+      "classic_resource_aliases": {
+        "metals": "ore_iron",
+        "water": "water_ice",
+        "hydrogen": "gas_h2",
+        "helium": "gas_he3"
+      },
+      "production_storage": {
+        "base_caps": {
+          "raw": 140,
+          "processed": 90,
+          "components": 60
+        },
+        "colony_level_mult": 0.25,
+        "industry_level_mult": 0.2,
+        "min_cap": 20
+      },
+      "recipes": {
+        "metal_alloys": {
+          "tier": 1,
+          "inputs": {
+            "ore_iron": 3
+          },
+          "outputs": {
+            "metal_alloys": 2
+          },
+          "time": 1,
+          "facility": "factory",
+          "power_cost": 1,
+          "min_industry_level": 0
+        },
+        "polymers": {
+          "tier": 1,
+          "inputs": {
+            "organics": 3
+          },
+          "outputs": {
+            "polymers": 2
+          },
+          "time": 1,
+          "facility": "factory",
+          "power_cost": 1,
+          "min_industry_level": 0
+        },
+        "fuel": {
+          "tier": 1,
+          "inputs": {
+            "gas_h2": 2,
+            "water_ice": 1
+          },
+          "outputs": {
+            "fuel": 3
+          },
+          "time": 1,
+          "facility": "factory",
+          "power_cost": 1,
+          "min_industry_level": 0
+        },
+        "electronics": {
+          "tier": 1,
+          "inputs": {
+            "rare_metals": 2,
+            "silicates": 2
+          },
+          "outputs": {
+            "electronics": 1
+          },
+          "time": 2,
+          "facility": "factory",
+          "power_cost": 2,
+          "min_industry_level": 1
+        },
+        "hull_plating": {
+          "tier": 2,
+          "inputs": {
+            "metal_alloys": 4,
+            "silicates": 2
+          },
+          "outputs": {
+            "hull_plating": 2
+          },
+          "time": 2,
+          "facility": "factory",
+          "power_cost": 2,
+          "min_industry_level": 1
+        },
+        "drive_assemblies": {
+          "tier": 2,
+          "inputs": {
+            "metal_alloys": 2,
+            "electronics": 2,
+            "fuel": 1
+          },
+          "outputs": {
+            "drive_assemblies": 1
+          },
+          "time": 3,
+          "facility": "factory",
+          "power_cost": 3,
+          "min_industry_level": 2
+        },
+        "avionics": {
+          "tier": 2,
+          "inputs": {
+            "electronics": 2,
+            "rare_metals": 1
+          },
+          "outputs": {
+            "avionics": 1
+          },
+          "time": 2,
+          "facility": "factory",
+          "power_cost": 2,
+          "min_industry_level": 1
+        },
+        "hab_modules": {
+          "tier": 2,
+          "inputs": {
+            "polymers": 3,
+            "metal_alloys": 2
+          },
+          "outputs": {
+            "hab_modules": 1
+          },
+          "time": 2,
+          "facility": "factory",
+          "power_cost": 2,
+          "min_industry_level": 1
+        },
+        "cargo_frames": {
+          "tier": 2,
+          "inputs": {
+            "metal_alloys": 3,
+            "polymers": 1
+          },
+          "outputs": {
+            "cargo_frames": 2
+          },
+          "time": 2,
+          "facility": "factory",
+          "power_cost": 1,
+          "min_industry_level": 1
+        }
+      },
+      "orbital_facility_types": {
+        "spaceport": {
+          "description": "Basic orbital docking and storage. Receives ships but cannot build them.",
+          "build_cost": {
+            "metal_alloys": 10,
+            "hull_plating": 4,
+            "credits": 100
+          },
+          "build_turns": 5,
+          "storage_bonus": 200,
+          "dock_slots": 3,
+          "can_build_ships": false,
+          "upgrade_cost_mult": 1.5
+        },
+        "drydock": {
+          "description": "Ship assembly facility. Can build scouts, small/medium freighters, and miners.",
+          "build_cost": {
+            "metal_alloys": 20,
+            "hull_plating": 8,
+            "avionics": 4,
+            "credits": 200
+          },
+          "build_turns": 8,
+          "storage_bonus": 100,
+          "dock_slots": 2,
+          "can_build_ships": true,
+          "buildable_classes": [
+            "scout",
+            "miner",
+            "small_freighter",
+            "medium_freighter",
+            "corvette"
+          ],
+          "max_concurrent_builds": 1,
+          "upgrade_cost_mult": 1.5,
+          "prerequisite": "spaceport"
+        },
+        "orbital_yard": {
+          "description": "Advanced orbital construction. Builds colony ships and large freighters.",
+          "build_cost": {
+            "metal_alloys": 40,
+            "hull_plating": 16,
+            "avionics": 8,
+            "drive_assemblies": 4,
+            "credits": 400
+          },
+          "build_turns": 12,
+          "storage_bonus": 150,
+          "dock_slots": 4,
+          "can_build_ships": true,
+          "buildable_classes": [
+            "scout",
+            "miner",
+            "small_freighter",
+            "medium_freighter",
+            "corvette",
+            "colony_ship",
+            "large_freighter"
+          ],
+          "max_concurrent_builds": 2,
+          "upgrade_cost_mult": 2.0,
+          "prerequisite": "drydock"
+        }
+      },
+      "ship_blueprints": {
+        "scout": {
+          "name": "Pathfinder-class Scout",
+          "components": {
+            "hull_plating": 2,
+            "drive_assemblies": 1,
+            "avionics": 1
+          },
+          "credits": 50,
+          "build_turns": 2,
+          "required_facility": "drydock",
+          "stats": {
+            "max_hull": 30,
+            "speed": 3,
+            "cargo_capacity": 10,
+            "sensor_range": 3,
+            "fuel_capacity": 12,
+            "combat_power": 5,
+            "maintenance_cost": 3
+          },
+          "abilities": [
+            "scan",
+            "probe_deploy",
+            "investigate",
+            "retreat_boost"
+          ]
+        },
+        "miner": {
+          "name": "Excavator-class Miner",
+          "components": {
+            "hull_plating": 3,
+            "drive_assemblies": 1,
+            "cargo_frames": 2,
+            "avionics": 1
+          },
+          "credits": 60,
+          "build_turns": 3,
+          "required_facility": "drydock",
+          "stats": {
+            "max_hull": 40,
+            "speed": 1,
+            "cargo_capacity": 60,
+            "sensor_range": 1,
+            "fuel_capacity": 10,
+            "combat_power": 3,
+            "maintenance_cost": 4
+          },
+          "abilities": [
+            "prospect",
+            "extract",
+            "basic_refine",
+            "auto_mine"
+          ]
+        },
+        "small_freighter": {
+          "name": "Tramp-class Light Freighter",
+          "components": {
+            "hull_plating": 4,
+            "drive_assemblies": 1,
+            "cargo_frames": 4,
+            "avionics": 1
+          },
+          "credits": 60,
+          "build_turns": 4,
+          "required_facility": "drydock",
+          "stats": {
+            "max_hull": 40,
+            "speed": 2,
+            "cargo_capacity": 80,
+            "sensor_range": 1,
+            "fuel_capacity": 10,
+            "combat_power": 2,
+            "maintenance_cost": 4
+          },
+          "abilities": [
+            "load_cargo",
+            "unload_cargo",
+            "set_trade_route"
+          ]
+        },
+        "medium_freighter": {
+          "name": "Merchantman-class Freighter",
+          "components": {
+            "hull_plating": 8,
+            "drive_assemblies": 2,
+            "cargo_frames": 8,
+            "avionics": 2
+          },
+          "credits": 120,
+          "build_turns": 6,
+          "required_facility": "drydock",
+          "stats": {
+            "max_hull": 60,
+            "speed": 1,
+            "cargo_capacity": 200,
+            "sensor_range": 1,
+            "fuel_capacity": 12,
+            "combat_power": 3,
+            "maintenance_cost": 7
+          },
+          "abilities": [
+            "load_cargo",
+            "unload_cargo",
+            "set_trade_route",
+            "emergency_jettison"
+          ]
+        },
+        "corvette": {
+          "name": "Sentinel-class Corvette",
+          "components": {
+            "hull_plating": 6,
+            "drive_assemblies": 2,
+            "avionics": 2,
+            "cargo_frames": 1
+          },
+          "credits": 100,
+          "build_turns": 4,
+          "required_facility": "drydock",
+          "stats": {
+            "max_hull": 60,
+            "speed": 2,
+            "cargo_capacity": 15,
+            "sensor_range": 2,
+            "fuel_capacity": 10,
+            "combat_power": 20,
+            "maintenance_cost": 7
+          },
+          "abilities": [
+            "patrol",
+            "escort",
+            "intercept",
+            "blockade",
+            "engage"
+          ]
+        },
+        "colony_ship": {
+          "name": "Ark-class Colony Ship",
+          "components": {
+            "hull_plating": 16,
+            "drive_assemblies": 4,
+            "hab_modules": 8,
+            "cargo_frames": 6,
+            "avionics": 2
+          },
+          "credits": 300,
+          "build_turns": 12,
+          "required_facility": "orbital_yard",
+          "stats": {
+            "max_hull": 100,
+            "speed": 1,
+            "cargo_capacity": 300,
+            "sensor_range": 1,
+            "fuel_capacity": 20,
+            "combat_power": 2,
+            "maintenance_cost": 12
+          },
+          "abilities": [
+            "load_cargo",
+            "unload_cargo",
+            "establish_colony"
+          ]
+        },
+        "large_freighter": {
+          "name": "Atlas-class Heavy Freighter",
+          "components": {
+            "hull_plating": 12,
+            "drive_assemblies": 3,
+            "cargo_frames": 12,
+            "avionics": 2
+          },
+          "credits": 220,
+          "build_turns": 8,
+          "required_facility": "orbital_yard",
+          "stats": {
+            "max_hull": 80,
+            "speed": 1,
+            "cargo_capacity": 320,
+            "sensor_range": 1,
+            "fuel_capacity": 14,
+            "combat_power": 3,
+            "maintenance_cost": 9
+          },
+          "abilities": [
+            "load_cargo",
+            "unload_cargo",
+            "set_trade_route",
+            "emergency_jettison"
+          ]
+        }
+      },
+      "extraction_balance": {
+        "base_power_per_site": 1,
+        "mining_level_bonus": 0.5,
+        "advanced_mining_tech_mult": 1.5,
+        "max_extraction_sites_per_colony": 6,
+        "extraction_site_build_cost": {
+          "credits": 30,
+          "metal_alloys": 5
+        },
+        "extraction_site_build_turns": 2
+      },
+      "factory_balance": {
+        "max_factories_per_colony_level": {
+          "0": 1,
+          "1": 2,
+          "2": 3,
+          "3": 4
+        },
+        "base_throughput": 1,
+        "throughput_per_colony_level": 1,
+        "throughput_per_industry_level": 1,
+        "factory_build_cost": {
+          "credits": 50,
+          "metal_alloys": 10
+        },
+        "factory_build_turns": 3,
+        "factory_maintenance_per_turn": 2
+      },
+      "shipyard_balance": {
+        "cancel_refund_ratio": 0.5,
+        "rush_cost_per_turn": 25
+      },
+      "fleet_ops_balance": {
+        "fuel_cost_per_hop": 1,
+        "maintenance_scaling": 1.1,
+        "freighter_ops_cost_per_trip": 3
+      }
+    }
+  },
+  "logistics": {
+    "routes": {}
+  },
+  "shipyard": {
+    "facilities": {
+      "sys_01": [
+        {
+          "id": "4d170d1c",
+          "facility_type": "spaceport",
+          "level": 1,
+          "building": false,
+          "build_turns_remaining": 0,
+          "storage_bonus": 0
+        }
+      ]
+    },
+    "construction_queues": {}
+  },
+  "missions": {
+    "active_missions": [],
+    "completed_missions": [],
+    "max_active": 3
+  },
+  "diplomacy": {
+    "relations": {
+      "pirates": -40,
+      "alien_patrol": 0,
+      "rogue_ai": -20
+    },
+    "faction_names": {
+      "pirates": "Pirate Clans",
+      "alien_patrol": "Alien Patrol",
+      "rogue_ai": "Rogue AI"
+    }
+  },
+  "pending_ship_actions": [],
+  "pending_ship_orders": [],
+  "encounter_resolution_mode": "tactical",
+  "pending_encounters": []
+}

@@ -311,6 +311,39 @@ class FleetManager:
     def get_ships_at(self, system_id: str) -> list:
         return [s for s in self.ships.values() if s.location == system_id]
 
+    @staticmethod
+    def is_intra_system_move(origin_system_id: str, destination_system_id: str) -> bool:
+        """Check if a move is within the same star system (no turn cost).
+
+        Uses system ID comparison — same system means same gravity well.
+        """
+        if not origin_system_id or not destination_system_id:
+            return False
+        return origin_system_id == destination_system_id
+
+    def move_ship_local(self, ship_id: str, destination_system_id: str) -> bool:
+        """Move a ship within the same system instantly (no turn cost).
+
+        This represents intra-system repositioning — e.g. moving from
+        one planet to another within the same star system. The ship's
+        location stays the same system_id since the game model tracks
+        ships by system. This method validates the move is local and
+        clears any existing path/mission.
+
+        Returns True if the ship was already at the system (local move).
+        """
+        ship = self.ships.get(ship_id)
+        if not ship:
+            return False
+        if not self.is_intra_system_move(ship.location, destination_system_id):
+            return False
+        # Ship is already at this system — clear movement state
+        ship.path.clear()
+        ship.destination = None
+        ship.mission = None
+        ship.mining = False
+        return True
+
     def get_contextual_actions(self, ship_id: str, galaxy=None, colonies=None) -> list:
         """Return available actions based on ship class, location, and state."""
         ship = self.ships.get(ship_id)

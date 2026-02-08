@@ -914,6 +914,27 @@ class GameState:
 
         return newly_discovered
 
+    def execute_local_move(self, ship_id: str, target_system_id: str) -> tuple[bool, str]:
+        """Move a ship within the same star system without advancing the turn.
+
+        Intra-system moves resolve immediately and do not trigger any
+        turn processing (research, production, etc. remain unchanged).
+
+        Returns (success, message).
+        """
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found"
+
+        if not self.fleet.is_intra_system_move(ship.location, target_system_id):
+            return False, "Not an intra-system move — use normal movement for inter-system travel"
+
+        ok = self.fleet.move_ship_local(ship_id, target_system_id)
+        if ok:
+            self.log.append(f"{ship.name} repositioned within {ship.location}")
+            return True, f"{ship.name} repositioned within system"
+        return False, "Local move failed"
+
     def activate_gate(self, system_id: str) -> bool:
         """Activate a dormant gate, applying any tech-based cost reduction."""
         tech_effects = self.tech.get_effects()

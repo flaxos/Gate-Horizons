@@ -49,6 +49,7 @@ from gate_horizons.ui.screens.encounter_screen import EncounterScreen
 from gate_horizons.ui.screens.tactical_screen import TacticalScreen
 from gate_horizons.ui.screens.relations_screen import RelationsScreen
 from gate_horizons.ui.screens.event_screen import EventPopup
+from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
 from gate_horizons.ui.widgets.save_load import LoadGamePopup
 
 logger = logging.getLogger("gate_horizons.app")
@@ -130,7 +131,7 @@ class GateHorizonsApp(App):
         "system_view", "colony_screen", "fleet_screen", "tech_screen",
         "trade_screen", "production_screen", "logistics_screen",
         "shipyard_screen", "mission_screen", "encounter_screen", "tactical_screen",
-        "relations_screen",
+        "relations_screen", "gravity_well",
     }
 
     def __init__(self, **kwargs):
@@ -183,6 +184,7 @@ class GateHorizonsApp(App):
         self.encounter_screen = EncounterScreen()
         self.tactical_screen = TacticalScreen()
         self.relations_screen = RelationsScreen()
+        self.gravity_well_screen = GravityWellScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -198,6 +200,7 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.encounter_screen)
         self.sm.add_widget(self.tactical_screen)
         self.sm.add_widget(self.relations_screen)
+        self.sm.add_widget(self.gravity_well_screen)
 
         self.sm.current = "main_menu"
 
@@ -318,7 +321,13 @@ class GateHorizonsApp(App):
         self.sm.current = "tactical_screen"
 
     def show_system_view(self, system_id):
-        """Navigate to system detail view."""
+        """Navigate to gravity well map (3-level system view)."""
+        if self.game_state:
+            self.gravity_well_screen.set_system(self.game_state, system_id)
+        self.sm.current = "gravity_well"
+
+    def show_legacy_system_view(self, system_id):
+        """Navigate to legacy system detail view."""
         if self.game_state:
             self.system_view_screen.set_system(self.game_state, system_id)
         self.sm.current = "system_view"
@@ -370,6 +379,7 @@ class GateHorizonsApp(App):
         self.mission_screen.set_game_state(self.game_state)
         self.encounter_screen.set_game_state(self.game_state)
         self.relations_screen.set_game_state(self.game_state)
+        self.gravity_well_screen.set_game_state(self.game_state)
 
 
 def main():
