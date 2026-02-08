@@ -17,9 +17,11 @@
 | Gravity well map (system/body detail) | `docs/DESIGN_gravity_well_map.md` | `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/ui/widgets/map_camera.py` | Shipped | Hierarchical map view with breadcrumb navigation and camera reset. |
 | Intra-system movement (no turn cost) | `docs/ROADMAP.md` | `gate_horizons/game/ships.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_intra_system_movement.py` | Shipped | In-system moves resolve instantly without advancing the turn. |
 | Deterministic test save generator | `docs/ROADMAP.md` | `tools/generate_test_saves.py`, `saves/test_midgame_50pct_tech.json`, `saves/test_lategame_100pct_tech.json`, `saves/test_sandbox_small.json` | Shipped | Generates midgame/lategame/sandbox saves with seeded RNG. |
-| Map camera keyboard shortcuts | `docs/ROADMAP.md` | `gate_horizons/ui/widgets/map_camera.py` | Partial | Pan/zoom/reset via keyboard; escape-to-back not yet implemented. |
+| Map camera keyboard shortcuts | `docs/ROADMAP.md` | `gate_horizons/ui/widgets/map_camera.py`, `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Pan/zoom/reset via keyboard; Escape now steps back to the previous map level. |
 | Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | — | Future | Planned for demo slice polish. |
-| Selection highlight ring animation | `docs/ROADMAP.md` | — | Future | Planned for gravity well system view selection clarity. |
-| Ship movement lines on system map | `docs/ROADMAP.md` | — | Future | Planned for gravity well view to mirror galaxy map paths. |
+| Piracy/trade disruption events | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned as part of broader event coverage. |
+| Diplomacy-based trade agreements | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned diplomacy extension beyond current relations/actions. |
+| Selection highlight ring animation | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Pulsing selection rings for bodies and ships on the system view. |
+| Ship movement lines on system map | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Dashed movement line from ship row to gate when a path is active. |
 | Procedural galaxy generation | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/game/galaxy.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_galaxy_generation.py` | Shipped | Seeded generator with deterministic connectivity. |
 | Expanded event library (100+ events) | `PROJECT_PLAN.md`, `docs/RELEASE_PLAN_GAMEPLAY_FEATURES.md` | `gate_horizons/data/events/exploration.json`, `gate_horizons/data/events/exploration_extra.json`, `gate_horizons/game/events.py`, `gate_horizons/tests/test_event_library_content.py` | Shipped | 100+ exploration events loaded via event engine. |

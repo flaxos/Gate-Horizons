@@ -5,30 +5,14 @@
 - [x] Intra-system movement (no turn cost)
 - [x] Test save generation (midgame, lategame, sandbox)
 - [x] Camera reset button on gravity well view
-- [x] Map keyboard pan/zoom shortcuts (WASD/arrows, +/-/Home; Esc/back pending)
+- [x] Map keyboard shortcuts (WASD/arrows, +/-/Home, Esc/back)
+- [x] Selection highlight ring animation (system view bodies + ships)
+- [x] Ship movement lines on system map (dashed path to gate)
 
 ## Priority Backlog
 
 ### P0 — High Impact, Low Risk
-
-#### 1. Keyboard Shortcuts for Map Navigation
-- **Why:** Desktop users expect WASD/arrow keys for pan, +/- for zoom, Escape for back.
-- **Acceptance criteria:** Arrow keys pan, +/- zoom, Esc goes up one level, Home resets camera.
-- **Status:** Partial — pan/zoom/reset shipped; Esc/back still needed.
-- **Effort:** S
-- **Risk:** Low — purely additive input handling.
-
-#### 2. Selection Highlight Ring Animation
-- **Why:** Currently hard to see which body is selected at high zoom.
-- **Acceptance criteria:** Selected bodies have a glowing pulse ring. Selected ships pulse brighter.
-- **Effort:** S
-- **Risk:** Low — canvas drawing only.
-
-#### 3. Ship Movement Lines on System Map
-- **Why:** When a ship has a path/destination, show a dashed line on the gravity well view.
-- **Acceptance criteria:** Dashed lines from ship icon to destination system node, consistent with Galaxy Map style.
-- **Effort:** S
-- **Risk:** Low.
+No P0 items currently pending.
 
 ### P1 — High Impact, Medium Risk
 

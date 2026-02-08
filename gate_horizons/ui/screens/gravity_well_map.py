@@ -147,11 +147,13 @@ class SystemMapWidget(MapCameraWidget):
         self._min_scale = 0.4
         self._max_scale = 3.5
         self._pulse_t = 0.0
+        self._dash_offset = 0.0
         Clock.schedule_interval(self._tick, 1 / 30)
         self.bind(size=self._redraw, pos=self._redraw)
 
     def _tick(self, dt):
         self._pulse_t += dt * 1.5
+        self._dash_offset = (self._dash_offset + dp(2.5)) % dp(120)
         self._redraw()
 
     def set_data(self, game_state, system_id):
@@ -242,9 +244,11 @@ class SystemMapWidget(MapCameraWidget):
 
                 # Selection highlight
                 if planet.id == self.selected_body_id:
-                    Color(1, 1, 1, 0.35)
-                    sel_r = p_size * 0.8
-                    Ellipse(pos=(px - sel_r, py - sel_r), size=(sel_r * 2, sel_r * 2))
+                    pulse = 0.5 + 0.5 * math.sin(self._pulse_t)
+                    glow_alpha = 0.2 + 0.4 * pulse
+                    sel_r = p_size * (0.9 + 0.2 * pulse)
+                    Color(0.7, 0.9, 1.0, glow_alpha)
+                    Line(circle=(px, py, sel_r), width=1.4)
 
                 # Colony indicator
                 if self.system_id in self.game_state.colonies.colonies:
@@ -261,6 +265,7 @@ class SystemMapWidget(MapCameraWidget):
                 cx_base + max_radius * 0.95,
                 cy_base + max_radius * 0.95,
             )
+            gate_anchor = (gate_x, gate_y)
             gate_size = dp(14) * self._scale
             if system.gate_active:
                 _draw_station_icon(self.canvas, gate_x, gate_y, gate_size,
@@ -287,10 +292,35 @@ class SystemMapWidget(MapCameraWidget):
                 s_size = dp(12) * self._scale
                 scolor = class_colors.get(ship.ship_class, (0.7, 0.7, 0.7, 0.9))
 
+                if ship.path:
+                    is_selected = ship.id == self.selected_ship_id
+                    if is_selected:
+                        Color(0.4, 0.8, 1.0, 0.55)
+                        width = 1.5
+                        dash_length = dp(6)
+                    else:
+                        Color(0.35, 0.65, 0.9, 0.35)
+                        width = 1.1
+                        dash_length = dp(4)
+                    Line(
+                        points=[sx, sy, gate_anchor[0], gate_anchor[1]],
+                        width=width,
+                        dash_length=dash_length,
+                        dash_offset=self._dash_offset,
+                    )
+
                 if ship.id == self.selected_ship_id:
-                    Color(1, 1, 1, 0.4)
-                    Ellipse(pos=(sx - s_size, sy - s_size),
-                            size=(s_size * 2, s_size * 2))
+                    pulse = 0.5 + 0.5 * math.sin(self._pulse_t * 1.4)
+                    ring_alpha = 0.35 + 0.45 * pulse
+                    ring_radius = s_size * (1.1 + 0.25 * pulse)
+                    Color(0.9, 0.95, 1.0, ring_alpha)
+                    Line(circle=(sx, sy, ring_radius), width=1.2)
+                    scolor = (
+                        min(1.0, scolor[0] + 0.15 * pulse),
+                        min(1.0, scolor[1] + 0.15 * pulse),
+                        min(1.0, scolor[2] + 0.15 * pulse),
+                        min(1.0, scolor[3] + 0.2 * pulse),
+                    )
 
                 Color(*scolor)
                 # Diamond shape for ships
@@ -581,9 +611,11 @@ class GravityWellScreen(Screen):
         self.system_map = SystemMapWidget(
             on_body_tap=self._on_body_tap,
             on_ship_tap=self._on_ship_tap,
+            on_back=self._go_to_galaxy,
         )
         self.body_detail = BodyDetailWidget(
             on_region_tap=self._on_region_tap,
+            on_back=self._switch_to_system_level,
         )
 
     def _build_legend(self):

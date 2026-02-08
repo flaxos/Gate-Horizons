@@ -154,17 +154,22 @@ class CombatResolver:
         return round(base_odds, 3)
 
     def auto_resolve(
-        self, attacker_ships: list, defender: EncounterData, odds: float = None
+        self,
+        attacker_ships: list,
+        defender: EncounterData,
+        odds: float = None,
+        rng: Optional[random.Random] = None,
     ) -> CombatResult:
         """Auto-resolve combat with variance."""
+        rng = rng or random
         if odds is None:
             odds = self.calculate_odds(attacker_ships, defender)
 
         result = CombatResult()
 
         # Roll with ±15% variance
-        roll = random.random()
-        adjusted_odds = odds + random.uniform(-0.15, 0.15)
+        roll = rng.random()
+        adjusted_odds = odds + rng.uniform(-0.15, 0.15)
         adjusted_odds = max(0.0, min(1.0, adjusted_odds))
 
         result.victory = roll < adjusted_odds
@@ -173,18 +178,18 @@ class CombatResolver:
             # Victory: lighter damage, gain loot
             result.narrative = self._victory_narrative(attacker_ships, defender)
             result.xp_gained = max(1, defender.strength // 5)
-            result.intel_gained = random.randint(1, 3)
+            result.intel_gained = rng.randint(1, 3)
 
             # Calculate loot
             for resource, amount_range in defender.loot_table.items():
                 if isinstance(amount_range, list) and len(amount_range) == 2:
-                    result.loot[resource] = random.randint(amount_range[0], amount_range[1])
+                    result.loot[resource] = rng.randint(amount_range[0], amount_range[1])
                 elif isinstance(amount_range, (int, float)):
                     result.loot[resource] = int(amount_range)
 
             # Light damage to attackers
             for ship in attacker_ships:
-                damage = random.randint(0, max(1, defender.strength // len(attacker_ships)))
+                damage = rng.randint(0, max(1, defender.strength // len(attacker_ships)))
                 if damage > 0:
                     result.attacker_damage[ship.id] = damage
                     ship.hull -= damage
@@ -197,7 +202,7 @@ class CombatResolver:
             result.xp_gained = max(1, defender.strength // 10)
 
             for ship in attacker_ships:
-                damage = random.randint(
+                damage = rng.randint(
                     max(1, defender.strength // (len(attacker_ships) * 2)),
                     max(2, defender.strength // len(attacker_ships)),
                 )
@@ -281,12 +286,18 @@ class CombatResolver:
 
         return result
 
-    def attempt_flee(self, ships: list, defender: EncounterData) -> CombatResult:
+    def attempt_flee(
+        self,
+        ships: list,
+        defender: EncounterData,
+        rng: Optional[random.Random] = None,
+    ) -> CombatResult:
         """Attempt to flee from an encounter."""
+        rng = rng or random
         result = CombatResult()
         result.fled = True
 
-        flee_roll = random.random()
+        flee_roll = rng.random()
         # Faster ships flee more easily
         avg_speed = sum(s.stats.speed for s in ships) / max(1, len(ships))
         flee_bonus = avg_speed * 0.1
@@ -299,7 +310,7 @@ class CombatResolver:
             # Failed escape, take some damage
             result.narrative = "Escape attempt failed! Your ships take damage while disengaging."
             for ship in ships:
-                damage = random.randint(1, max(2, defender.strength // (len(ships) * 3)))
+                damage = rng.randint(1, max(2, defender.strength // (len(ships) * 3)))
                 result.attacker_damage[ship.id] = damage
                 ship.hull -= damage
                 if ship.hull <= 0:
@@ -338,8 +349,10 @@ class CombatResolver:
         self,
         system_tier: int,
         gate_capacity: Optional[int] = None,
+        rng: Optional[random.Random] = None,
     ) -> Optional[EncounterData]:
         """Generate a random encounter based on system tier."""
+        rng = rng or random
         # Higher tier (frontier) = more encounters
         encounter_chance = {1: 0.02, 2: 0.05, 3: 0.1}.get(system_tier, 0.05)
 
@@ -349,13 +362,13 @@ class CombatResolver:
             capacity_factor = min(1.0, max(0.1, gate_capacity / 100))
             encounter_chance *= capacity_factor
 
-        if random.random() > encounter_chance:
+        if rng.random() > encounter_chance:
             return None
 
         encounters = [
             EncounterData(
                 type="pirates",
-                strength=random.randint(5, 15) * system_tier,
+                strength=rng.randint(5, 15) * system_tier,
                 description="A band of pirate raiders emerges from behind an asteroid field.",
                 loot_table={"credits": [5, 20], "metals": [2, 10]},
                 flee_difficulty=0.3,
@@ -363,7 +376,7 @@ class CombatResolver:
             ),
             EncounterData(
                 type="alien_patrol",
-                strength=random.randint(10, 25) * system_tier,
+                strength=rng.randint(10, 25) * system_tier,
                 description="Unknown alien vessels move to intercept your ships.",
                 loot_table={"exotics": [1, 5], "intel": [3, 8]},
                 flee_difficulty=0.4,
@@ -371,7 +384,7 @@ class CombatResolver:
             ),
             EncounterData(
                 type="rogue_ai",
-                strength=random.randint(8, 20) * system_tier,
+                strength=rng.randint(8, 20) * system_tier,
                 description="Automated combat drones activate and target your fleet.",
                 loot_table={"metals": [5, 15], "intel": [2, 6]},
                 flee_difficulty=0.2,
@@ -379,7 +392,62 @@ class CombatResolver:
             ),
         ]
 
-        return random.choice(encounters)
+        return rng.choice(encounters)
+
+    @staticmethod
+    def validate_encounter_spec(spec: dict) -> tuple[bool, str]:
+        if not isinstance(spec, dict):
+            return False, "EncounterSpec payload must be a dict"
+        required_keys = (
+            "contractVersion",
+            "encounterId",
+            "strategicContext",
+            "tacticalScope",
+            "successCriteria",
+            "failureCriteria",
+            "rewards",
+            "canonRefs",
+        )
+        for key in required_keys:
+            if key not in spec:
+                return False, f"EncounterSpec missing {key}"
+        if not isinstance(spec.get("contractVersion"), str) or not spec.get("contractVersion"):
+            return False, "EncounterSpec contractVersion must be a non-empty string"
+        if not isinstance(spec.get("encounterId"), str) or not spec.get("encounterId"):
+            return False, "EncounterSpec encounterId must be a non-empty string"
+        if not isinstance(spec.get("strategicContext"), dict):
+            return False, "EncounterSpec strategicContext must be a dict"
+        if not isinstance(spec.get("tacticalScope"), dict):
+            return False, "EncounterSpec tacticalScope must be a dict"
+        if not isinstance(spec.get("successCriteria"), list):
+            return False, "EncounterSpec successCriteria must be a list"
+        if not isinstance(spec.get("failureCriteria"), list):
+            return False, "EncounterSpec failureCriteria must be a list"
+        if not isinstance(spec.get("rewards"), dict):
+            return False, "EncounterSpec rewards must be a dict"
+        if not isinstance(spec.get("canonRefs"), list):
+            return False, "EncounterSpec canonRefs must be a list"
+        return True, "ok"
+
+    @staticmethod
+    def validate_result_spec(spec: dict) -> tuple[bool, str]:
+        if not isinstance(spec, dict):
+            return False, "ResultSpec payload must be a dict"
+        required_keys = ("contractVersion", "encounterId", "outcome")
+        for key in required_keys:
+            if key not in spec:
+                return False, f"ResultSpec missing {key}"
+        if not isinstance(spec.get("contractVersion"), str) or not spec.get("contractVersion"):
+            return False, "ResultSpec contractVersion must be a non-empty string"
+        if not isinstance(spec.get("encounterId"), str) or not spec.get("encounterId"):
+            return False, "ResultSpec encounterId must be a non-empty string"
+        if not isinstance(spec.get("outcome"), str) or not spec.get("outcome"):
+            return False, "ResultSpec outcome must be a non-empty string"
+        for optional_key in ("loot", "assetStatus", "objectiveResults", "casualties", "relations"):
+            if optional_key in spec and spec[optional_key] is not None:
+                if not isinstance(spec[optional_key], dict):
+                    return False, f"ResultSpec {optional_key} must be a dict"
+        return True, "ok"
 
     def to_dict(self) -> dict:
         return {"combat_accuracy_bonus": self.combat_accuracy_bonus}

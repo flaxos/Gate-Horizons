@@ -27,12 +27,18 @@ from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 9
+CURRENT_SCHEMA_VERSION = 10
 
 
 # Default data paths (relative to gate_horizons package)
 def _get_data_path(*parts):
     return resources.files("gate_horizons").joinpath("data", *parts)
+
+
+def _coerce_rng_state(value):
+    if isinstance(value, list):
+        return tuple(_coerce_rng_state(item) for item in value)
+    return value
 
 
 class GameState:
@@ -61,6 +67,13 @@ class GameState:
         self.pending_ship_orders: list[dict] = []
         self.encounter_resolution_mode: str = "auto"
         self.pending_encounters: list[dict] = []
+        self.rng_seed: int = 0
+        self.rng = random.Random(self.rng_seed)
+
+    def rng_for_context(self, context: str) -> random.Random:
+        seed_source = f"{self.rng_seed}:{context}"
+        seed = int(hashlib.sha256(seed_source.encode("utf-8")).hexdigest()[:8], 16)
+        return random.Random(seed)
 
     @classmethod
     def new_game(
@@ -73,6 +86,10 @@ class GameState:
         """Initialize a fresh game with starting conditions."""
         state = cls()
         state.difficulty = difficulty
+
+        # Initialize deterministic RNG seed for turn-level randomness.
+        state.rng_seed = int(galaxy_seed or 0)
+        state.rng = random.Random(state.rng_seed)
 
         # Load galaxy
         if use_procedural_galaxy:
@@ -248,6 +265,9 @@ class GameState:
 
     def submit_encounter_result(self, result_spec: dict) -> tuple[bool, str]:
         """Apply a ResultSpec for a pending manual encounter."""
+        valid, message = self.combat.validate_result_spec(result_spec)
+        if not valid:
+            return False, message
         encounter_id = result_spec.get("encounterId") if isinstance(result_spec, dict) else None
         if not encounter_id:
             return False, "ResultSpec missing encounterId"
@@ -455,10 +475,11 @@ class GameState:
         export_path = Path(exports_dir)
         export_path.mkdir(parents=True, exist_ok=True)
         filepath = export_path / "EncounterSpec.json"
-        filepath.write_text(
-            json.dumps(encounter_spec.to_dict(), indent=2),
-            encoding="utf-8",
-        )
+        payload = encounter_spec.to_dict()
+        valid, message = self.combat.validate_encounter_spec(payload)
+        if not valid:
+            return False, message
+        filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         self.log.append(f"EncounterSpec exported to {filepath}")
         return True, str(filepath)
 
@@ -470,7 +491,10 @@ class GameState:
         path = Path(imports_dir) / filename
         if not path.exists():
             return False, f"ResultSpec not found at {path}"
-        data = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return False, f"ResultSpec invalid JSON at {path}"
         return self.submit_encounter_result(data)
 
     @staticmethod
@@ -1485,12 +1509,16 @@ class GameState:
             "pending_ship_orders": list(self.pending_ship_orders),
             "encounter_resolution_mode": self.encounter_resolution_mode,
             "pending_encounters": list(self.pending_encounters),
+            "rng_seed": self.rng_seed,
+            "rng_state": self.rng.getstate(),
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> "GameState":
         state = cls()
-        schema_version = data.get("schema_version", 0)
+        schema_version = int(data.get("schema_version", 0) or 0)
+        if schema_version > CURRENT_SCHEMA_VERSION:
+            schema_version = CURRENT_SCHEMA_VERSION
         if schema_version < 1:
             data = dict(data)
             data.setdefault("game_time", "January 2157")
@@ -1515,7 +1543,8 @@ class GameState:
         state.turn_number = state.game_clock.turn_number
         state.game_time = data.get("game_time", "January 2157")
         state.difficulty = data.get("difficulty", "normal")
-        state.log = list(data.get("log", []))
+        log = data.get("log", [])
+        state.log = list(log) if isinstance(log, list) else []
 
         # Schema v4+: production + logistics + shipyard subsystems
         if schema_version >= 4:
@@ -1533,10 +1562,22 @@ class GameState:
             except Exception:
                 pass  # Config may not exist in test environments
 
-        state.pending_ship_actions = list(data.get("pending_ship_actions", []))
-        state.pending_ship_orders = list(data.get("pending_ship_orders", []))
+        pending_actions = data.get("pending_ship_actions", [])
+        pending_orders = data.get("pending_ship_orders", [])
+        pending_encounters = data.get("pending_encounters", [])
+        state.pending_ship_actions = list(pending_actions) if isinstance(pending_actions, list) else []
+        state.pending_ship_orders = list(pending_orders) if isinstance(pending_orders, list) else []
         state.encounter_resolution_mode = data.get("encounter_resolution_mode", "auto")
-        state.pending_encounters = list(data.get("pending_encounters", []))
+        state.pending_encounters = list(pending_encounters) if isinstance(pending_encounters, list) else []
+        rng_seed = int(data.get("rng_seed", 0) or 0)
+        rng_state = data.get("rng_state")
+        state.rng_seed = rng_seed
+        state.rng = random.Random(rng_seed)
+        if rng_state is not None:
+            try:
+                state.rng.setstate(_coerce_rng_state(rng_state))
+            except (TypeError, ValueError):
+                state.rng = random.Random(rng_seed)
         if schema_version >= 7:
             state.missions = MissionManager.from_dict(data.get("missions", {}))
         else:
