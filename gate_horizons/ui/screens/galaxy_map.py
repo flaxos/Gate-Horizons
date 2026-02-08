@@ -54,6 +54,8 @@ class StarMapWidget(Widget):
         self._pinch_start_distance = None
         self._pinch_start_scale = None
         self._pinch_start_offset = None
+        self._dash_offset = 0.0
+        Clock.schedule_interval(self._advance_dash, 1 / 45)
         self.bind(size=self._redraw, pos=self._redraw)
 
     def set_game_state(self, game_state):
@@ -107,6 +109,8 @@ class StarMapWidget(Widget):
                         Color(0.3, 0.3, 0.3, 0.4)  # Gray for dormant
 
                     Line(points=[sx, sy, cx, cy], width=1.2)
+
+            self._draw_ship_paths(galaxy)
 
             # Draw system nodes
             node_size = dp(18)
@@ -192,6 +196,46 @@ class StarMapWidget(Widget):
             # Draw system labels
             # Labels are drawn as canvas instructions (text not directly available on canvas)
             # We use a simple approach with positioned labels instead
+
+    def _advance_dash(self, dt):
+        self._dash_offset = (self._dash_offset + dp(2.5)) % dp(120)
+        self._redraw()
+
+    def _draw_ship_paths(self, galaxy):
+        if not self.selected_ship:
+            return
+
+        ship = self.game_state.fleet.ships.get(self.selected_ship)
+        if not ship or not ship.path:
+            return
+
+        system_ids = [ship.location] + list(ship.path)
+        for system_id in system_ids:
+            system = galaxy.systems.get(system_id)
+            if not system or not system.discovered:
+                return
+            if system_id not in self._node_positions:
+                return
+
+        points = []
+        for system_id in system_ids:
+            sx, sy = self._node_positions[system_id]
+            points.extend([sx, sy])
+
+        Color(0.4, 0.8, 1, 0.5)
+        Line(
+            points=points,
+            width=1.5,
+            dash_length=dp(6),
+            dash_offset=self._dash_offset,
+        )
+
+        next_waypoint = ship.path[0] if ship.path else None
+        if next_waypoint:
+            wx, wy = self._node_positions[next_waypoint]
+            Color(0.7, 0.95, 1, 0.9)
+            marker = dp(8)
+            Ellipse(pos=(wx - marker / 2, wy - marker / 2), size=(marker, marker))
 
     def _apply_transform(self, x, y):
         return (
