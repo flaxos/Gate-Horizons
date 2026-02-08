@@ -3,6 +3,7 @@
 Turn Resolution Order (deterministic, explicit):
 =================================================
 Phase A — Ship & Mining (unchanged from original)
+  A0. Execute queued ship orders + action handlers
   A1. Process ship movements
   A2. Process mining operations
 
@@ -269,6 +270,9 @@ class TurnProcessor:
         report.turn_number = clock.turn_number
         report.game_date = turn_to_date(clock.turn_number)
         game_state.game_time = report.game_date
+
+        if hasattr(game_state, "process_ship_orders"):
+            game_state.process_ship_orders(report)
 
         if hasattr(game_state, "pending_ship_actions"):
             report.ship_actions = list(game_state.pending_ship_actions)
