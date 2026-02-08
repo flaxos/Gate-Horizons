@@ -76,6 +76,9 @@ class TurnReport:
     freighter_route_reports: list = field(default_factory=list)
     shipyard_report: dict = field(default_factory=dict)
     ship_actions: list = field(default_factory=list)
+    missions_generated: list = field(default_factory=list)
+    missions_completed: list = field(default_factory=list)
+    missions_active: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -108,6 +111,9 @@ class TurnReport:
             "freighter_route_reports": self.freighter_route_reports,
             "shipyard_report": dict(self.shipyard_report),
             "ship_actions": self.ship_actions,
+            "missions_generated": self.missions_generated,
+            "missions_completed": self.missions_completed,
+            "missions_active": self.missions_active,
         }
 
     def get_summary_lines(self) -> list:
@@ -130,6 +136,37 @@ class TurnReport:
                 summary = action.get("summary")
                 if summary:
                     lines.append(summary)
+
+        if self.missions_generated:
+            for mission in self.missions_generated:
+                title = mission.get("title", "Mission")
+                description = mission.get("description", "")
+                if description:
+                    lines.append(f"New mission: {title} — {description}")
+                else:
+                    lines.append(f"New mission: {title}")
+
+        if self.missions_completed:
+            for mission in self.missions_completed:
+                title = mission.get("title", "Mission")
+                reward = mission.get("reward", {})
+                reward_text = ", ".join(
+                    f"{amount} {resource}" for resource, amount in reward.items()
+                )
+                suffix = f" (Rewards: {reward_text})" if reward_text else ""
+                lines.append(f"MISSION COMPLETE: {title}{suffix}")
+
+        if self.missions_active:
+            lines.append("Active missions:")
+            for mission in self.missions_active:
+                title = mission.get("title", "Mission")
+                progress = mission.get("progress_summary", "")
+                description = mission.get("description", "")
+                detail = f"{description}" if description else title
+                if progress:
+                    lines.append(f"{detail} ({progress})")
+                else:
+                    lines.append(detail)
 
         if self.discoveries:
             for discovery in self.discoveries:
@@ -332,6 +369,10 @@ class TurnProcessor:
         if clock.mark_processed("fog_of_war"):
             self._update_fog_of_war(game_state, report)
 
+        # E1b. Check mission progress and generate new missions
+        if clock.mark_processed("missions"):
+            self._process_missions(game_state, report)
+
         # E2. Check warnings
         if clock.mark_processed("warnings"):
             self._check_warnings(game_state, report)
@@ -345,6 +386,26 @@ class TurnProcessor:
             game_state.log.append(f"Turn {report.turn_number}: {report.game_date}")
 
         return report
+
+    def _process_missions(self, game_state, report: TurnReport) -> None:
+        if not hasattr(game_state, "missions"):
+            return
+
+        completed = game_state.missions.check_completions(game_state, report)
+        generated = game_state.missions.generate_turn_mission(game_state)
+
+        report.missions_completed = [self._mission_report_entry(m) for m in completed]
+        report.missions_generated = [self._mission_report_entry(m) for m in generated]
+        report.missions_active = [
+            self._mission_report_entry(m) for m in game_state.missions.active_missions
+        ]
+
+    @staticmethod
+    def _mission_report_entry(mission) -> dict:
+        data = mission.to_dict() if hasattr(mission, "to_dict") else dict(mission)
+        if hasattr(mission, "progress_summary"):
+            data["progress_summary"] = mission.progress_summary()
+        return data
 
     # ================================================================
     # Phase A — Ship & Mining
