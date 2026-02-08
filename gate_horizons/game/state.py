@@ -16,7 +16,7 @@ from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
 from .clock import GameClock
 from .production import ProductionManager, ProductionConfig, ExtractionSite, Factory
-from .logistics import LogisticsManager
+from .logistics import CargoRule, LogisticsManager, Waypoint
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
@@ -538,6 +538,79 @@ class GameState:
             galaxy=self.galaxy,
             ships=assigned_ships or [],
         )
+
+    def create_freighter_route(
+        self,
+        source_system_id: str,
+        dest_system_id: str,
+        ship_id: str,
+        resource_id: str,
+        amount: int = 0,
+        name: str = None,
+        min_threshold: int = 0,
+        max_threshold: int = 0,
+    ) -> tuple:
+        """Create a physical freighter route between two systems.
+
+        Returns (success: bool, message: str).
+        """
+        if source_system_id == dest_system_id:
+            return False, "Source and destination must be different"
+        if source_system_id not in self.galaxy.systems or dest_system_id not in self.galaxy.systems:
+            return False, "Invalid source or destination system"
+
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Assigned ship not found"
+        if ship.ship_class != "freighter":
+            return False, "Only freighters can run logistics routes"
+        if ship.trade_route:
+            return False, "Ship already assigned to a trade route"
+        if self.logistics.get_route_for_ship(ship_id):
+            return False, "Ship already assigned to a freight route"
+
+        allowed_resources = set(self.production.config.resource_definitions.keys())
+        allowed_resources.update(RESOURCE_TYPES)
+        if resource_id not in allowed_resources:
+            return False, "Resource is not supported for freight routes"
+
+        safe_amount = max(0, int(amount))
+        safe_min = max(0, int(min_threshold))
+        safe_max = max(0, int(max_threshold))
+
+        waypoints = [
+            Waypoint(
+                system_id=source_system_id,
+                cargo_rules=[
+                    CargoRule(
+                        resource_id=resource_id,
+                        action="load",
+                        amount=safe_amount,
+                        min_threshold=safe_min,
+                    )
+                ],
+            ),
+            Waypoint(
+                system_id=dest_system_id,
+                cargo_rules=[
+                    CargoRule(
+                        resource_id=resource_id,
+                        action="unload",
+                        amount=safe_amount,
+                        max_threshold=safe_max,
+                    )
+                ],
+            ),
+        ]
+
+        route_name = name or f"{source_system_id}->{dest_system_id} ({resource_id})"
+        route = self.logistics.create_route(
+            name=route_name,
+            waypoints=waypoints,
+            assigned_ship_id=ship_id,
+        )
+        ship.mission = "freight"
+        return True, f"Freight route '{route.name}' created"
 
     def save(self, filepath: str) -> None:
         """Save game state to JSON file."""
