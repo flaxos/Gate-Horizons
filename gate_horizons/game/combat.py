@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclass
@@ -25,6 +25,53 @@ class EncounterData:
     @classmethod
     def from_dict(cls, data: dict) -> "EncounterData":
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class EncounterSpec:
+    contract_version: str
+    encounter_id: str
+    strategic_context: dict
+    tactical_scope: dict
+    success_criteria: list
+    failure_criteria: list
+    rewards: dict
+    canon_refs: list
+
+    def to_dict(self) -> dict:
+        return {
+            "contractVersion": self.contract_version,
+            "encounterId": self.encounter_id,
+            "strategicContext": dict(self.strategic_context),
+            "tacticalScope": dict(self.tactical_scope),
+            "successCriteria": list(self.success_criteria),
+            "failureCriteria": list(self.failure_criteria),
+            "rewards": dict(self.rewards),
+            "canonRefs": list(self.canon_refs),
+        }
+
+
+@dataclass
+class ResultSpec:
+    contract_version: str
+    encounter_id: str
+    outcome: str
+    loot: dict = field(default_factory=dict)
+    asset_status: dict = field(default_factory=dict)
+    notes: str = ""
+    mission_time: str = ""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ResultSpec":
+        return cls(
+            contract_version=data.get("contractVersion", "1.0"),
+            encounter_id=data.get("encounterId", ""),
+            outcome=data.get("outcome", "unknown"),
+            loot=data.get("loot", {}) or {},
+            asset_status=data.get("assetStatus", {}) or {},
+            notes=data.get("notes", ""),
+            mission_time=data.get("missionTime", ""),
+        )
 
 
 @dataclass
@@ -134,6 +181,78 @@ class CombatResolver:
                 if ship.hull <= 0:
                     ship.hull = 0
                     result.ships_destroyed.append(ship.id)
+
+        return result
+
+    def create_encounter_spec(
+        self,
+        attacker_ships: list,
+        defender: EncounterData,
+        system,
+        encounter_id: str,
+        intent: Optional[str] = None,
+        canon_refs: Optional[list] = None,
+    ) -> EncounterSpec:
+        system_id = getattr(system, "id", "") or ""
+        system_name = getattr(system, "name", "") or system_id
+        ship_names = [ship.name for ship in attacker_ships]
+        ship_classes = [ship.ship_class for ship in attacker_ships]
+        rewards = {
+            "intel": defender.loot_table.get("intel", 0) if defender.loot_table else 0,
+            "resources": dict(defender.loot_table) if defender.loot_table else {},
+        }
+        if "intel" in rewards["resources"]:
+            rewards["resources"].pop("intel", None)
+        return EncounterSpec(
+            contract_version="1.0",
+            encounter_id=encounter_id,
+            strategic_context={
+                "systemId": system_id,
+                "factionContext": [],
+                "intent": intent or defender.description or f"Resolve {defender.type} encounter",
+                "timeWindow": "1w",
+            },
+            tactical_scope={
+                "location": system_name or "Unknown",
+                "allowedAssets": ship_names or ship_classes,
+                "constraints": ["standard_rules_of_engagement"],
+            },
+            success_criteria=[f"Resolve {defender.type} encounter"],
+            failure_criteria=["Loss of all assets"],
+            rewards=rewards,
+            canon_refs=canon_refs
+            or ["CANON:v1.0.0#GateFTL", "CANON:v1.0.0#Factions"],
+        )
+
+    def result_from_spec(
+        self,
+        attacker_ships: list,
+        defender: EncounterData,
+        result_spec: Union[dict, ResultSpec],
+    ) -> CombatResult:
+        spec = result_spec
+        if isinstance(result_spec, dict):
+            spec = ResultSpec.from_dict(result_spec)
+        result = CombatResult()
+        outcome = (spec.outcome or "").lower()
+        result.victory = outcome in {"success", "partial_success", "victory", "full_success"}
+        result.fled = outcome in {"retreat", "fled", "withdrawn"}
+        result.narrative = spec.notes or "Manual encounter resolution received."
+        loot = spec.loot or {}
+        result.intel_gained = int(loot.get("intel", 0) or 0)
+        result.loot = dict(loot.get("resources", {})) if isinstance(loot, dict) else {}
+
+        status_map = spec.asset_status or {}
+        for ship in attacker_ships:
+            status = status_map.get(ship.id) or status_map.get(ship.name)
+            if not status:
+                continue
+            status = status.lower()
+            if status in {"destroyed", "lost", "wrecked"}:
+                result.ships_destroyed.append(ship.id)
+            elif status in {"damaged", "disabled"}:
+                damage = max(1, int(ship.stats.max_hull * 0.25))
+                result.attacker_damage[ship.id] = damage
 
         return result
 

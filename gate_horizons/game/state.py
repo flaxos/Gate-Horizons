@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from importlib import resources
 from typing import Optional
+from uuid import uuid4
 
 from .galaxy import GalaxyMap
 from .ships import FleetManager
 from .resources import ResourceManager, RESOURCE_TYPES
 from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
 from .trade import TradeManager, TradeRoute
-from .combat import CombatResolver
+from .combat import CombatResolver, EncounterData
 from .events import EventEngine
 from .tech import TechTree
 from .turn import TurnProcessor, TurnReport, turn_to_date
@@ -20,7 +21,7 @@ from .logistics import CargoRule, LogisticsManager, Waypoint
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 5
+CURRENT_SCHEMA_VERSION = 6
 
 
 # Default data paths (relative to gate_horizons package)
@@ -49,6 +50,8 @@ class GameState:
         self.logistics = LogisticsManager()
         self.shipyard = ShipyardManager()
         self.pending_ship_actions: list[dict] = []
+        self.encounter_resolution_mode: str = "auto"
+        self.pending_encounters: list[dict] = []
 
     @classmethod
     def new_game(cls, difficulty: str = "normal") -> "GameState":
@@ -154,6 +157,95 @@ class GameState:
     def process_turn(self) -> TurnReport:
         """Process one game turn."""
         return self.turn_processor.process_turn(self)
+
+    def set_encounter_resolution_mode(self, mode: str) -> tuple[bool, str]:
+        """Set encounter resolution mode (auto/manual/tactical)."""
+        normalized = (mode or "").strip().lower()
+        if normalized not in {"auto", "manual", "tactical"}:
+            return False, f"Unsupported encounter resolution mode: {mode}"
+        self.encounter_resolution_mode = normalized
+        return True, f"Encounter resolution set to {normalized}"
+
+    def resolve_encounter(self, attacker_ships: list, encounter, system, report) -> None:
+        """Resolve an encounter using the configured resolution mode."""
+        mode = (self.encounter_resolution_mode or "auto").lower()
+        if mode == "auto":
+            combat_result = self.combat.auto_resolve(attacker_ships, encounter)
+            report.combat_encounters.append(combat_result)
+            for resource, amount in combat_result.loot.items():
+                self.resources.add(resource, amount)
+            for destroyed_id in combat_result.ships_destroyed:
+                self.fleet.destroy_ship(destroyed_id)
+            return
+
+        encounter_id = f"enc-{uuid4().hex[:8]}"
+        encounter_spec = self.combat.create_encounter_spec(
+            attacker_ships=attacker_ships,
+            defender=encounter,
+            system=system,
+            encounter_id=encounter_id,
+        )
+        pending_entry = {
+            "encounter_id": encounter_id,
+            "spec": encounter_spec.to_dict(),
+            "attacker_ship_ids": [ship.id for ship in attacker_ships],
+            "defender": encounter.to_dict(),
+            "system_id": getattr(system, "id", ""),
+        }
+        self.pending_encounters.append(pending_entry)
+        self.log.append(f"Encounter {encounter_id} awaiting manual resolution")
+        report.combat_encounters.append(
+            {
+                "encounter_id": encounter_id,
+                "status": "pending_manual",
+                "narrative": "Encounter pending tactical resolution.",
+                "encounter_spec": encounter_spec.to_dict(),
+            }
+        )
+
+    def submit_encounter_result(self, result_spec: dict) -> tuple[bool, str]:
+        """Apply a ResultSpec for a pending manual encounter."""
+        encounter_id = result_spec.get("encounterId") if isinstance(result_spec, dict) else None
+        if not encounter_id:
+            return False, "ResultSpec missing encounterId"
+        pending_index = next(
+            (
+                index
+                for index, entry in enumerate(self.pending_encounters)
+                if entry.get("encounter_id") == encounter_id
+            ),
+            None,
+        )
+        if pending_index is None:
+            return False, f"No pending encounter with id {encounter_id}"
+        pending = self.pending_encounters.pop(pending_index)
+        attacker_ship_ids = pending.get("attacker_ship_ids", [])
+        attacker_ships = [
+            self.fleet.ships[ship_id]
+            for ship_id in attacker_ship_ids
+            if ship_id in self.fleet.ships
+        ]
+        defender = EncounterData.from_dict(pending.get("defender", {}))
+        combat_result = self.combat.result_from_spec(attacker_ships, defender, result_spec)
+        self._apply_manual_combat_result(combat_result, attacker_ships)
+        self.log.append(f"Encounter {encounter_id} resolved manually")
+        return True, "Encounter result applied"
+
+    def _apply_manual_combat_result(self, combat_result, attacker_ships: list) -> None:
+        for resource, amount in combat_result.loot.items():
+            self.resources.add(resource, amount)
+        if combat_result.intel_gained:
+            self.resources.add("intel", combat_result.intel_gained)
+        for ship in attacker_ships:
+            damage = combat_result.attacker_damage.get(ship.id)
+            if damage:
+                ship.hull -= damage
+                if ship.hull <= 0:
+                    ship.hull = 0
+                    if ship.id not in combat_result.ships_destroyed:
+                        combat_result.ships_destroyed.append(ship.id)
+        for destroyed_id in combat_result.ships_destroyed:
+            self.fleet.destroy_ship(destroyed_id)
 
     def execute_ship_action(
         self,
@@ -911,6 +1003,8 @@ class GameState:
             "logistics": self.logistics.to_dict(),
             "shipyard": self.shipyard.to_dict(),
             "pending_ship_actions": list(self.pending_ship_actions),
+            "encounter_resolution_mode": self.encounter_resolution_mode,
+            "pending_encounters": list(self.pending_encounters),
         }
 
     @classmethod
@@ -960,5 +1054,7 @@ class GameState:
                 pass  # Config may not exist in test environments
 
         state.pending_ship_actions = list(data.get("pending_ship_actions", []))
+        state.encounter_resolution_mode = data.get("encounter_resolution_mode", "auto")
+        state.pending_encounters = list(data.get("pending_encounters", []))
 
         return state
