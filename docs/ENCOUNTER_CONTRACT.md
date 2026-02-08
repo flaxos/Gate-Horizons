@@ -67,13 +67,21 @@ Define the strict, contract‑only integration between Gate Horizons (meta) and 
     "intel": 2,
     "resources": {"metals": 40}
   },
-  "notes": "Black box recovered but civilian shuttle destroyed."
+  "notes": "Black box recovered but civilian shuttle destroyed.",
+  "relations": {"alien_patrol": 5},
+  "tacticalReport": {
+    "winner": "player",
+    "damage": {"ISS Sentinel": 4},
+    "losses": [],
+    "salvage": {"metals": 12}
+  }
 }
 ```
 
 ### Result interpretation (Gate Horizons)
 - `loot.resources` may include negative numbers to represent resource losses.
 - Outcome drives a small colony stability delta on the encounter system (success = +2, partial = +1, failure = -2, defeat = -3).
+- `relations` (if present) applies relation score deltas for listed factions.
 
 ## Validation Expectations
 - Contract versions must match the declared schema version.

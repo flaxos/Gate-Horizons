@@ -7,6 +7,9 @@ Gate Horizons. The goal is a coherent core loop: **mine raw resources -> refine 
 manufacture components -> build infrastructure and ships** with physical freight routes
 connecting colonies.
 
+This document does not cover the tactical combat MVP or diplomacy systems, which now live
+in dedicated gameplay docs and code modules.
+
 ---
 
 ## 1. Resource Taxonomy

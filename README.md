@@ -72,10 +72,10 @@ MVC Pattern:
 ```
 
 ## Two-layer Design (Meta vs Tactical)
-Gate Horizons is the **meta game**: exploration, colonisation, logistics, research, factions, canon timeline, and encounter generation. Flaxos Spaceship Sim is the **tactical runtime**: real‑time ship simulation (RCS + Epstein drive), multi‑station play, and mission execution. The timescale separation is deliberate: Gate Horizons advances in weeks/months via gates/wormholes, while tactical missions unfold locally in real time. This keeps strategy and consequence in the meta layer, and skill and execution in the tactical layer.
+Gate Horizons is the **meta game**: exploration, colonisation, logistics, research, factions, canon timeline, and encounter generation. It now ships with a **turn-based tactical hex combat MVP** for encounter resolution. The long-term plan still includes external integration with Flaxos Spaceship Sim (real‑time ship simulation), but Gate Horizons remains fully playable with the built-in tactical layer. The timescale separation is deliberate: Gate Horizons advances in weeks/months via gates/wormholes, while tactical missions unfold locally in short, discrete turns.
 
 ### Contract-only Integration (Non-negotiable)
-Integration is **contract only**:
+Integration is **contract only** (used by the tactical MVP, encounter branching, and any external runtime):
 
 - Gate Horizons outputs `EncounterSpec.json` (mission request).
 - Spaceship Sim returns `ResultSpec.json` (mission outcomes).
@@ -141,10 +141,10 @@ test suite for the logistics system.
 ### What is Implemented vs Future
 **Implemented now**: Colony levels, stockpiles, storage caps, trade routes with
 latency/capacity, shortage penalties, stability system, world traits (hub/frontier),
-tech-gated colonisation, logistics infrastructure, full headless test suite.
+tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy relations, encounter branching, full headless test suite.
 
 **Future (not implemented)**: Ship-level freight simulation, piracy/trade disruption
-events, diplomacy-based trade agreements, procedural galaxy generation, UI screens.
+events, diplomacy-based trade agreements, procedural galaxy generation.
 
 ---
 

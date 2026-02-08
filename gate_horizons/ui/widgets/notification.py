@@ -11,8 +11,9 @@ from kivy.metrics import dp
 class TurnReportPopup(Popup):
     """Shows the turn report summary after processing a turn."""
 
-    def __init__(self, report=None, on_continue=None, **kwargs):
+    def __init__(self, report=None, on_continue=None, pending_encounters=None, on_view_encounters=None, **kwargs):
         self.continue_callback = on_continue
+        self.view_encounters_callback = on_view_encounters
 
         content = BoxLayout(orientation="vertical", spacing=dp(4), padding=dp(8))
 
@@ -59,6 +60,19 @@ class TurnReportPopup(Popup):
         scroll.add_widget(report_layout)
         content.add_widget(scroll)
 
+        if pending_encounters:
+            resolve_btn = Button(
+                text=f"Resolve Encounters ({pending_encounters})",
+                size_hint_y=None,
+                height=dp(40),
+                font_size="13sp",
+                bold=True,
+                background_color=(0.35, 0.18, 0.4, 0.9),
+                color=(1, 0.9, 1, 1),
+            )
+            resolve_btn.bind(on_release=self._on_view_encounters)
+            content.add_widget(resolve_btn)
+
         continue_btn = Button(
             text="Continue",
             size_hint_y=None,
@@ -90,3 +104,8 @@ class TurnReportPopup(Popup):
         self.dismiss()
         if self.continue_callback:
             self.continue_callback()
+
+    def _on_view_encounters(self, *args):
+        self.dismiss()
+        if self.view_encounters_callback:
+            self.view_encounters_callback()

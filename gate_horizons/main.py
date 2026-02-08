@@ -45,6 +45,9 @@ from gate_horizons.ui.screens.production_screen import ProductionScreen
 from gate_horizons.ui.screens.logistics_screen import LogisticsScreen
 from gate_horizons.ui.screens.shipyard_screen import ShipyardScreen
 from gate_horizons.ui.screens.mission_screen import MissionScreen
+from gate_horizons.ui.screens.encounter_screen import EncounterScreen
+from gate_horizons.ui.screens.tactical_screen import TacticalScreen
+from gate_horizons.ui.screens.relations_screen import RelationsScreen
 from gate_horizons.ui.screens.event_screen import EventPopup
 from gate_horizons.ui.widgets.save_load import LoadGamePopup
 
@@ -126,7 +129,8 @@ class GateHorizonsApp(App):
     _GAME_SCREENS = {
         "system_view", "colony_screen", "fleet_screen", "tech_screen",
         "trade_screen", "production_screen", "logistics_screen",
-        "shipyard_screen", "mission_screen",
+        "shipyard_screen", "mission_screen", "encounter_screen", "tactical_screen",
+        "relations_screen",
     }
 
     def __init__(self, **kwargs):
@@ -176,6 +180,9 @@ class GateHorizonsApp(App):
         self.logistics_screen = LogisticsScreen()
         self.shipyard_screen = ShipyardScreen()
         self.mission_screen = MissionScreen()
+        self.encounter_screen = EncounterScreen()
+        self.tactical_screen = TacticalScreen()
+        self.relations_screen = RelationsScreen()
 
         self.sm.add_widget(self.main_menu_screen)
         self.sm.add_widget(self.galaxy_map_screen)
@@ -188,6 +195,9 @@ class GateHorizonsApp(App):
         self.sm.add_widget(self.logistics_screen)
         self.sm.add_widget(self.shipyard_screen)
         self.sm.add_widget(self.mission_screen)
+        self.sm.add_widget(self.encounter_screen)
+        self.sm.add_widget(self.tactical_screen)
+        self.sm.add_widget(self.relations_screen)
 
         self.sm.current = "main_menu"
 
@@ -291,6 +301,22 @@ class GateHorizonsApp(App):
             self._push_state_to_screens()
         self.sm.current = screen_name
 
+    def start_tactical_encounter(self, encounter_id: str):
+        """Launch tactical combat for a pending encounter."""
+        if not self.game_state:
+            return
+        pending = next(
+            (
+                entry for entry in self.game_state.pending_encounters
+                if entry.get("encounter_id") == encounter_id
+            ),
+            None,
+        )
+        if not pending:
+            return
+        self.tactical_screen.set_encounter(self.game_state, pending)
+        self.sm.current = "tactical_screen"
+
     def show_system_view(self, system_id):
         """Navigate to system detail view."""
         if self.game_state:
@@ -342,6 +368,8 @@ class GateHorizonsApp(App):
         self.logistics_screen.set_game_state(self.game_state)
         self.shipyard_screen.set_game_state(self.game_state)
         self.mission_screen.set_game_state(self.game_state)
+        self.encounter_screen.set_game_state(self.game_state)
+        self.relations_screen.set_game_state(self.game_state)
 
 
 def main():

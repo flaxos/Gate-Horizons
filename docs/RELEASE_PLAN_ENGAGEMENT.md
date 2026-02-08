@@ -1,4 +1,9 @@
 # Release Plan: Engagement Systems
+
+## Status Update (Reality Sync)
+- Encounter contracts are now implemented and used in encounter branching.
+- Diplomacy gating exists via relation-based encounter options.
+- Mission system and order execution phases remain future work.
 ## Execution Plan
 1. **Deliver Phase 1: Order Execution + Refuel/Repair + Action Handlers**
    - Implement order execution flow with validation and resolution steps.
