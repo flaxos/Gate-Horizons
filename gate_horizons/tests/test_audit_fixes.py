@@ -421,6 +421,24 @@ class Test12ColonyStockpilesVisible(unittest.TestCase):
             self.assertIn(resource, source)
 
 
+class Test15GalaxyMapColonyStockpilesVisible(unittest.TestCase):
+    """Test 15: Galaxy map system panel surfaces colony stockpiles."""
+
+    def test_galaxy_map_includes_stockpile_section(self):
+        """Galaxy map should render a stockpile section in the system panel."""
+        gm_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "galaxy_map.py",
+        )
+        with open(gm_path) as f:
+            source = f.read()
+
+        self.assertIn("Stockpiles", source)
+        self.assertIn("get_storage_caps", source)
+        for resource in ["energy", "metals", "exotics", "credits", "intel"]:
+            self.assertIn(resource, source)
+
+
 class Test13SystemViewColonizationGuards(unittest.TestCase):
     """Test 13: System view should respect colonization tech/cost gating."""
 

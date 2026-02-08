@@ -3,6 +3,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
@@ -16,6 +17,7 @@ from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
 from ..widgets.notification import TurnReportPopup
 from ..widgets.save_load import SaveGamePopup, LoadGamePopup
+from gate_horizons.game.resources import RESOURCE_TYPES
 
 
 class NavButton(Button):
@@ -542,6 +544,52 @@ class GalaxyMapScreen(Screen):
             view_colony_btn.colony_id = system_id
             view_colony_btn.bind(on_release=self._on_view_colony)
             panel.add_widget(view_colony_btn)
+
+            panel.add_widget(Label(
+                text="Stockpiles",
+                font_size="12sp",
+                bold=True,
+                color=(0.6, 0.8, 1, 1),
+                size_hint_y=None,
+                height=dp(22),
+                halign="left",
+                text_size=(dp(240), None),
+            ))
+
+            storage_caps = colony.get_storage_caps()
+            resource_labels = {
+                "energy": "Energy",
+                "metals": "Metals",
+                "exotics": "Exotics",
+                "credits": "Credits",
+                "intel": "Intel",
+            }
+            stock_grid = GridLayout(
+                cols=2,
+                size_hint_y=None,
+                row_default_height=dp(20),
+                row_force_default=True,
+                spacing=dp(4),
+            )
+            stock_grid.bind(minimum_height=stock_grid.setter("height"))
+            for resource in RESOURCE_TYPES:
+                current = colony.stockpiles.get(resource, 0)
+                cap = storage_caps.get(resource, 0)
+                stock_grid.add_widget(Label(
+                    text=resource_labels.get(resource, resource.title()),
+                    font_size="11sp",
+                    color=(0.8, 0.9, 1, 1),
+                    halign="left",
+                    text_size=(dp(120), None),
+                ))
+                stock_grid.add_widget(Label(
+                    text=f"{current} / {cap}",
+                    font_size="11sp",
+                    color=(0.6, 0.85, 1, 0.9),
+                    halign="left",
+                    text_size=(dp(80), None),
+                ))
+            panel.add_widget(stock_grid)
 
         # Actions
         if not system.gate_active and system.gate_activation_cost:
