@@ -407,6 +407,16 @@ class TestColonyLogistics30Turns(unittest.TestCase):
             "Hub should have higher storage caps than frontier outpost"
         )
 
+    def test_stockpiles_change_after_turn(self):
+        """Processing a turn should update colony stockpiles."""
+        state = make_minimal_game_state()
+        hub = state.colonies.colonies["system_a"]
+        before = dict(hub.stockpiles)
+        state.turn_processor.process_turn(state)
+        after = hub.stockpiles
+        changed = any(after.get(res) != before.get(res) for res in before)
+        self.assertTrue(changed, "Expected colony stockpiles to update after a turn")
+
     def test_shortage_penalties_accumulate(self):
         """Prolonged shortages cause escalating stability drops."""
         state = make_minimal_game_state()

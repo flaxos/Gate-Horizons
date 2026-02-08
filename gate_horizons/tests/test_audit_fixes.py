@@ -274,6 +274,24 @@ class Test07ScreenRegistration(unittest.TestCase):
             )
 
 
+class Test15ColonyScreenRefresh(unittest.TestCase):
+    """Ensure colony screen refreshes data on entry."""
+
+    def test_colony_screen_refresh_hooked(self):
+        colony_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui",
+            "screens",
+            "colony_screen.py",
+        )
+        with open(colony_path) as f:
+            source = f.read()
+
+        self.assertIn("def on_pre_enter", source)
+        self.assertIn("def refresh", source)
+        self.assertIn("self._update_detail()", source)
+
+
 class Test08BackButtonHandling(unittest.TestCase):
     """Test 8: Back button navigates correctly per screen (source check)."""
 
