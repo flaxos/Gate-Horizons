@@ -78,6 +78,14 @@ class EventEngine:
         self.triggered_events: list[str] = []  # IDs of one-time events already triggered
         self.event_queue: list[Event] = []  # Events waiting for player resolution
 
+    def _is_diplomacy_locked(self, event: Event, game_state) -> bool:
+        if "diplomacy" not in event.tags:
+            return False
+        if not game_state or not hasattr(game_state, "tech"):
+            return False
+        tech_effects = game_state.tech.get_effects()
+        return not tech_effects.get("unlock_diplomacy", False)
+
     def load_events(self, directory: Union[str, Traversable]) -> None:
         """Load all event JSON files from a directory."""
         if directory is None:
@@ -125,6 +133,8 @@ class EventEngine:
         for event in self.available_events:
             # Skip already triggered one-time events
             if event.one_time and event.id in self.triggered_events:
+                continue
+            if self._is_diplomacy_locked(event, game_state):
                 continue
 
             # Check requirements
@@ -208,12 +218,25 @@ class EventEngine:
             return None
 
         # Roll against outcome probabilities
-        roll = random.random()
+        diplomacy_bonus = 0.0
+        if game_state and "diplomacy" in event.tags:
+            tech_effects = game_state.tech.get_effects()
+            diplomacy_bonus = max(0.0, float(tech_effects.get("diplomacy_bonus", 0.0)))
+
+        outcome_weights = []
+        for outcome in outcomes:
+            weight = outcome.get("probability", 0)
+            if diplomacy_bonus > 0 and outcome.get("result") == "success":
+                weight *= 1 + diplomacy_bonus
+            outcome_weights.append(weight)
+
+        total_weight = sum(outcome_weights)
+        roll = random.uniform(0, total_weight) if total_weight > 0 else 0
         cumulative = 0.0
         selected_outcome = outcomes[-1]  # Default to last outcome
 
-        for outcome in outcomes:
-            cumulative += outcome.get("probability", 0)
+        for outcome, weight in zip(outcomes, outcome_weights):
+            cumulative += weight
             if roll < cumulative:
                 selected_outcome = outcome
                 break
@@ -284,6 +307,8 @@ class EventEngine:
             if event.one_time and event.id in self.triggered_events:
                 continue
             if not event.tags or not tag_set.intersection(event.tags):
+                continue
+            if self._is_diplomacy_locked(event, game_state):
                 continue
             if game_state and not self._meets_requirements(event, game_state):
                 continue
