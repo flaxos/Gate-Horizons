@@ -333,7 +333,7 @@ class SystemViewScreen(Screen):
         if system.anomalies:
             for anomaly in system.anomalies:
                 self.info_panel.add_widget(Label(
-                    text=f"Anomaly: {anomaly}",
+                    text=f"Anomaly: {self._format_anomaly(anomaly)}",
                     font_size="11sp",
                     color=(1, 0.7, 0.3, 0.9),
                     size_hint_y=None,
@@ -378,6 +378,7 @@ class SystemViewScreen(Screen):
                 halign="left",
                 text_size=(dp(300), None),
             ))
+
             view_colony_btn = Button(
                 text="View Colony Details",
                 size_hint_y=None,
@@ -555,6 +556,16 @@ class SystemViewScreen(Screen):
 
         scroll.add_widget(planet_list)
         self.info_panel.add_widget(scroll)
+
+    @staticmethod
+    def _format_anomaly(anomaly):
+        if isinstance(anomaly, dict):
+            anomaly_type = anomaly.get("type", "anomaly").replace("_", " ").title()
+            description = anomaly.get("description") or anomaly.get("id") or "Unidentified anomaly"
+            investigated = anomaly.get("investigated")
+            status = "Investigated" if investigated else "Uninvestigated"
+            return f"{anomaly_type}: {description} ({status})"
+        return str(anomaly)
 
     def _on_colonize(self, btn):
         if not self.game_state:
