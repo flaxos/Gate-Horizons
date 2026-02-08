@@ -11,6 +11,9 @@
 - [x] Zoom-threshold auto-level switching (system ↔ body)
 - [x] Mini-map overlay (system view context)
 - [x] Turn report summary screen
+- [x] Resource flow visualisation (trade route overlay)
+- [x] Planet comparison view
+- [x] Fog of war visualization on system map
 
 ## Priority Backlog
 
@@ -25,25 +28,7 @@ No P0 items currently pending.
 - **Effort:** L
 - **Risk:** Medium — requires new data model for fleet groups.
 
-#### 6. Resource Flow Visualisation
-- **Why:** Hard to understand where resources go. Trade/logistics flows invisible.
-- **Acceptance criteria:** Animated flow lines between colonies showing active trade routes and resource direction.
-- **Effort:** M
-- **Risk:** Medium — performance with many routes; needs throttling.
-
 ### P2 — Medium Impact
-
-#### 9. Planet Comparison View
-- **Why:** When choosing where to colonise, comparing planets is manual.
-- **Acceptance criteria:** Side-by-side comparison of 2-3 planets showing resources, habitability, gravity, traits.
-- **Effort:** M
-- **Risk:** Low.
-
-#### 10. Fog of War Visualization on System Map
-- **Why:** Unsurveyed systems show bodies but this isn't indicated visually.
-- **Acceptance criteria:** Unsurveyed bodies shown as "?" silhouettes. Body details hidden until surveyed.
-- **Effort:** S
-- **Risk:** Low.
 
 ### P3 — Future / Larger Scope
 

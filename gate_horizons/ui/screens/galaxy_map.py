@@ -51,6 +51,15 @@ class StarMapWidget(Widget):
         self._scale = 1.0
         self._min_scale = 0.6
         self._max_scale = 2.5
+        self.show_trade_flows = False
+        self.trade_flow_legend = {}
+        self._flow_resource_colors = {
+            "energy": (0.95, 0.8, 0.25, 0.75),
+            "metals": (0.7, 0.7, 0.8, 0.75),
+            "exotics": (0.7, 0.4, 0.9, 0.75),
+            "credits": (0.25, 0.85, 0.5, 0.75),
+            "intel": (0.35, 0.7, 1, 0.75),
+        }
         self._active_touches = {}
         self._pinch_start_distance = None
         self._pinch_start_scale = None
@@ -63,6 +72,13 @@ class StarMapWidget(Widget):
     def set_game_state(self, game_state):
         self.game_state = game_state
         self._redraw()
+
+    def set_trade_flows_enabled(self, enabled: bool):
+        self.show_trade_flows = bool(enabled)
+        self._redraw()
+
+    def get_trade_flow_legend(self) -> dict:
+        return dict(self.trade_flow_legend)
 
     def _redraw(self, *args):
         self.canvas.clear()
@@ -113,6 +129,7 @@ class StarMapWidget(Widget):
 
                     Line(points=[sx, sy, cx, cy], width=1.2)
 
+            self._draw_trade_flows(galaxy)
             self._draw_ship_paths(galaxy)
 
             # Draw system nodes
@@ -205,6 +222,85 @@ class StarMapWidget(Widget):
         self._dash_offset = (self._dash_offset + dp(2.5)) % dp(120)
         self._pulse_t += dt * 1.5
         self._redraw()
+
+    def _draw_trade_flows(self, galaxy):
+        segments = self._get_trade_flow_segments()
+        if not segments:
+            return
+
+        flow_resources = {}
+        for segment in segments:
+            start_id = segment["source"]
+            end_id = segment["destination"]
+            if start_id not in self._node_positions or end_id not in self._node_positions:
+                continue
+            start_system = galaxy.systems.get(start_id)
+            end_system = galaxy.systems.get(end_id)
+            if not start_system or not end_system:
+                continue
+            if not start_system.discovered or not end_system.discovered:
+                continue
+
+            resource = segment["resource"]
+            color = self._flow_resource_colors.get(resource, (0.6, 0.7, 0.85, 0.7))
+            flow_resources[resource] = color
+
+            x1, y1 = self._node_positions[start_id]
+            x2, y2 = self._node_positions[end_id]
+            dx = x2 - x1
+            dy = y2 - y1
+            distance = (dx * dx + dy * dy) ** 0.5
+            if distance <= 0:
+                continue
+
+            perp_x = -dy / distance
+            perp_y = dx / distance
+            offset = dp(6)
+            direction = segment["direction"]
+            offset_sign = 1 if direction == "outbound" else -1
+            x1 += perp_x * offset * offset_sign
+            y1 += perp_y * offset * offset_sign
+            x2 += perp_x * offset * offset_sign
+            y2 += perp_y * offset * offset_sign
+
+            Color(*color)
+            Line(points=[x1, y1, x2, y2], width=1.1)
+            self._draw_flow_arrow(x1, y1, x2, y2, color)
+
+        self.trade_flow_legend = flow_resources
+
+    def _draw_flow_arrow(self, x1, y1, x2, y2, color):
+        dx = x2 - x1
+        dy = y2 - y1
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance <= 0:
+            return
+        unit_x = dx / distance
+        unit_y = dy / distance
+        arrow_len = dp(10)
+        arrow_width = dp(5)
+        base_x = x1 + unit_x * (distance * 0.6)
+        base_y = y1 + unit_y * (distance * 0.6)
+        left_x = base_x - unit_x * arrow_len + (-unit_y) * arrow_width
+        left_y = base_y - unit_y * arrow_len + unit_x * arrow_width
+        right_x = base_x - unit_x * arrow_len - (-unit_y) * arrow_width
+        right_y = base_y - unit_y * arrow_len - unit_x * arrow_width
+        Color(*color)
+        Line(points=[base_x, base_y, left_x, left_y], width=1.2)
+        Line(points=[base_x, base_y, right_x, right_y], width=1.2)
+
+    def _get_trade_flow_segments(self) -> list[dict]:
+        self.trade_flow_legend = {}
+        if not self.game_state or not self.show_trade_flows:
+            return []
+        tech_effects = self.game_state.tech.get_effects() if hasattr(self.game_state, "tech") else {}
+        segments = self.game_state.trade.build_flow_segments(
+            colonies=self.game_state.colonies,
+            fleet=self.game_state.fleet,
+            tech_effects=tech_effects,
+            galaxy=self.game_state.galaxy,
+        )
+        return segments
 
     def _draw_ship_paths(self, galaxy):
         ships_in_transit = [
@@ -407,6 +503,8 @@ class GalaxyMapScreen(Screen):
         self._side_panel = None
         self.selected_system_id = None
         self._auto_selected = False
+        self.flow_toggle_btn = None
+        self.flow_legend = None
         self._build_ui()
 
     def _build_ui(self):
@@ -513,6 +611,17 @@ class GalaxyMapScreen(Screen):
         load_btn.bind(on_release=self._on_load)
         bottom_bar.add_widget(load_btn)
 
+        self.flow_toggle_btn = Button(
+            text="Flows Off",
+            size_hint=(None, 1),
+            width=dp(86),
+            font_size="12sp",
+            background_color=(0.12, 0.2, 0.35, 0.8),
+            color=(0.7, 0.85, 1, 1),
+        )
+        self.flow_toggle_btn.bind(on_release=self._on_toggle_trade_flows)
+        bottom_bar.add_widget(self.flow_toggle_btn)
+
         # Spacer
         bottom_bar.add_widget(Widget())
 
@@ -550,6 +659,7 @@ class GalaxyMapScreen(Screen):
         self._update_labels()
         self._auto_select_home_colony()
         self._refresh_side_panel()
+        self._update_flow_legend()
 
     def refresh(self):
         if self.game_state:
@@ -557,6 +667,7 @@ class GalaxyMapScreen(Screen):
             self.top_bar.update(self.game_state)
             self._update_labels()
             self._refresh_side_panel()
+            self._update_flow_legend()
 
     def _auto_select_home_colony(self):
         if self._auto_selected or not self.game_state:
@@ -604,6 +715,83 @@ class GalaxyMapScreen(Screen):
                 pos=(sx - dp(50), sy + dp(12)),
             )
             self.label_layout.add_widget(lbl)
+
+        self._update_flow_legend()
+
+    def _on_toggle_trade_flows(self, *args):
+        enabled = not self.star_map.show_trade_flows
+        self.star_map.set_trade_flows_enabled(enabled)
+        if self.flow_toggle_btn:
+            self.flow_toggle_btn.text = "Flows On" if enabled else "Flows Off"
+        self._update_flow_legend()
+
+    def _update_flow_legend(self):
+        if not self.star_map.show_trade_flows:
+            if self.flow_legend and self.flow_legend.parent:
+                self.label_layout.remove_widget(self.flow_legend)
+            return
+        legend_data = self.star_map.get_trade_flow_legend()
+        if not legend_data:
+            if self.flow_legend and self.flow_legend.parent:
+                self.label_layout.remove_widget(self.flow_legend)
+            return
+
+        if not self.flow_legend:
+            self.flow_legend = self._build_flow_legend()
+        if not self.flow_legend.parent:
+            self.label_layout.add_widget(self.flow_legend)
+
+        self.flow_legend.clear_widgets()
+        self.flow_legend.add_widget(Label(
+            text="Flow Legend",
+            font_size="11sp",
+            bold=True,
+            color=(0.7, 0.9, 1, 0.95),
+            size_hint_y=None,
+            height=dp(18),
+        ))
+        for resource, color in legend_data.items():
+            row = BoxLayout(
+                orientation="horizontal",
+                size_hint_y=None,
+                height=dp(18),
+                spacing=dp(6),
+            )
+            swatch = Widget(size_hint=(None, None), size=(dp(10), dp(10)))
+            with swatch.canvas:
+                Color(*color)
+                rect = Rectangle(pos=swatch.pos, size=swatch.size)
+            swatch.bind(
+                pos=lambda w, v, r=rect: setattr(r, "pos", v),
+                size=lambda w, v, r=rect: setattr(r, "size", v),
+            )
+            row.add_widget(swatch)
+            row.add_widget(Label(
+                text=resource,
+                font_size="10sp",
+                color=(0.7, 0.85, 1, 0.9),
+                halign="left",
+                valign="middle",
+            ))
+            self.flow_legend.add_widget(row)
+
+    def _build_flow_legend(self):
+        legend = BoxLayout(
+            orientation="vertical",
+            size_hint=(None, None),
+            size=(dp(140), dp(120)),
+            padding=dp(6),
+            spacing=dp(4),
+            pos_hint={"right": 0.98, "top": 0.98},
+        )
+        with legend.canvas.before:
+            Color(0.05, 0.08, 0.15, 0.9)
+            legend_bg = Rectangle(pos=legend.pos, size=legend.size)
+        legend.bind(
+            pos=lambda w, v: setattr(legend_bg, "pos", v),
+            size=lambda w, v: setattr(legend_bg, "size", v),
+        )
+        return legend
 
     def _on_system_tap(self, system_id):
         """Handle system node tap — show side panel."""

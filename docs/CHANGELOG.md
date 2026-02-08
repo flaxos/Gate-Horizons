@@ -9,6 +9,19 @@
 - Add deterministic encounter/event/mission RNG tied to saved state for repeatable outcomes.
 - Harden EncounterSpec/ResultSpec import/export validation and JSON error handling.
 - Prevent invalid EncounterSpec exports from queuing pending encounters.
+- Sanitize ResultSpec numeric payloads and ignore invalid pending encounter entries on load.
+
+### NEXT3 Milestone 1 — Resource flow visualisation
+- Add trade route flow overlays to the galaxy map with directional arrows and legend.
+- Map overlay segments to trade route throughput for active routes.
+
+### NEXT3 Milestone 2 — Planet comparison view
+- Add a comparison popup for up to three selected bodies with colonisation stats.
+- Support multi-select of bodies in the gravity well system panel.
+
+### NEXT3 Milestone 3 — Fog of war visualization on system map
+- Render unsurveyed bodies as silhouettes and redact body details until surveyed.
+- Add tests for survey flag handling in comparison data and UI source.
 
 ### NEXT3 Milestone 1 — Map keyboard shortcuts parity
 - Add Escape/back keyboard navigation for gravity well map levels.

@@ -16,15 +16,19 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.popup import Popup
 from kivy.graphics import Color, Ellipse, Line, Rectangle, Triangle
 from kivy.clock import Clock
 from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.map_camera import MapCameraWidget
+from gate_horizons.game.planet_comparison import build_comparison_data
 
 
 # ======================================================================
@@ -99,9 +103,9 @@ def _draw_moon_icon(canvas, cx, cy, size, color=(0.7, 0.7, 0.8, 0.9)):
     )
 
 
-def _draw_asteroid_icon(canvas, cx, cy, size):
+def _draw_asteroid_icon(canvas, cx, cy, size, color=(0.55, 0.45, 0.35, 0.9)):
     """Draw asteroid/belt — cluster of small irregular dots."""
-    Color(0.55, 0.45, 0.35, 0.9)
+    Color(*color)
     offsets = [(-0.3, 0.2), (0.25, -0.15), (0, 0.3), (-0.2, -0.25), (0.3, 0.1)]
     for ox, oy in offsets:
         s = size * 0.25
@@ -179,6 +183,7 @@ class SystemMapWidget(MapCameraWidget):
         cx_base = self.center_x
         cy_base = self.center_y
         max_radius = min(self.width, self.height) * 0.38
+        is_surveyed = bool(system.surveyed)
 
         with self.canvas:
             # ---- Stars ----
@@ -223,23 +228,36 @@ class SystemMapWidget(MapCameraWidget):
                 is_asteroid = "asteroid" in planet.type.lower()
                 has_atmo = planet.type in ("oceanic", "garden", "toxic", "gas_giant")
 
-                if is_asteroid:
-                    p_size = dp(20) * self._scale
-                    _draw_asteroid_icon(self.canvas, px, py, p_size)
-                elif is_gas:
-                    p_size = dp(28) * self._scale
-                    _draw_planet_icon(self.canvas, px, py, p_size, color, has_atmosphere=True)
-                    # Ring for gas giants
-                    Color(color[0], color[1], color[2], 0.3)
-                    Line(
-                        ellipse=(px - p_size * 0.9, py - p_size * 0.2,
-                                 p_size * 1.8, p_size * 0.4),
-                        width=1,
-                    )
+                if not is_surveyed:
+                    silhouette = (0.15, 0.18, 0.25, 0.85)
+                    if is_asteroid:
+                        p_size = dp(20) * self._scale
+                        _draw_asteroid_icon(self.canvas, px, py, p_size, color=silhouette)
+                    elif is_gas:
+                        p_size = dp(28) * self._scale
+                        _draw_planet_icon(self.canvas, px, py, p_size, silhouette, has_atmosphere=False)
+                    else:
+                        p_size = dp(18) * self._scale
+                        _draw_planet_icon(self.canvas, px, py, p_size, silhouette,
+                                          has_atmosphere=False)
                 else:
-                    p_size = dp(18) * self._scale
-                    _draw_planet_icon(self.canvas, px, py, p_size, color,
-                                      has_atmosphere=has_atmo)
+                    if is_asteroid:
+                        p_size = dp(20) * self._scale
+                        _draw_asteroid_icon(self.canvas, px, py, p_size)
+                    elif is_gas:
+                        p_size = dp(28) * self._scale
+                        _draw_planet_icon(self.canvas, px, py, p_size, color, has_atmosphere=True)
+                        # Ring for gas giants
+                        Color(color[0], color[1], color[2], 0.3)
+                        Line(
+                            ellipse=(px - p_size * 0.9, py - p_size * 0.2,
+                                     p_size * 1.8, p_size * 0.4),
+                            width=1,
+                        )
+                    else:
+                        p_size = dp(18) * self._scale
+                        _draw_planet_icon(self.canvas, px, py, p_size, color,
+                                          has_atmosphere=has_atmo)
 
                 self._body_positions[planet.id] = (px, py, p_size)
 
@@ -416,8 +434,19 @@ class BodyDetailWidget(MapCameraWidget):
 
         color = BODY_TYPE_COLORS.get(planet.type, (0.5, 0.5, 0.5, 1))
         is_asteroid = "asteroid" in planet.type.lower()
+        is_surveyed = bool(system.surveyed)
 
         with self.canvas:
+            if not is_surveyed:
+                silhouette = (0.15, 0.18, 0.25, 0.85)
+                if is_asteroid:
+                    body_size = dp(80) * self._scale
+                    _draw_asteroid_icon(self.canvas, cx, cy, body_size, color=silhouette)
+                else:
+                    body_size = dp(100) * self._scale
+                    _draw_planet_icon(self.canvas, cx, cy, body_size, silhouette,
+                                      has_atmosphere=False)
+                return
             if is_asteroid:
                 body_size = dp(80) * self._scale
                 _draw_asteroid_icon(self.canvas, cx, cy, body_size)
@@ -569,6 +598,130 @@ class MiniMapWidget(Widget):
                     Ellipse(pos=(sx - dp(2), sy - dp(2)), size=(dp(4), dp(4)))
 
 
+class PlanetComparisonPopup(Popup):
+    """Popup showing side-by-side planet comparison."""
+
+    def __init__(self, comparison_data: list[dict], **kwargs):
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(8))
+
+        header = Label(
+            text="Planet Comparison",
+            font_size="16sp",
+            bold=True,
+            color=(0.3, 0.85, 1, 1),
+            size_hint_y=None,
+            height=dp(28),
+        )
+        content.add_widget(header)
+
+        grid = GridLayout(
+            cols=max(1, len(comparison_data)),
+            spacing=dp(8),
+            size_hint_y=None,
+        )
+        grid.bind(minimum_height=grid.setter("height"))
+
+        for body in comparison_data:
+            col = BoxLayout(
+                orientation="vertical",
+                size_hint_y=None,
+                spacing=dp(4),
+                padding=[dp(6), dp(6), dp(6), dp(6)],
+            )
+            col.bind(minimum_height=col.setter("height"))
+            with col.canvas.before:
+                Color(0.05, 0.08, 0.15, 0.9)
+                bg = Rectangle(pos=col.pos, size=col.size)
+            col.bind(
+                pos=lambda w, v, b=bg: setattr(b, "pos", v),
+                size=lambda w, v, b=bg: setattr(b, "size", v),
+            )
+
+            col.add_widget(Label(
+                text=body.get("name", "Unknown"),
+                font_size="13sp",
+                bold=True,
+                color=(0.7, 0.9, 1, 0.95),
+                size_hint_y=None,
+                height=dp(22),
+            ))
+            col.add_widget(Label(
+                text=f"Type: {body.get('type', 'unknown').replace('_', ' ').title()}",
+                font_size="11sp",
+                color=(0.7, 0.85, 1, 0.9),
+                size_hint_y=None,
+                height=dp(18),
+            ))
+            col.add_widget(Label(
+                text=f"Habitability: {body.get('habitability', 0):.0%}",
+                font_size="11sp",
+                color=(0.7, 0.85, 1, 0.9),
+                size_hint_y=None,
+                height=dp(18),
+            ))
+            col.add_widget(Label(
+                text=f"Gravity: {body.get('gravity', 0):.1f}g",
+                font_size="11sp",
+                color=(0.7, 0.85, 1, 0.9),
+                size_hint_y=None,
+                height=dp(18),
+            ))
+
+            traits = body.get("traits") or []
+            traits_text = ", ".join(traits) if traits else "None"
+            col.add_widget(Label(
+                text=f"Traits: {traits_text}",
+                font_size="10sp",
+                color=(0.6, 0.8, 1, 0.85),
+                size_hint_y=None,
+                height=dp(18),
+            ))
+
+            resources = body.get("resources") or {}
+            if resources:
+                for resource, amount in resources.items():
+                    col.add_widget(Label(
+                        text=f"{resource}: {amount}",
+                        font_size="10sp",
+                        color=(0.6, 0.8, 1, 0.85),
+                        size_hint_y=None,
+                        height=dp(16),
+                    ))
+            else:
+                col.add_widget(Label(
+                    text="Resources: None",
+                    font_size="10sp",
+                    color=(0.6, 0.8, 1, 0.85),
+                    size_hint_y=None,
+                    height=dp(16),
+                ))
+
+            grid.add_widget(col)
+
+        scroll = ScrollView(size_hint=(1, 1))
+        scroll.add_widget(grid)
+        content.add_widget(scroll)
+
+        close_btn = Button(
+            text="Close",
+            size_hint_y=None,
+            height=dp(40),
+            font_size="12sp",
+            background_color=(0.12, 0.2, 0.35, 0.8),
+            color=(0.7, 0.85, 1, 1),
+        )
+        close_btn.bind(on_release=lambda *_: self.dismiss())
+        content.add_widget(close_btn)
+
+        super().__init__(
+            title="Planet Comparison",
+            content=content,
+            size_hint=(0.9, 0.85),
+            auto_dismiss=True,
+            **kwargs,
+        )
+
+
 # ======================================================================
 # Gravity Well Screen — the container with breadcrumb + level switching
 # ======================================================================
@@ -595,6 +748,8 @@ class GravityWellScreen(Screen):
         self.system_id = None
         self._current_level = self.LEVEL_SYSTEM
         self._selected_body_id = None
+        self._comparison_selection = []
+        self._comparison_button = None
         self._last_auto_switch = 0.0
         self._build_ui()
 
@@ -748,6 +903,7 @@ class GravityWellScreen(Screen):
         self.system_id = system_id
         self._current_level = self.LEVEL_SYSTEM
         self._selected_body_id = None
+        self._comparison_selection = []
         self.top_bar.update(game_state)
         self.mini_map.set_data(game_state, system_id)
         self._switch_to_system_level()
@@ -941,6 +1097,11 @@ class GravityWellScreen(Screen):
 
     def _build_system_info(self, system):
         """Build info panel for system level."""
+        valid_body_ids = {planet.id for planet in system.planets}
+        self._comparison_selection = [
+            body_id for body_id in self._comparison_selection if body_id in valid_body_ids
+        ]
+        system_surveyed = bool(system.surveyed)
         self.info_panel.add_widget(Label(
             text=system.name,
             font_size="16sp",
@@ -982,12 +1143,44 @@ class GravityWellScreen(Screen):
             halign="left",
             text_size=(dp(240), None),
         ))
+        if not system_surveyed:
+            self.info_panel.add_widget(Label(
+                text="Survey required to reveal body details.",
+                font_size="10sp",
+                color=(0.7, 0.75, 0.9, 0.85),
+                size_hint_y=None,
+                height=dp(18),
+                halign="left",
+                text_size=(dp(240), None),
+            ))
 
         for planet in system.planets:
             type_icon = self._body_type_icon(planet.type)
-            col_tag = " [colonizable]" if planet.colonizable else ""
-            btn = Button(
-                text=f"{type_icon} {planet.name} ({planet.type}){col_tag}",
+            display_name = planet.name if system_surveyed else "Unknown Body"
+            display_type = planet.type if system_surveyed else "unknown"
+            col_tag = " [colonizable]" if system_surveyed and planet.colonizable else ""
+            row = BoxLayout(
+                orientation="horizontal",
+                size_hint_y=None,
+                height=dp(30),
+                spacing=dp(4),
+            )
+            compare_btn = ToggleButton(
+                text="Compare",
+                size_hint_x=None,
+                width=dp(72),
+                font_size="10sp",
+                background_color=(0.1, 0.18, 0.3, 0.7),
+                color=(0.7, 0.85, 1, 0.9),
+            )
+            compare_btn.body_id = planet.id
+            compare_btn.state = "down" if planet.id in self._comparison_selection else "normal"
+            compare_btn.disabled = not system_surveyed
+            compare_btn.bind(on_release=self._on_compare_toggle)
+            row.add_widget(compare_btn)
+
+            view_btn = Button(
+                text=f"{type_icon} {display_name} ({display_type}){col_tag}",
                 size_hint_y=None,
                 height=dp(30),
                 font_size="11sp",
@@ -995,9 +1188,24 @@ class GravityWellScreen(Screen):
                 color=(0.75, 0.88, 1, 0.9),
                 halign="left",
             )
-            btn.body_id = planet.id
-            btn.bind(on_release=lambda b: self._switch_to_body_level(b.body_id))
-            self.info_panel.add_widget(btn)
+            view_btn.body_id = planet.id
+            view_btn.disabled = not system_surveyed
+            view_btn.bind(on_release=lambda b: self._switch_to_body_level(b.body_id))
+            row.add_widget(view_btn)
+            self.info_panel.add_widget(row)
+
+        self._comparison_button = Button(
+            text="Compare Selected (0/3)",
+            size_hint_y=None,
+            height=dp(32),
+            font_size="11sp",
+            background_color=(0.12, 0.2, 0.35, 0.8),
+            color=(0.7, 0.85, 1, 1),
+            disabled=True,
+        )
+        self._comparison_button.bind(on_release=self._open_comparison_view)
+        self.info_panel.add_widget(self._comparison_button)
+        self._update_compare_button()
 
         # Ships at system
         ships = self.game_state.fleet.get_ships_at(self.system_id)
@@ -1046,6 +1254,18 @@ class GravityWellScreen(Screen):
                 planet = p
                 break
         if not planet:
+            return
+        if not system.surveyed:
+            self.info_panel.add_widget(Label(
+                text="Survey data unavailable. Complete a survey to reveal details.",
+                font_size="11sp",
+                color=(0.7, 0.75, 0.9, 0.9),
+                size_hint_y=None,
+                height=dp(36),
+                halign="left",
+                text_size=(dp(240), None),
+            ))
+            self.info_panel.add_widget(Widget(size_hint_y=None, height=dp(8)))
             return
 
         type_icon = self._body_type_icon(planet.type)
@@ -1185,9 +1405,16 @@ class GravityWellScreen(Screen):
                 color=(0.3, 1, 0.5, 1),
             )
             view_colony_btn.bind(on_release=self._on_view_colony)
-            self.info_panel.add_widget(view_colony_btn)
+        self.info_panel.add_widget(view_colony_btn)
 
         self.info_panel.add_widget(Widget(size_hint_y=None, height=dp(8)))
+
+    def _update_compare_button(self):
+        if not self._comparison_button:
+            return
+        count = len(self._comparison_selection)
+        self._comparison_button.text = f"Compare Selected ({count}/3)"
+        self._comparison_button.disabled = count < 2
 
     @staticmethod
     def _body_type_icon(body_type):
@@ -1210,6 +1437,35 @@ class GravityWellScreen(Screen):
     # ------------------------------------------------------------------
     # Callbacks
     # ------------------------------------------------------------------
+
+    def _on_compare_toggle(self, button):
+        body_id = getattr(button, "body_id", None)
+        if not body_id:
+            return
+        if button.state == "down":
+            if body_id in self._comparison_selection:
+                self._update_compare_button()
+                return
+            if len(self._comparison_selection) >= 3:
+                button.state = "normal"
+                return
+            self._comparison_selection.append(body_id)
+        else:
+            if body_id in self._comparison_selection:
+                self._comparison_selection.remove(body_id)
+        self._update_compare_button()
+
+    def _open_comparison_view(self, *args):
+        if not self.game_state or not self.system_id:
+            return
+        if len(self._comparison_selection) < 2:
+            return
+        system = self.game_state.galaxy.systems.get(self.system_id)
+        comparison_data = build_comparison_data(system, self._comparison_selection)
+        if not comparison_data:
+            return
+        popup = PlanetComparisonPopup(comparison_data)
+        popup.open()
 
     def _on_body_tap(self, body_id):
         if body_id == "__gate__":
