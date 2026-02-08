@@ -128,7 +128,18 @@ class MainMenuScreen(Screen):
             app.show_load_screen()
 
     def _on_settings(self, *args):
-        pass  # TODO: Settings screen
+        app = self._get_app()
+        if not app:
+            return
+        from gate_horizons.ui.widgets.settings import SettingsPopup
+        settings = getattr(app, "settings", None)
+        if not settings:
+            return
+        popup = SettingsPopup(
+            settings=settings,
+            on_save=getattr(app, "apply_settings", None),
+        )
+        popup.open()
 
     def _get_app(self):
         from kivy.app import App
