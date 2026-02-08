@@ -6,12 +6,10 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.uix.scatter import Scatter
 from kivy.uix.widget import Widget
-from kivy.graphics import Color, Ellipse, Line, Rectangle, InstructionGroup
+from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
@@ -31,14 +29,31 @@ class EndTurnButton(Button):
 class StarMapWidget(Widget):
     """Canvas-based star map rendering widget."""
 
-    def __init__(self, game_state=None, on_system_tap=None, on_ship_tap=None, **kwargs):
+    def __init__(
+        self,
+        game_state=None,
+        on_system_tap=None,
+        on_ship_tap=None,
+        on_view_change=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.game_state = game_state
         self.on_system_tap = on_system_tap
         self.on_ship_tap = on_ship_tap
+        self.on_view_change = on_view_change
         self.selected_system = None
         self.selected_ship = None
         self._node_positions = {}  # system_id -> (screen_x, screen_y)
+        self._base_node_positions = {}
+        self._pan_offset = [0.0, 0.0]
+        self._scale = 1.0
+        self._min_scale = 0.6
+        self._max_scale = 2.5
+        self._active_touches = {}
+        self._pinch_start_distance = None
+        self._pinch_start_scale = None
+        self._pinch_start_offset = None
         self.bind(size=self._redraw, pos=self._redraw)
 
     def set_game_state(self, game_state):
@@ -52,6 +67,7 @@ class StarMapWidget(Widget):
 
         galaxy = self.game_state.galaxy
         self._node_positions.clear()
+        self._base_node_positions.clear()
 
         # Padding
         pad = dp(40)
@@ -60,9 +76,10 @@ class StarMapWidget(Widget):
 
         # Calculate screen positions
         for sid, system in galaxy.systems.items():
-            sx = self.x + pad + system.x * w
-            sy = self.y + pad + system.y * h
-            self._node_positions[sid] = (sx, sy)
+            base_x = self.x + pad + system.x * w
+            base_y = self.y + pad + system.y * h
+            self._base_node_positions[sid] = (base_x, base_y)
+            self._node_positions[sid] = self._apply_transform(base_x, base_y)
 
         with self.canvas:
             # Draw gate connections (lines)
@@ -176,10 +193,29 @@ class StarMapWidget(Widget):
             # Labels are drawn as canvas instructions (text not directly available on canvas)
             # We use a simple approach with positioned labels instead
 
-    def on_touch_down(self, touch):
-        if not self.collide_point(*touch.pos):
-            return False
+    def _apply_transform(self, x, y):
+        return (
+            x * self._scale + self._pan_offset[0],
+            y * self._scale + self._pan_offset[1],
+        )
 
+    def _clamp_scale(self, value):
+        return max(self._min_scale, min(self._max_scale, value))
+
+    def _zoom_at(self, center, scale_factor):
+        new_scale = self._clamp_scale(self._scale * scale_factor)
+        if new_scale == self._scale:
+            return
+
+        cx, cy = center
+        base_cx = (cx - self._pan_offset[0]) / self._scale
+        base_cy = (cy - self._pan_offset[1]) / self._scale
+
+        self._scale = new_scale
+        self._pan_offset[0] = cx - base_cx * self._scale
+        self._pan_offset[1] = cy - base_cy * self._scale
+
+    def _handle_tap(self, touch):
         # Check ship taps first (they're smaller, more specific)
         ship_offset = {}
         node_size = dp(18)
@@ -226,6 +262,75 @@ class StarMapWidget(Widget):
         self._redraw()
         return True
 
+    def on_touch_down(self, touch):
+        if not self.collide_point(*touch.pos):
+            return False
+        if touch.is_mouse_scrolling:
+            zoom_factor = 1.1 if touch.button == "scrolldown" else 0.9
+            self._zoom_at(touch.pos, zoom_factor)
+            self._redraw()
+            if self.on_view_change:
+                self.on_view_change()
+            return True
+
+        self._active_touches[touch.uid] = touch
+        touch.ud["star_map"] = {"moved": False}
+
+        if len(self._active_touches) == 2:
+            touches = list(self._active_touches.values())
+            self._pinch_start_distance = self._distance(touches[0], touches[1])
+            self._pinch_start_scale = self._scale
+            self._pinch_start_offset = list(self._pan_offset)
+        return True
+
+    def on_touch_move(self, touch):
+        if touch.uid not in self._active_touches:
+            return False
+
+        touch.ud.get("star_map", {})["moved"] = True
+
+        if len(self._active_touches) >= 2:
+            touches = list(self._active_touches.values())[:2]
+            current_distance = self._distance(touches[0], touches[1])
+            if self._pinch_start_distance:
+                scale_factor = current_distance / self._pinch_start_distance
+                target_scale = self._clamp_scale(self._pinch_start_scale * scale_factor)
+                mid_x = (touches[0].x + touches[1].x) / 2
+                mid_y = (touches[0].y + touches[1].y) / 2
+                base_mid_x = (mid_x - self._pinch_start_offset[0]) / self._pinch_start_scale
+                base_mid_y = (mid_y - self._pinch_start_offset[1]) / self._pinch_start_scale
+                self._scale = target_scale
+                self._pan_offset[0] = mid_x - base_mid_x * self._scale
+                self._pan_offset[1] = mid_y - base_mid_y * self._scale
+        else:
+            self._pan_offset[0] += touch.dx
+            self._pan_offset[1] += touch.dy
+
+        self._redraw()
+        if self.on_view_change:
+            self.on_view_change()
+        return True
+
+    def on_touch_up(self, touch):
+        if touch.uid not in self._active_touches:
+            return False
+
+        moved = touch.ud.get("star_map", {}).get("moved", False)
+        self._active_touches.pop(touch.uid, None)
+
+        if len(self._active_touches) < 2:
+            self._pinch_start_distance = None
+            self._pinch_start_scale = None
+            self._pinch_start_offset = None
+
+        if not moved:
+            return self._handle_tap(touch)
+        return True
+
+    @staticmethod
+    def _distance(touch_a, touch_b):
+        return ((touch_a.x - touch_b.x) ** 2 + (touch_a.y - touch_b.y) ** 2) ** 0.5
+
 
 class GalaxyMapScreen(Screen):
     """The primary game screen with star map, resource bar, and navigation."""
@@ -262,6 +367,7 @@ class GalaxyMapScreen(Screen):
         self.star_map = StarMapWidget(
             on_system_tap=self._on_system_tap,
             on_ship_tap=self._on_ship_tap,
+            on_view_change=self._refresh_labels_for_view,
         )
         middle.add_widget(self.star_map)
 
@@ -292,14 +398,14 @@ class GalaxyMapScreen(Screen):
         )
 
         nav_buttons = [
-            ("Map", "galaxy_map"),
-            ("Fleet", "fleet_screen"),
-            ("Tech", "tech_screen"),
-            ("Colonies", "colony_screen"),
-            ("Trade", "trade_screen"),
-            ("Prod", "production_screen"),
-            ("Logistics", "logistics_screen"),
-            ("Shipyard", "shipyard_screen"),
+            ("🗺 Map", "galaxy_map"),
+            ("🚀 Fleet", "fleet_screen"),
+            ("🧬 Tech", "tech_screen"),
+            ("🏛 Colonies", "colony_screen"),
+            ("💱 Trade", "trade_screen"),
+            ("🏭 Prod", "production_screen"),
+            ("📦 Logistics", "logistics_screen"),
+            ("🛠 Shipyard", "shipyard_screen"),
         ]
 
         for text, screen_name in nav_buttons:
@@ -405,6 +511,11 @@ class GalaxyMapScreen(Screen):
 
         Clock.schedule_once(self._place_labels, 0.1)
 
+    def _refresh_labels_for_view(self):
+        if not self.game_state or not self.star_map._node_positions:
+            return
+        self._place_labels(0)
+
     def _place_labels(self, dt):
         """Place labels after layout is computed."""
         self.label_layout.clear_widgets()
@@ -493,7 +604,7 @@ class GalaxyMapScreen(Screen):
         # Planets
         if system.planets:
             panel.add_widget(Label(
-                text="Planets:",
+                text="🪐 Planets:",
                 font_size="12sp",
                 bold=True,
                 color=(0.6, 0.8, 1, 1),
@@ -505,7 +616,7 @@ class GalaxyMapScreen(Screen):
             for planet in system.planets:
                 col_tag = " [colonizable]" if planet.colonizable else ""
                 panel.add_widget(Label(
-                    text=f"  {planet.name} ({planet.type}){col_tag}",
+                    text=f"  🪐 {planet.name} ({planet.type}){col_tag}",
                     font_size="11sp",
                     color=(0.7, 0.85, 1, 0.9),
                     size_hint_y=None,
@@ -518,7 +629,7 @@ class GalaxyMapScreen(Screen):
         ships_here = self.game_state.fleet.get_ships_at(system_id)
         if ships_here:
             panel.add_widget(Label(
-                text=f"Ships ({len(ships_here)}):",
+                text=f"🚀 Ships ({len(ships_here)}):",
                 font_size="12sp",
                 bold=True,
                 color=(0.6, 0.8, 1, 1),
@@ -529,7 +640,7 @@ class GalaxyMapScreen(Screen):
             ))
             for ship in ships_here:
                 btn = Button(
-                    text=f"  {ship.name} ({ship.ship_class})",
+                    text=f"  🚀 {ship.name} ({ship.ship_class})",
                     size_hint_y=None,
                     height=dp(32),
                     font_size="11sp",
@@ -545,7 +656,7 @@ class GalaxyMapScreen(Screen):
         colony = self.game_state.colonies.colonies.get(system_id)
         if colony:
             panel.add_widget(Label(
-                text=f"Colony: {colony.name} (pop: {colony.population})",
+                text=f"🏠 Colony: {colony.name} (pop: {colony.population})",
                 font_size="12sp",
                 color=(1, 1, 0.3, 0.9),
                 size_hint_y=None,
@@ -566,7 +677,7 @@ class GalaxyMapScreen(Screen):
             panel.add_widget(view_colony_btn)
 
             panel.add_widget(Label(
-                text="Stockpiles",
+                text="📦 Stockpiles",
                 font_size="12sp",
                 bold=True,
                 color=(0.6, 0.8, 1, 1),
@@ -578,11 +689,11 @@ class GalaxyMapScreen(Screen):
 
             storage_caps = colony.get_storage_caps()
             resource_labels = {
-                "energy": "Energy",
-                "metals": "Metals",
-                "exotics": "Exotics",
-                "credits": "Credits",
-                "intel": "Intel",
+                "energy": "⚡ Energy",
+                "metals": "⛏ Metals",
+                "exotics": "💎 Exotics",
+                "credits": "💰 Credits",
+                "intel": "🛰 Intel",
             }
             stock_grid = GridLayout(
                 cols=2,
