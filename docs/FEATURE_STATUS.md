@@ -18,6 +18,10 @@
 | Intra-system movement (no turn cost) | `docs/ROADMAP.md` | `gate_horizons/game/ships.py`, `gate_horizons/game/state.py`, `gate_horizons/tests/test_intra_system_movement.py` | Shipped | In-system moves resolve instantly without advancing the turn. |
 | Deterministic test save generator | `docs/ROADMAP.md` | `tools/generate_test_saves.py`, `saves/test_midgame_50pct_tech.json`, `saves/test_lategame_100pct_tech.json`, `saves/test_sandbox_small.json` | Shipped | Generates midgame/lategame/sandbox saves with seeded RNG. |
 | Map camera keyboard shortcuts | `docs/ROADMAP.md` | `gate_horizons/ui/widgets/map_camera.py`, `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Pan/zoom/reset via keyboard; Escape now steps back to the previous map level. |
+| Zoom-threshold auto-level switching | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Auto-switch between system and body levels based on zoom thresholds. |
+| Mini-map overlay | `PROJECT_PLAN.md`, `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Compact galaxy context overlay when viewing a system. |
+| Turn report summary screen | `docs/ROADMAP.md` | `gate_horizons/ui/screens/turn_report_screen.py`, `gate_horizons/ui/screens/galaxy_map.py` | Shipped | Full-screen summary with section shortcuts replacing the popup. |
+| Fog of war visualization on system map | `docs/ROADMAP.md` | — | Future | Unsurveyed bodies shown as silhouettes until surveyed. |
 | Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | — | Future | Planned for demo slice polish. |
 | Piracy/trade disruption events | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned as part of broader event coverage. |
 | Diplomacy-based trade agreements | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned diplomacy extension beyond current relations/actions. |

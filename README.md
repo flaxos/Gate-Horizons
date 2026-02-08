@@ -144,8 +144,9 @@ latency/capacity, shortage penalties, stability system, world traits (hub/fronti
 tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy
 relations, encounter branching, 24-tech research tree, physical freighter routes,
 shipyard production, procedural galaxy generation (seeded), 100+ exploration events,
-gravity well system map, intra-system movement (no turn cost), deterministic test saves,
-and full headless test suite.
+gravity well system map, intra-system movement (no turn cost), zoom-threshold auto-level
+switching, mini-map overlay, turn report summary screen, deterministic test saves, and
+full headless test suite.
 
 **Future (not implemented)**: Mini-map with sphere-of-influence overlay, piracy/trade
 disruption events, diplomacy-based trade agreements.

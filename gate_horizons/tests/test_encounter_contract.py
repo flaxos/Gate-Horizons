@@ -3,6 +3,7 @@
 import json
 import tempfile
 import unittest
+from unittest import mock
 
 from gate_horizons.game.state import GameState
 
@@ -99,6 +100,20 @@ class TestEncounterContract(unittest.TestCase):
             success, message = state.import_result_spec(imports_dir=tmpdir)
             self.assertFalse(success)
             self.assertIn("encounterId", message)
+
+    def test_export_encounter_spec_does_not_queue_on_invalid_payload(self):
+        state = GameState.new_game()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pending_before = len(state.pending_encounters)
+            with mock.patch.object(state.combat, "validate_encounter_spec", return_value=(False, "bad")):
+                success, message = state.export_encounter_spec(
+                    system_id="sol",
+                    encounter_type="pirates",
+                    exports_dir=tmpdir,
+                )
+            self.assertFalse(success)
+            self.assertEqual(message, "bad")
+            self.assertEqual(len(state.pending_encounters), pending_before)
 
 
 if __name__ == "__main__":

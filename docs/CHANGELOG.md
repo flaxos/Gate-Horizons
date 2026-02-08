@@ -8,6 +8,7 @@
 - Align roadmap, plans, and feature status with gravity well map work and pending UX items.
 - Add deterministic encounter/event/mission RNG tied to saved state for repeatable outcomes.
 - Harden EncounterSpec/ResultSpec import/export validation and JSON error handling.
+- Prevent invalid EncounterSpec exports from queuing pending encounters.
 
 ### NEXT3 Milestone 1 — Map keyboard shortcuts parity
 - Add Escape/back keyboard navigation for gravity well map levels.
@@ -18,6 +19,15 @@
 
 ### NEXT3 Milestone 3 — Ship movement lines on system map
 - Add dashed movement lines from ships to the gate when a travel path is set.
+
+### NEXT3 Milestone 1 — Zoom-threshold auto-level switching
+- Add zoom threshold auto-switching between system and body views with debounce.
+
+### NEXT3 Milestone 2 — Mini-map overlay
+- Add a compact galaxy overview widget with current system highlight.
+
+### NEXT3 Milestone 3 — Turn report summary screen
+- Replace the compact popup with a full-screen turn report summary and section shortcuts.
 
 ### NEXT3 Milestone 1 — Full tech tree
 - Expanded tech tree to 24 techs with new tier upgrades and effects.
