@@ -290,7 +290,7 @@ class LogisticsManager:
         actions = []
         system_id = waypoint.system_id
         colony = colonies.colonies.get(system_id) if colonies else None
-        prod_inv = production_inventories.get(system_id, {})
+        prod_inv = production_inventories.setdefault(system_id, {})
 
         for rule in waypoint.cargo_rules:
             res = rule.resource_id
