@@ -22,7 +22,7 @@ from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 7
+CURRENT_SCHEMA_VERSION = 8
 
 
 # Default data paths (relative to gate_horizons package)
@@ -52,6 +52,7 @@ class GameState:
         self.shipyard = ShipyardManager()
         self.missions = MissionManager()
         self.pending_ship_actions: list[dict] = []
+        self.pending_ship_orders: list[dict] = []
         self.encounter_resolution_mode: str = "auto"
         self.pending_encounters: list[dict] = []
 
@@ -263,8 +264,104 @@ class GameState:
         if ship.path:
             return False, f"{ship.name} is currently in transit"
 
-        normalized = action_name.strip().lower()
-        handlers = {
+        success, message, report_entry = self._dispatch_ship_action(
+            ship,
+            action_name,
+            params or {},
+        )
+        if success and report_entry:
+            self.pending_ship_actions.append(report_entry)
+            self.log.append(report_entry.get("summary", message))
+        return success, message
+
+    def issue_ship_order(
+        self,
+        ship_id: str,
+        action_name: str,
+        params: Optional[dict] = None,
+    ) -> tuple[bool, str, Optional[dict]]:
+        """Queue a ship order for execution during the turn resolution."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found", None
+
+        if ship.path:
+            return False, f"{ship.name} is currently in transit", None
+
+        handler = self._get_ship_action_handler(action_name)
+        if not handler:
+            return False, f"Unsupported action: {action_name}", None
+
+        order = {
+            "order_id": f"ord-{uuid4().hex[:8]}",
+            "ship_id": ship_id,
+            "action": action_name.strip(),
+            "params": dict(params or {}),
+            "status": "queued",
+            "submitted_turn": self.turn_number,
+        }
+        self.pending_ship_orders.append(order)
+        self.log.append(f"Order queued: {ship.name} -> {order['action']}")
+        return True, "Order queued", order
+
+    def process_ship_orders(self, report: TurnReport) -> None:
+        """Execute queued ship orders with validation and resolution steps."""
+        if not self.pending_ship_orders:
+            return
+
+        remaining_orders = []
+        for order in list(self.pending_ship_orders):
+            order_id = order.get("order_id", "unknown")
+            ship_id = order.get("ship_id")
+            ship = self.fleet.ships.get(ship_id)
+            if not ship:
+                order["status"] = "failed"
+                warning = f"Order {order_id} failed: ship not found"
+                report.warnings.append(warning)
+                continue
+
+            if ship.path:
+                order["status"] = "delayed"
+                remaining_orders.append(order)
+                continue
+
+            handler = self._get_ship_action_handler(order.get("action", ""))
+            if not handler:
+                order["status"] = "failed"
+                warning = f"Order {order_id} failed: unsupported action"
+                report.warnings.append(warning)
+                continue
+
+            success, message, report_entry = handler(ship, order.get("params", {}) or {})
+            order["status"] = "completed" if success else "failed"
+            order["result"] = message
+            if success and report_entry:
+                report_entry["order_id"] = order_id
+                self.pending_ship_actions.append(report_entry)
+                self.log.append(report_entry.get("summary", message))
+            elif not success:
+                warning = f"Order {order_id} failed: {message}"
+                report.warnings.append(warning)
+
+        self.pending_ship_orders = remaining_orders
+
+    def _get_ship_action_handler(self, action_name: str):
+        normalized = (action_name or "").strip().lower()
+        return self._ship_action_handlers().get(normalized)
+
+    def _dispatch_ship_action(
+        self,
+        ship,
+        action_name: str,
+        params: dict,
+    ) -> tuple[bool, str, dict]:
+        handler = self._get_ship_action_handler(action_name)
+        if not handler:
+            return False, f"Unsupported action: {action_name}", {}
+        return handler(ship, params)
+
+    def _ship_action_handlers(self) -> dict:
+        return {
             "scan system": self._handle_scan_system,
             "deploy probe": self._handle_deploy_probe,
             "patrol": self._handle_patrol,
@@ -273,15 +370,6 @@ class GameState:
             "repair": self._handle_repair,
             "refuel": self._handle_refuel,
         }
-        handler = handlers.get(normalized)
-        if not handler:
-            return False, f"Unsupported action: {action_name}"
-
-        success, message, report_entry = handler(ship, params or {})
-        if success and report_entry:
-            self.pending_ship_actions.append(report_entry)
-            self.log.append(report_entry.get("summary", message))
-        return success, message
 
     def _handle_scan_system(self, ship, params: dict) -> tuple[bool, str, dict]:
         system = self.galaxy.systems.get(ship.location)
@@ -1006,6 +1094,7 @@ class GameState:
             "shipyard": self.shipyard.to_dict(),
             "missions": self.missions.to_dict(),
             "pending_ship_actions": list(self.pending_ship_actions),
+            "pending_ship_orders": list(self.pending_ship_orders),
             "encounter_resolution_mode": self.encounter_resolution_mode,
             "pending_encounters": list(self.pending_encounters),
         }
@@ -1057,6 +1146,7 @@ class GameState:
                 pass  # Config may not exist in test environments
 
         state.pending_ship_actions = list(data.get("pending_ship_actions", []))
+        state.pending_ship_orders = list(data.get("pending_ship_orders", []))
         state.encounter_resolution_mode = data.get("encounter_resolution_mode", "auto")
         state.pending_encounters = list(data.get("pending_encounters", []))
         if schema_version >= 7:
