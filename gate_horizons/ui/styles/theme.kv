@@ -118,3 +118,25 @@
     text_size: self.size
     halign: 'center'
     valign: 'middle'
+
+<NavDropDown>:
+    canvas.before:
+        Color:
+            rgba: 0.04, 0.07, 0.14, 0.98
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<NavDropDownItem>:
+    size_hint_y: None
+    height: dp(44)
+    background_color: 0, 0, 0, 0
+    color: 0.75, 0.88, 1, 1
+    font_size: sp(13)
+    canvas.before:
+        Color:
+            rgba: (0.12, 0.22, 0.38, 0.9) if self.state == 'down' else (0.06, 0.1, 0.2, 0.95)
+        RoundedRectangle:
+            pos: self.x + dp(2), self.y + dp(1)
+            size: self.width - dp(4), self.height - dp(2)
+            radius: [dp(3)]
