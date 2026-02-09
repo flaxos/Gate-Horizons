@@ -786,6 +786,7 @@ class GameState:
             "escort": self._handle_escort,
             "blockade": self._handle_blockade,
             "investigate anomaly": self._handle_investigate_anomaly,
+            "establish colony": self._handle_establish_colony,
             "repair": self._handle_repair,
             "refuel": self._handle_refuel,
         }
@@ -958,6 +959,55 @@ class GameState:
             "resources_spent": refuel_cost,
         }
 
+    def _handle_establish_colony(self, ship, params: dict) -> tuple[bool, str, dict]:
+        system_id = params.get("system_id") or ship.location
+        if system_id != ship.location:
+            return False, "Colony ship must be in target system", {}
+
+        planet_id = params.get("planet_id")
+        planet_name = params.get("name")
+        if not planet_id:
+            system = self.galaxy.systems.get(system_id)
+            if not system:
+                return False, "System not found", {}
+            colonizable = [planet for planet in system.planets if planet.colonizable]
+            if not colonizable:
+                return False, "No colonizable planet in system", {}
+            planet = colonizable[0]
+            planet_id = planet.id
+            planet_name = planet_name or planet.name
+        elif not planet_name:
+            system = self.galaxy.systems.get(system_id)
+            if system:
+                for planet in system.planets:
+                    if planet.id == planet_id:
+                        planet_name = planet.name
+                        break
+
+        success, message = self.found_colony(
+            system_id=system_id,
+            planet_id=planet_id,
+            name=planet_name,
+            ship_id=ship.id,
+        )
+        if not success:
+            return False, message, {}
+
+        cost = self.colonies.get_founding_cost()
+        summary = f"{ship.name} established a colony at {system_id}"
+        if planet_name:
+            summary = f"{ship.name} established {planet_name} at {system_id}"
+
+        return True, "Colony established", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Establish Colony",
+            "system_id": system_id,
+            "summary": summary,
+            "resources_spent": cost,
+            "ship_consumed": True,
+        }
+
     def _reveal_systems_in_range(self, center_id: str, range_remaining: int) -> list[str]:
         if range_remaining <= 0:
             return []
@@ -1022,12 +1072,43 @@ class GameState:
             cost_reduction=cost_reduction,
         )
 
-    def found_colony(self, system_id: str, planet_id: str, name: str = None) -> tuple:
+    def _get_colony_ship(self, system_id: str, ship_id: str = None):
+        ship = None
+        if ship_id:
+            ship = self.fleet.ships.get(ship_id)
+            if not ship:
+                return None, "Colony ship not found"
+        else:
+            ship = next(
+                (candidate for candidate in self.fleet.ships.values()
+                 if candidate.location == system_id
+                 and "establish_colony" in candidate.stats.abilities),
+                None,
+            )
+        if not ship:
+            return None, "Colony ship required in system"
+        if ship.location != system_id:
+            return None, "Colony ship must be in target system"
+        if "establish_colony" not in ship.stats.abilities:
+            return None, "Ship lacks establish_colony capability"
+        return ship, ""
+
+    def found_colony(
+        self,
+        system_id: str,
+        planet_id: str,
+        name: str = None,
+        ship_id: str = None,
+    ) -> tuple:
         """Found a new outpost colony on a world.
 
         Requires colonisation tech and resource costs.
         Returns (success: bool, message: str).
         """
+        ship, ship_reason = self._get_colony_ship(system_id, ship_id)
+        if not ship:
+            return False, ship_reason
+
         # Get researched tech set
         researched = {t.id for t in self.tech.techs.values() if t.researched}
 
@@ -1035,6 +1116,9 @@ class GameState:
             system_id, planet_id,
             galaxy=self.galaxy,
             researched_techs=researched,
+            fleet=self.fleet,
+            ship_id=ship.id,
+            resources=self.resources,
         )
         if not can_found:
             return False, reason
@@ -1083,7 +1167,12 @@ class GameState:
                     )
                 )
 
-        self.log.append(f"Founded outpost: {colony_name} at {system_id}")
+        if ship and self.fleet.destroy_ship(ship.id):
+            self.log.append(
+                f"{ship.name} was consumed to establish {colony_name} at {system_id}"
+            )
+        else:
+            self.log.append(f"Founded outpost: {colony_name} at {system_id}")
         return True, f"Outpost {colony_name} established"
 
     def upgrade_colony(self, system_id: str) -> tuple:

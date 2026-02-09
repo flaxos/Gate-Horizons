@@ -1,5 +1,21 @@
 # ExecPlans
 
+## Colony ship requirement for founding outposts
+
+### Goal
+Require an in-system ship with the `establish_colony` ability to found colonies, expose an explicit ship action, and consume the colony ship on success with player-visible logging.
+
+### Steps
+1. Update colony validation to require a qualifying ship and optional resource checks.
+2. Add colony ship action in ship context menus and dispatch handling in game state.
+3. Consume the colony ship on successful founding and log the tradeoff.
+4. Update UI/system checks and tests to account for the ship requirement.
+
+### Acceptance
+- Founding fails without a colony-capable ship in the target system.
+- “Establish Colony” appears for colony ships and routes through the ship action dispatch.
+- On success, the colony ship is removed and the log/turn report reflects the tradeoff.
+
 ## STAB-01 + NEXT3: Regression hardening and next roadmap triad
 
 ### Regression risk list (top 10)

@@ -491,11 +491,21 @@ class SystemViewScreen(Screen):
             if planet.colonizable and self.system_id not in self.game_state.colonies.colonies:
                 cost = self.game_state.colonies.get_founding_cost()
                 researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
+                colony_ship = next(
+                    (
+                        ship for ship in self.game_state.fleet.get_ships_at(self.system_id)
+                        if "establish_colony" in ship.stats.abilities
+                    ),
+                    None,
+                )
                 can_found, _ = self.game_state.colonies.can_found_colony(
                     self.system_id,
                     planet.id,
                     galaxy=self.game_state.galaxy,
                     researched_techs=researched,
+                    fleet=self.game_state.fleet,
+                    ship_id=colony_ship.id if colony_ship else None,
+                    resources=self.game_state.resources,
                 )
                 can_afford = self.game_state.resources.can_afford(cost)
                 can_confirm = can_found and can_afford
@@ -610,11 +620,21 @@ class SystemViewScreen(Screen):
             return
         cost = self.game_state.colonies.get_founding_cost()
         researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
+        colony_ship = next(
+            (
+                ship for ship in self.game_state.fleet.get_ships_at(self.system_id)
+                if "establish_colony" in ship.stats.abilities
+            ),
+            None,
+        )
         can_found, reason = self.game_state.colonies.can_found_colony(
             self.system_id,
             btn.planet_id,
             galaxy=self.game_state.galaxy,
             researched_techs=researched,
+            fleet=self.game_state.fleet,
+            ship_id=colony_ship.id if colony_ship else None,
+            resources=self.game_state.resources,
         )
         can_afford = self.game_state.resources.can_afford(cost)
         reason_text = None
@@ -630,17 +650,20 @@ class SystemViewScreen(Screen):
             can_afford=can_afford,
             can_confirm=can_confirm,
             reason_text=reason_text,
-            on_confirm=lambda pid=btn.planet_id, pname=btn.planet_name: self._do_colonize(pid, pname),
+            on_confirm=lambda pid=btn.planet_id, pname=btn.planet_name, sid=(
+                colony_ship.id if colony_ship else None
+            ): self._do_colonize(pid, pname, sid),
         )
         popup.open()
 
-    def _do_colonize(self, planet_id, planet_name):
+    def _do_colonize(self, planet_id, planet_name, ship_id):
         if not self.game_state:
             return
         success, message = self.game_state.found_colony(
             self.system_id,
             planet_id,
             name=planet_name,
+            ship_id=ship_id,
         )
         if not success:
             NoticePopup(title="Colonization Blocked", message=message).open()

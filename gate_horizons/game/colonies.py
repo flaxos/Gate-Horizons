@@ -640,11 +640,41 @@ class ColonyManager:
         self.colonies[system_id] = colony
         return colony
 
-    def can_found_colony(self, system_id: str, planet_id: str, galaxy=None,
-                         tech_effects: dict = None, researched_techs: set = None) -> tuple:
+    def can_found_colony(
+        self,
+        system_id: str,
+        planet_id: str,
+        galaxy=None,
+        tech_effects: dict = None,
+        researched_techs: set = None,
+        fleet=None,
+        ship_id: str = None,
+        resources=None,
+    ) -> tuple:
         """Check if a new colony can be founded. Returns (can_found, reason)."""
         if system_id in self.colonies:
             return False, "System already has a colony"
+
+        if not fleet:
+            return False, "Colony ship required in system"
+
+        colony_ship = None
+        if ship_id:
+            colony_ship = fleet.ships.get(ship_id)
+            if not colony_ship:
+                return False, "Colony ship not found"
+        else:
+            colony_ship = next(
+                (ship for ship in fleet.ships.values()
+                 if ship.location == system_id and "establish_colony" in ship.stats.abilities),
+                None,
+            )
+        if not colony_ship:
+            return False, "Colony ship required in system"
+        if colony_ship.location != system_id:
+            return False, "Colony ship must be in target system"
+        if "establish_colony" not in colony_ship.stats.abilities:
+            return False, "Ship lacks establish_colony capability"
 
         # Check colonisation tech
         if researched_techs is None or "colonisation" not in researched_techs:
@@ -664,6 +694,11 @@ class ColonyManager:
                 return False, "Planet not found"
             if not planet.colonizable:
                 return False, "Planet is not colonizable"
+
+        if resources:
+            cost = self.get_founding_cost()
+            if not resources.can_afford(cost):
+                return False, f"Cannot afford founding cost: {cost}"
 
         return True, "OK"
 
