@@ -1566,20 +1566,18 @@ class GameState:
         if not colony:
             return {}
 
-        if not self.resources.per_system_resources:
-            self.resources.sync_from_colonies(self.colonies)
-
-        system_resources = self.resources.per_system_resources.get(ship.location, {})
-        if not system_resources:
-            return {}
-
         available = {
-            res: min(
-                self.resources.global_resources.get(res, 0),
-                system_resources.get(res, 0),
-            )
+            res: max(0, int(colony.stockpiles.get(res, 0)))
             for res in RESOURCE_TYPES
         }
+        production_inventory = colony.production_inventory or {}
+        if manifest:
+            for res in manifest.keys():
+                if res not in available and res in production_inventory:
+                    available[res] = max(0, int(production_inventory.get(res, 0)))
+
+        if not any(amount > 0 for amount in available.values()):
+            return {}
 
         if manifest:
             resource_order = [res for res in manifest.keys() if res in available]
@@ -1598,12 +1596,17 @@ class GameState:
             if desired <= 0:
                 continue
             amount = min(desired, available[res], remaining_capacity)
-            spent = self.resources.spend_and_return_actual(res, amount, ship.location)
-            if spent <= 0:
+            if amount <= 0:
                 continue
-            ship.add_cargo(res, spent)
-            loaded[res] = loaded.get(res, 0) + spent
-            remaining_capacity -= spent
+            if res in colony.stockpiles:
+                colony.stockpiles[res] = colony.stockpiles.get(res, 0) - amount
+            else:
+                colony.production_inventory[res] = production_inventory.get(res, 0) - amount
+            ship.add_cargo(res, amount)
+            loaded[res] = loaded.get(res, 0) + amount
+            remaining_capacity -= amount
+        if loaded:
+            self.resources.sync_from_colonies(self.colonies)
         return loaded
 
     def load_colonists_to_ship(self, ship_id: str, amount: Optional[int] = None) -> dict:

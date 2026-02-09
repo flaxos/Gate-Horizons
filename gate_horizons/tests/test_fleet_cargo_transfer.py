@@ -11,18 +11,13 @@ class TestFleetCargoTransfer(unittest.TestCase):
             ship for ship in self.state.fleet.ships.values()
             if ship.ship_class == "freighter"
         )
+        self.colony = self.state.colonies.colonies["sol"]
+        self.colony.stockpiles = {r: 0 for r in RESOURCE_TYPES}
         self.state.resources.global_resources = {r: 0 for r in RESOURCE_TYPES}
         self.state.resources.per_system_resources["sol"] = {r: 0 for r in RESOURCE_TYPES}
 
     def test_load_cargo_from_colony_manifest(self):
-        self.state.resources.global_resources.update({
-            "energy": 40,
-            "metals": 25,
-            "exotics": 5,
-            "credits": 10,
-            "intel": 8,
-        })
-        self.state.resources.per_system_resources["sol"].update({
+        self.colony.stockpiles.update({
             "energy": 40,
             "metals": 25,
             "exotics": 5,
@@ -38,20 +33,15 @@ class TestFleetCargoTransfer(unittest.TestCase):
         self.assertEqual({"energy": 30, "metals": 20}, loaded)
         self.assertEqual(30, self.freighter.cargo.get("energy"))
         self.assertEqual(20, self.freighter.cargo.get("metals"))
+        self.assertEqual(10, self.colony.stockpiles["energy"])
+        self.assertEqual(5, self.colony.stockpiles["metals"])
         self.assertEqual(10, self.state.resources.global_resources["energy"])
         self.assertEqual(5, self.state.resources.global_resources["metals"])
         self.assertEqual(10, self.state.resources.per_system_resources["sol"]["energy"])
         self.assertEqual(5, self.state.resources.per_system_resources["sol"]["metals"])
 
     def test_load_cargo_from_colony_defaults_to_most_abundant(self):
-        self.state.resources.global_resources.update({
-            "energy": 10,
-            "metals": 50,
-            "exotics": 0,
-            "credits": 0,
-            "intel": 0,
-        })
-        self.state.resources.per_system_resources["sol"].update({
+        self.colony.stockpiles.update({
             "energy": 10,
             "metals": 50,
             "exotics": 0,
@@ -64,6 +54,7 @@ class TestFleetCargoTransfer(unittest.TestCase):
 
         self.assertEqual({"metals": 30}, loaded)
         self.assertEqual(30, self.freighter.cargo.get("metals"))
+        self.assertEqual(20, self.colony.stockpiles["metals"])
         self.assertEqual(20, self.state.resources.global_resources["metals"])
         self.assertEqual(20, self.state.resources.per_system_resources["sol"]["metals"])
 
