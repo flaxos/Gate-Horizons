@@ -243,11 +243,22 @@ class TurnReport:
                 lines.append(f"Colony {name}: +{growth} population")
             for completed in report.get("construction_completed", []):
                 lines.append(f"Colony {name}: {completed} construction complete!")
+            stability_delta = report.get("stability_trait_adjustment", 0)
+            if stability_delta:
+                sign = "+" if stability_delta > 0 else ""
+                lines.append(f"Colony {name}: stability {sign}{stability_delta} from traits")
 
         if self.shortage_reports:
             for system_id, shortages in self.shortage_reports.items():
                 if shortages.get("stability_loss", 0) > 0:
                     lines.append(f"SHORTAGE at {system_id}: stability -{shortages['stability_loss']}")
+
+        for system_id, entry in self.colony_ledger_entries.items():
+            trait_effects = entry.get("trait_effects", {})
+            exotics_bonus = trait_effects.get("exotics_bonus", 0)
+            if exotics_bonus:
+                colony_name = entry.get("colony_name", system_id)
+                lines.append(f"Colony {colony_name}: +{exotics_bonus} exotics from traits")
 
         if self.tech_completed:
             lines.append(f"RESEARCH COMPLETE: {self.tech_completed}")
@@ -659,8 +670,16 @@ class TurnProcessor:
         research_bonus = tech_effects.get("research_bonus", 0)
 
         for system_id, colony in game_state.colonies.colonies.items():
-            production = colony.calculate_production()
+            rng = None
+            if hasattr(game_state, "rng_for_context"):
+                rng = game_state.rng_for_context(
+                    f"colony_production:{system_id}:{report.turn_number}"
+                )
+            production = colony.calculate_production(rng=rng)
             ledger_entry = self._ensure_colony_ledger_entry(report, system_id)
+            ledger_entry.setdefault("colony_name", colony.name)
+            if colony.last_trait_effects:
+                ledger_entry["trait_effects"] = dict(colony.last_trait_effects)
 
             # Apply tech bonuses
             if industry_bonus > 1.0:
