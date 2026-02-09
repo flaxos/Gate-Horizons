@@ -1037,9 +1037,15 @@ class GameState:
         if not target_id:
             return False, "Escort requires target_ship_id", {}
 
+        if target_id == ship.id:
+            return False, "Escort target must be another ship", {}
+
         target_ship = self.fleet.ships.get(target_id)
         if not target_ship:
             return False, "Escort target not found", {}
+
+        if target_ship.location != ship.location:
+            return False, "Escort target must be in the same system", {}
 
         ship.mission = "escort"
         ship.mission_target = target_id

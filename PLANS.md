@@ -1,5 +1,14 @@
 # ExecPlans
 
+## Escort target selection flow
+
+### Goal
+Add an escort target selection popup to the ship context menu and validate escort targets in game state handling.
+
+### Steps
+1. Build the escort target selection popup in the galaxy map ship context menu and pass target ship IDs with the escort order.
+2. Validate escort targets in the game state handler (existence, not self, same system) and surface failures to the UI.
+
 ## Logistics route editor expansion
 
 ### Goal
