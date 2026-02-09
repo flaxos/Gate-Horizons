@@ -1015,6 +1015,7 @@ class GalaxyMapScreen(Screen):
             "Patrol",
             "Blockade",
             "Investigate Anomaly",
+            "Establish Colony",
             "Repair",
             "Refuel",
         }:

@@ -19,7 +19,7 @@ Usage:
 import unittest
 
 from gate_horizons.game.galaxy import GalaxyMap, StarSystem, Planet
-from gate_horizons.game.ships import FleetManager
+from gate_horizons.game.ships import FleetManager, Ship, ShipStats
 from gate_horizons.game.resources import ResourceManager
 from gate_horizons.game.colonies import ColonyManager, Colony, INFRASTRUCTURE_TYPES
 from gate_horizons.game.trade import TradeManager, TradeRoute
@@ -502,12 +502,21 @@ class TestColonyLogistics30Turns(unittest.TestCase):
 
         # Try to found without colonisation tech
         state.tech.techs["colonisation"].researched = False
+        colony_ship = Ship(
+            name="Ark-class Colony Ship",
+            ship_class="colony_ship",
+            location="system_b",
+            stats=ShipStats(abilities=["establish_colony"]),
+        )
+        state.fleet.ships[colony_ship.id] = colony_ship
 
         researched_set = set()
         can_found, reason = state.colonies.can_found_colony(
             "system_b", "frontier_planet",
             galaxy=state.galaxy,
             researched_techs=researched_set,
+            fleet=state.fleet,
+            ship_id=colony_ship.id,
         )
         self.assertFalse(can_found, "Should not be able to found without colonisation tech")
         self.assertIn("Colonisation", reason)
@@ -518,6 +527,8 @@ class TestColonyLogistics30Turns(unittest.TestCase):
             "system_b", "frontier_planet",
             galaxy=state.galaxy,
             researched_techs=researched_set,
+            fleet=state.fleet,
+            ship_id=colony_ship.id,
         )
         self.assertTrue(can_found2, "Should be able to found with colonisation tech")
 

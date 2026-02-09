@@ -384,6 +384,15 @@ class FleetManager:
             actions.append(Action(name="Emergency Stop", description="Halt at current position"))
             return actions
 
+        if "establish_colony" in abilities and location and not has_colony:
+            colonizable = any(planet.colonizable for planet in location.planets)
+            if colonizable:
+                actions.append(Action(
+                    name="Establish Colony",
+                    description="Convert this ship into a new colony",
+                    risk="medium",
+                ))
+
         # Scout actions
         if ship.ship_class == "scout":
             if location and not location.surveyed:
