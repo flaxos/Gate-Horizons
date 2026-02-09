@@ -1,5 +1,20 @@
 # ExecPlans
 
+## Colony starter cargo requirement
+
+### Goal
+Require colony ships to carry a starter cargo kit before founding a colony, consume that cargo on establishment, and log/report the usage.
+
+### Steps
+1. Define the starter cargo requirement alongside colony founding costs.
+2. Validate colony ship cargo and deduct the starter kit during colony establishment.
+3. Record the starter cargo consumption in colony founding logs/ship action summaries.
+
+### Acceptance
+- Founding fails if the colony ship lacks the starter cargo requirement.
+- Required cargo is removed from the colony ship when the outpost is created.
+- Colony founding logs mention the starter cargo usage.
+
 ## Colony ship requirement for founding outposts
 
 ### Goal

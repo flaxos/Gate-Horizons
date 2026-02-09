@@ -994,6 +994,7 @@ class GameState:
             return False, message, {}
 
         cost = self.colonies.get_founding_cost()
+        starter_cargo = self.colonies.get_starter_cargo_requirement()
         summary = f"{ship.name} established a colony at {system_id}"
         if planet_name:
             summary = f"{ship.name} established {planet_name} at {system_id}"
@@ -1005,6 +1006,7 @@ class GameState:
             "system_id": system_id,
             "summary": summary,
             "resources_spent": cost,
+            "starter_cargo_consumed": starter_cargo,
             "ship_consumed": True,
         }
 
@@ -1123,6 +1125,15 @@ class GameState:
         if not can_found:
             return False, reason
 
+        starter_cargo = self.colonies.get_starter_cargo_requirement()
+        missing_starter = {
+            resource: amount - ship.cargo.get(resource, 0)
+            for resource, amount in starter_cargo.items()
+            if ship.cargo.get(resource, 0) < amount
+        }
+        if missing_starter:
+            return False, f"Colony ship lacks starter cargo: {missing_starter}"
+
         # Check and spend resources
         cost = self.colonies.get_founding_cost()
         if not self.resources.can_afford(cost):
@@ -1151,6 +1162,9 @@ class GameState:
             world_traits=world_traits,
         )
         colony.stability = 50  # New outposts are fragile
+        for resource, amount in starter_cargo.items():
+            ship.remove_cargo(resource, amount)
+            colony.stockpiles[resource] = colony.stockpiles.get(resource, 0) + amount
 
         # Auto-generate extraction sites based on planet body type
         if planet:
@@ -1167,10 +1181,14 @@ class GameState:
                     )
                 )
 
+        starter_summary = ", ".join(
+            f"{amount} {resource}" for resource, amount in starter_cargo.items() if amount > 0
+        )
         if ship and self.fleet.destroy_ship(ship.id):
-            self.log.append(
-                f"{ship.name} was consumed to establish {colony_name} at {system_id}"
-            )
+            summary = f"{ship.name} was consumed to establish {colony_name} at {system_id}"
+            if starter_summary:
+                summary = f"{summary} using starter cargo ({starter_summary})"
+            self.log.append(summary)
         else:
             self.log.append(f"Founded outpost: {colony_name} at {system_id}")
         return True, f"Outpost {colony_name} established"
