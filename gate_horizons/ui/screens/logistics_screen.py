@@ -587,6 +587,7 @@ class CreateFreightRoutePopup(Popup):
         allowed_resources.add("pop")
 
         waypoint_dicts = []
+        has_cargo_resource = False
         for wp in self.waypoints:
             system_id = wp.get("system_id")
             if not system_id:
@@ -612,6 +613,7 @@ class CreateFreightRoutePopup(Popup):
                     self.status_label.text = f"Invalid action: {action}"
                     self.status_label.color = (1, 0.3, 0.2, 1)
                     return
+                has_cargo_resource = True
                 rules.append({
                     "resource_id": resource_id,
                     "action": action,
@@ -625,6 +627,11 @@ class CreateFreightRoutePopup(Popup):
                 "wait_turns": max(0, int(wp.get("wait_turns", 0) or 0)),
                 "cargo_rules": rules,
             })
+
+        if not has_cargo_resource:
+            self.status_label.text = "Add at least one cargo rule with a resource"
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
 
         route_name = self.name_input.text.strip() or None
         route = self.game_state.logistics.create_route(
