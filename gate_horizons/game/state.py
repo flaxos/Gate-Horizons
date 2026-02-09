@@ -357,10 +357,18 @@ class GameState:
         loot_spec = result_spec.get("loot") if isinstance(result_spec, dict) else None
         if isinstance(loot_spec, dict):
             loot_resources = loot_spec.get("resources") or {}
-        if loot_resources and hasattr(self, "colonies"):
+        affordability_delta = dict(loot_resources)
+        if isinstance(loot_spec, dict) and "intel" in loot_spec:
+            try:
+                intel_delta = int(loot_spec.get("intel") or 0)
+            except (TypeError, ValueError):
+                intel_delta = 0
+            if intel_delta:
+                affordability_delta["intel"] = affordability_delta.get("intel", 0) + intel_delta
+        if affordability_delta and hasattr(self, "colonies"):
             self.resources.sync_from_colonies(self.colonies)
         affordability_message = self._validate_resource_delta_affordable(
-            loot_resources,
+            affordability_delta,
             context="encounter result",
         )
         if affordability_message:
