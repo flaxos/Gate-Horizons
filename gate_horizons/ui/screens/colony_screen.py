@@ -249,7 +249,7 @@ class ColonyScreen(Screen):
         )
 
         housing_level = colony.infrastructure.get("housing", {}).get("level", 0)
-        housing_cap = colony.get_carrying_capacity()
+        housing_cap = colony.HOUSING_BASE_CAP + housing_level * 200
         stats.add_widget(Label(
             text=f"Population: {colony.population}/{housing_cap}",
             font_size="13sp",

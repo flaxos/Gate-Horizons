@@ -508,6 +508,8 @@ class TestColonyLogistics30Turns(unittest.TestCase):
             location="system_b",
             stats=ShipStats(abilities=["establish_colony"]),
         )
+        colonists_required = state.colonies.get_colonist_requirement()
+        colony_ship.cargo["pop"] = colonists_required
         state.fleet.ships[colony_ship.id] = colony_ship
 
         researched_set = set()
@@ -521,8 +523,21 @@ class TestColonyLogistics30Turns(unittest.TestCase):
         self.assertFalse(can_found, "Should not be able to found without colonisation tech")
         self.assertIn("Colonisation", reason)
 
-        # Should succeed with colonisation tech
+        # Requires POP cargo even with colonisation tech
         researched_set.add("colonisation")
+        colony_ship.cargo["pop"] = 0
+        can_found2, reason2 = state.colonies.can_found_colony(
+            "system_b", "frontier_planet",
+            galaxy=state.galaxy,
+            researched_techs=researched_set,
+            fleet=state.fleet,
+            ship_id=colony_ship.id,
+        )
+        self.assertFalse(can_found2, "Should not be able to found without POP cargo")
+        self.assertIn("POP", reason2)
+
+        # Should succeed with colonisation tech and POP cargo
+        colony_ship.cargo["pop"] = colonists_required
         can_found2, reason2 = state.colonies.can_found_colony(
             "system_b", "frontier_planet",
             galaxy=state.galaxy,
