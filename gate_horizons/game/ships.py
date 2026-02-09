@@ -552,7 +552,7 @@ class FleetManager:
                     escort_ship for escort_ship in self.get_ships_at(ship.location)
                     if escort_ship.id != ship.id
                 ]
-                if len(escort_targets) == 1:
+                if len(escort_targets) >= 1:
                     append_action(Action(
                         name="Escort",
                         description="Escort another ship",
