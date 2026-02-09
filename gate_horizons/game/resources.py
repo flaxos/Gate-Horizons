@@ -85,6 +85,21 @@ class ResourceManager:
         self._income_cache = dict(income)
         self._expense_cache = dict(expenses)
 
+    def sync_from_colonies(self, colonies) -> None:
+        """Synchronize global and per-system resources from colony stockpiles."""
+        if not colonies:
+            return
+        per_system = {}
+        totals = {r: 0 for r in RESOURCE_TYPES}
+        for system_id, colony in colonies.colonies.items():
+            per_system[system_id] = {r: 0 for r in RESOURCE_TYPES}
+            for resource in RESOURCE_TYPES:
+                amount = int(colony.stockpiles.get(resource, 0))
+                per_system[system_id][resource] = amount
+                totals[resource] += amount
+        self.per_system_resources = per_system
+        self.global_resources = totals
+
     def process_turn(self, colonies=None, fleet=None, include_maintenance: bool = True) -> dict:
         """Calculate all production/consumption and apply. Returns summary."""
         income = {r: 0 for r in RESOURCE_TYPES}
