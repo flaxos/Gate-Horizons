@@ -198,7 +198,12 @@ class TradeManager:
         self.in_transit: list[Shipment] = []  # Goods currently being shipped
 
     @staticmethod
-    def _build_auto_manifest(route: TradeRoute, colonies=None, capacity: int = 0) -> dict:
+    def _build_auto_manifest(
+        route: TradeRoute,
+        colonies=None,
+        capacity: int = 0,
+        production=None,
+    ) -> dict:
         if not colonies:
             return {"outbound": {}, "inbound": {}}
 
@@ -208,13 +213,19 @@ class TradeManager:
             return {"outbound": {}, "inbound": {}}
 
         caps = dest.get_storage_caps()
-        allowlist = list(route.auto_allowlist or caps.keys())
+        prod_caps = production.get_storage_caps(dest) if production else {}
+        allowlist = list(route.auto_allowlist or [*caps.keys(), *prod_caps.keys()])
+        allowlist = list(dict.fromkeys(allowlist))
         deficits = {}
         for resource_id in allowlist:
-            cap = caps.get(resource_id, 0)
+            if resource_id in dest.stockpiles:
+                cap = caps.get(resource_id, 0)
+                current = dest.stockpiles.get(resource_id, 0)
+            else:
+                cap = prod_caps.get(resource_id, 0)
+                current = dest.production_inventory.get(resource_id, 0)
             if cap <= 0:
                 continue
-            current = dest.stockpiles.get(resource_id, 0)
             deficit = max(0, cap - current)
             if deficit <= 0:
                 continue
@@ -229,7 +240,10 @@ class TradeManager:
         for resource_id, deficit in sorted(deficits.items(), key=lambda item: item[1], reverse=True):
             if remaining <= 0:
                 break
-            available = source.stockpiles.get(resource_id, 0)
+            if resource_id in source.stockpiles:
+                available = source.stockpiles.get(resource_id, 0)
+            else:
+                available = source.production_inventory.get(resource_id, 0)
             if available <= 0:
                 continue
             amount = min(deficit, available, remaining)
@@ -398,8 +412,8 @@ class TradeManager:
             return True
         return False
 
-    def process_arrivals(self, colonies=None) -> list:
-        """Step 1 of turn resolution: deliver arrived shipments to colony stockpiles.
+    def process_arrivals(self, colonies=None, production=None) -> list:
+        """Step 1 of turn resolution: deliver arrived shipments to colonies.
 
         Returns list of arrival reports.
         """
@@ -419,12 +433,22 @@ class TradeManager:
                 if colonies:
                     colony = colonies.colonies.get(shipment.to_world)
                     if colony:
-                        caps = colony.get_storage_caps()
                         for resource, amount in shipment.resources.items():
-                            current = colony.stockpiles.get(resource, 0)
-                            cap = caps.get(resource, 100)
-                            added = min(amount, cap - current)
-                            colony.stockpiles[resource] = current + max(0, added)
+                            if resource in colony.stockpiles:
+                                caps = colony.get_storage_caps()
+                                current = colony.stockpiles.get(resource, 0)
+                                cap = caps.get(resource, 100)
+                                added = min(amount, cap - current)
+                                colony.stockpiles[resource] = current + max(0, added)
+                                report["delivered"][resource] = max(0, added)
+                                continue
+                            current = colony.production_inventory.get(resource, 0)
+                            cap = None
+                            if production:
+                                prod_caps = production.get_storage_caps(colony)
+                                cap = prod_caps.get(resource)
+                            added = amount if cap is None else min(amount, cap - current)
+                            colony.production_inventory[resource] = current + max(0, added)
                             report["delivered"][resource] = max(0, added)
 
                 arrivals.append(report)
@@ -439,6 +463,7 @@ class TradeManager:
         colonies=None,
         resources=None,
         fleet=None,
+        production=None,
         tech_effects: dict = None,
         rng=None,
         galaxy=None,
@@ -464,7 +489,7 @@ class TradeManager:
             manifest_override = None
             if route.auto_policy and route.auto_policy != "manual":
                 manifest_override = self._build_auto_manifest(
-                    route, colonies=colonies, capacity=capacity,
+                    route, colonies=colonies, capacity=capacity, production=production,
                 )
 
             throughput = route.calculate_throughput(
@@ -506,10 +531,16 @@ class TradeManager:
                 if colonies:
                     source_colony = colonies.colonies.get(route.source_system)
                     if source_colony:
-                        available = source_colony.stockpiles.get(resource, 0)
-                        take = min(amount, available)
-                        source_colony.stockpiles[resource] = available - take
-                        actual = take
+                        if resource in source_colony.stockpiles:
+                            available = source_colony.stockpiles.get(resource, 0)
+                            take = min(amount, available)
+                            source_colony.stockpiles[resource] = available - take
+                            actual = take
+                        elif resource in source_colony.production_inventory:
+                            available = source_colony.production_inventory.get(resource, 0)
+                            take = min(amount, available)
+                            source_colony.production_inventory[resource] = available - take
+                            actual = take
 
                 # Fall back to global resources if colony doesn't have enough
                 if actual < amount and resources:
@@ -550,10 +581,16 @@ class TradeManager:
                 if colonies:
                     dest_colony = colonies.colonies.get(route.destination_system)
                     if dest_colony:
-                        available = dest_colony.stockpiles.get(resource, 0)
-                        take = min(amount, available)
-                        dest_colony.stockpiles[resource] = available - take
-                        actual = take
+                        if resource in dest_colony.stockpiles:
+                            available = dest_colony.stockpiles.get(resource, 0)
+                            take = min(amount, available)
+                            dest_colony.stockpiles[resource] = available - take
+                            actual = take
+                        elif resource in dest_colony.production_inventory:
+                            available = dest_colony.production_inventory.get(resource, 0)
+                            take = min(amount, available)
+                            dest_colony.production_inventory[resource] = available - take
+                            actual = take
 
                 if actual < amount and resources:
                     remaining = amount - actual

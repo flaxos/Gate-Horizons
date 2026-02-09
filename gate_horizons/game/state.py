@@ -944,11 +944,11 @@ class GameState:
             return False, "Fuel tanks are already full", {}
 
         refuel_amount = min(int(params.get("amount", missing)), missing)
-        refuel_cost = {"energy": refuel_amount}
-        if not self.resources.can_afford(refuel_cost):
+        refuel_cost = {"fuel": refuel_amount}
+        if not self.can_afford_production_cost(colony.production_inventory, refuel_cost):
             return False, f"Cannot afford refuel cost: {refuel_cost}", {}
 
-        self.resources.spend_dict(refuel_cost)
+        self.spend_production_cost(colony.production_inventory, refuel_cost)
         ship.fuel = min(ship.stats.fuel_capacity, ship.fuel + refuel_amount)
         return True, "Refueling completed", {
             "ship_id": ship.id,
