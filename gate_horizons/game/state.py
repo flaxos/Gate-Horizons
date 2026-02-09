@@ -871,6 +871,9 @@ class GameState:
         normalized = (action_name or "").strip().lower()
         return self._ship_action_handlers().get(normalized)
 
+    def has_ship_action_handler(self, action_name: str) -> bool:
+        return bool(self._get_ship_action_handler(action_name))
+
     def _dispatch_ship_action(
         self,
         ship,

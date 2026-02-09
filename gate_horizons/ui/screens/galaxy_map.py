@@ -9,6 +9,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
+from kivy.uix.popup import Popup
 from kivy.graphics import Color, Ellipse, Line, Rectangle
 from kivy.clock import Clock
 from kivy.metrics import dp
@@ -1007,6 +1008,37 @@ class GalaxyMapScreen(Screen):
         )
         menu.open()
 
+    def _show_notice(self, message: str, title: str = "Notice") -> None:
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
+        content.add_widget(Label(
+            text=message,
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(56),
+            halign="center",
+            valign="middle",
+        ))
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.15, 0.2, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        popup = Popup(
+            title=title,
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+        )
+        ok_btn.bind(on_release=lambda x: popup.dismiss())
+        content.add_widget(ok_btn)
+        popup.open()
+
     def _execute_action(self, ship_id, action):
         """Execute a ship action."""
         ship = self.game_state.fleet.ships.get(ship_id)
@@ -1035,6 +1067,30 @@ class GalaxyMapScreen(Screen):
             if action.name == "Deploy Probe":
                 params = {"credits": action.cost.get("credits", 5)}
             self.game_state.issue_ship_order(ship_id, action.name, params=params)
+            self.refresh()
+        elif action.name == "Escort":
+            escort_targets = [
+                escort_ship for escort_ship in self.game_state.fleet.get_ships_at(ship.location)
+                if escort_ship.id != ship_id
+            ]
+            if not escort_targets:
+                self._show_notice("No escort targets available in this system.")
+                return
+            if len(escort_targets) > 1:
+                names = ", ".join(target.name for target in escort_targets)
+                self._show_notice(
+                    "Escort target selection is not available yet.\n"
+                    f"Available ships: {names}"
+                )
+                return
+            target = escort_targets[0]
+            success, message, _ = self.game_state.issue_ship_order(
+                ship_id,
+                "Escort",
+                params={"target_ship_id": target.id},
+            )
+            if not success:
+                self._show_notice(message)
             self.refresh()
         elif action.name == "Begin Mining":
             ship.mining = True
@@ -1110,6 +1166,12 @@ class GalaxyMapScreen(Screen):
                     f"{ship.name} cannot return home: no reachable colony."
                 )
             self.refresh()
+        elif action.name in {"Set Trade Route", "Prospect", "Set Auto-Mine"}:
+            self._show_notice(
+                f"{action.name} is not implemented yet. Check other menus for updates."
+            )
+        else:
+            self._show_notice(f"{action.name} is not available yet.")
 
     def _show_destination_menu(self, ship_id):
         """Show destination selection menu."""

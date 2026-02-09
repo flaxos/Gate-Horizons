@@ -373,6 +373,36 @@ class FleetManager:
         if not ship:
             return []
 
+        def action_supported(action_name: str) -> bool:
+            local_actions = {
+                "Move To",
+                "Continue",
+                "Reroute",
+                "Emergency Stop",
+                "Begin Mining",
+                "Continue Mining",
+                "Unload Cargo",
+                "Load Cargo",
+                "Load Colonists",
+                "Unload Colonists",
+                "Emergency Jettison",
+                "Deliver Cargo",
+                "Return Home",
+            }
+            if action_name in local_actions:
+                return True
+            if game_state:
+                return game_state.has_ship_action_handler(action_name)
+            return False
+
+        def append_action(action: Action) -> None:
+            if action_supported(action.name):
+                actions.append(action)
+
+        def insert_action(index: int, action: Action) -> None:
+            if action_supported(action.name):
+                actions.insert(index, action)
+
         actions = []
         abilities = ship.stats.abilities
         location = galaxy.systems.get(ship.location) if galaxy else None
@@ -404,22 +434,22 @@ class FleetManager:
                 )
 
         # Movement is always available
-        actions.append(Action(
+        append_action(Action(
             name="Move To",
             description="Set course for another system",
         ))
 
         # Ship is in transit
         if ship.path:
-            actions.insert(0, Action(name="Continue", description="Continue on current course"))
-            actions.append(Action(name="Reroute", description="Change destination"))
-            actions.append(Action(name="Emergency Stop", description="Halt at current position"))
+            insert_action(0, Action(name="Continue", description="Continue on current course"))
+            append_action(Action(name="Reroute", description="Change destination"))
+            append_action(Action(name="Emergency Stop", description="Halt at current position"))
             return actions
 
         if "establish_colony" in abilities and location and not has_colony:
             colonizable = any(planet.colonizable for planet in location.planets)
             if colonizable:
-                actions.append(Action(
+                append_action(Action(
                     name="Establish Colony",
                     description="Convert this ship into a new colony",
                     risk="medium",
@@ -428,29 +458,29 @@ class FleetManager:
         # Scout actions
         if ship.ship_class == "scout":
             if location and not location.surveyed:
-                actions.insert(0, Action(
+                insert_action(0, Action(
                     name="Scan System",
                     description="Perform detailed survey of this system",
                     turns=1,
                 ))
             if "probe_deploy" in abilities:
-                actions.append(Action(
+                append_action(Action(
                     name="Deploy Probe",
                     description="Deploy a long-range sensor probe",
                     cost={"credits": 5},
                 ))
             if has_anomaly and "investigate" in abilities:
-                actions.append(Action(
+                append_action(Action(
                     name="Investigate Anomaly",
                     description="Investigate detected anomaly",
                     risk="medium",
                 ))
             if not ship.path:
-                actions.append(Action(
+                append_action(Action(
                     name="Patrol",
                     description="Patrol this system for threats",
                 ))
-            actions.append(Action(
+            append_action(Action(
                 name="Return Home",
                 description="Return to nearest reachable colony",
             ))
@@ -459,21 +489,16 @@ class FleetManager:
         elif ship.ship_class == "freighter":
             if has_colony:
                 if ship.cargo_used > 0:
-                    actions.insert(0, Action(
+                    insert_action(0, Action(
                         name="Unload Cargo",
                         description="Unload cargo at this colony",
                     ))
-                actions.append(Action(
+                append_action(Action(
                     name="Load Cargo",
                     description="Load available resources",
                 ))
-                if "set_trade_route" in abilities:
-                    actions.append(Action(
-                        name="Set Trade Route",
-                        description="Establish automated trade route",
-                    ))
             if "emergency_jettison" in abilities and ship.cargo_used > 0:
-                actions.append(Action(
+                append_action(Action(
                     name="Emergency Jettison",
                     description="Dump cargo for speed boost",
                     risk="low",
@@ -483,11 +508,11 @@ class FleetManager:
         elif ship.ship_class == "colony_ship":
             if has_colony:
                 if ship.cargo.get("pop", 0) > 0:
-                    actions.insert(0, Action(
+                    insert_action(0, Action(
                         name="Unload Colonists",
                         description="Return colonists to the colony",
                     ))
-                actions.append(Action(
+                append_action(Action(
                     name="Load Colonists",
                     description="Load POP units for colonization",
                 ))
@@ -495,29 +520,19 @@ class FleetManager:
         # Miner actions
         elif ship.ship_class == "miner":
             if ship.mining:
-                actions.insert(0, Action(
+                insert_action(0, Action(
                     name="Continue Mining",
                     description="Continue current mining operation",
                 ))
             elif has_asteroids or (location and any(
                 p.resources for p in location.planets
             )):
-                actions.insert(0, Action(
+                insert_action(0, Action(
                     name="Begin Mining",
                     description="Start mining resources in this system",
                 ))
-                if "prospect" in abilities:
-                    actions.append(Action(
-                        name="Prospect",
-                        description="Survey resource deposits for quality",
-                    ))
-            if "auto_mine" in abilities:
-                actions.append(Action(
-                    name="Set Auto-Mine",
-                    description="Set up automated mining cycle",
-                ))
             if ship.cargo_used > 0:
-                actions.append(Action(
+                append_action(Action(
                     name="Deliver Cargo",
                     description="Deliver mined resources to nearest colony",
                 ))
@@ -525,38 +540,43 @@ class FleetManager:
         # Corvette actions
         elif ship.ship_class == "corvette":
             if "patrol" in abilities:
-                actions.insert(0, Action(
+                insert_action(0, Action(
                     name="Patrol",
                     description="Patrol this system",
                 ))
             if "escort" in abilities:
-                actions.append(Action(
-                    name="Escort",
-                    description="Escort another ship",
-                ))
+                escort_targets = [
+                    escort_ship for escort_ship in self.get_ships_at(ship.location)
+                    if escort_ship.id != ship.id
+                ]
+                if len(escort_targets) == 1:
+                    append_action(Action(
+                        name="Escort",
+                        description="Escort another ship",
+                    ))
             if has_hostiles:
                 if "intercept" in abilities:
-                    actions.append(Action(
+                    append_action(Action(
                         name="Intercept",
                         description="Intercept hostile contacts",
                         risk="high",
                     ))
                 if "engage" in abilities:
-                    actions.append(Action(
+                    append_action(Action(
                         name="Engage",
                         description="Engage enemy forces",
                         risk="high",
                     ))
-                actions.append(Action(
+                append_action(Action(
                     name="Retreat",
                     description="Withdraw from engagement",
                 ))
-                actions.append(Action(
+                append_action(Action(
                     name="Hail",
                     description="Attempt communication",
                 ))
             if "blockade" in abilities and has_colony:
-                actions.append(Action(
+                append_action(Action(
                     name="Blockade",
                     description="Establish system blockade",
                 ))
@@ -564,13 +584,13 @@ class FleetManager:
         # Universal actions at colony with spaceport
         if has_spaceport:
             if ship.hull < ship.stats.max_hull:
-                actions.append(Action(
+                append_action(Action(
                     name="Repair",
                     description=f"Repair hull ({ship.hull}/{ship.stats.max_hull})",
                     cost={"credits": (ship.stats.max_hull - ship.hull) * 2},
                 ))
             if ship.fuel < ship.stats.fuel_capacity:
-                actions.append(Action(
+                append_action(Action(
                     name="Refuel",
                     description=f"Refuel ({ship.fuel}/{ship.stats.fuel_capacity})",
                     cost={"fuel": (ship.stats.fuel_capacity - ship.fuel)},
