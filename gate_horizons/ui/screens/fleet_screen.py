@@ -315,28 +315,18 @@ class FleetScreen(Screen):
             self._update_list()
 
     def _deliver_cargo(self, btn):
-        """Deliver mined cargo to global resources."""
+        """Deliver mined cargo to colony stockpiles."""
         if not self.game_state:
             return
-        ship = self.game_state.fleet.ships.get(btn.ship_id)
-        if not ship:
-            return
-        for resource, amount in list(ship.cargo.items()):
-            self.game_state.resources.add(resource, amount, ship.location)
-        ship.cargo.clear()
+        self.game_state.unload_ship_cargo_to_colony(btn.ship_id)
         self.top_bar.update(self.game_state)
         self._update_list()
 
     def _unload_cargo(self, btn):
-        """Unload freighter cargo to global resources."""
+        """Unload freighter cargo to colony stockpiles."""
         if not self.game_state:
             return
-        ship = self.game_state.fleet.ships.get(btn.ship_id)
-        if not ship:
-            return
-        for resource, amount in list(ship.cargo.items()):
-            self.game_state.resources.add(resource, amount, ship.location)
-        ship.cargo.clear()
+        self.game_state.unload_ship_cargo_to_colony(btn.ship_id)
         self.top_bar.update(self.game_state)
         self._update_list()
 

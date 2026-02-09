@@ -1097,9 +1097,7 @@ class GalaxyMapScreen(Screen):
                 return
             colony_systems = list(self.game_state.colonies.colonies.keys())
             if ship.location in colony_systems:
-                for resource, amount in list(ship.cargo.items()):
-                    self.game_state.resources.add(resource, amount, ship.location)
-                ship.cargo.clear()
+                self.game_state.unload_ship_cargo_to_colony(ship_id)
                 self.refresh()
                 return
             shortest_path = None
