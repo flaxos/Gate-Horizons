@@ -558,6 +558,7 @@ class GalaxyMapScreen(Screen):
             save_callback=self._on_save,
             load_callback=self._on_load,
             flow_toggle_callback=self._on_toggle_trade_flows,
+            settings_callback=self._on_settings,
         )
 
         main_layout.add_widget(bottom_bar)
@@ -1221,6 +1222,28 @@ class GalaxyMapScreen(Screen):
                 on_saved=lambda: None,
             )
             popup.open()
+
+    def _on_settings(self, *args):
+        from kivy.app import App
+        app = App.get_running_app()
+        if not app:
+            return
+        from gate_horizons.ui.widgets.settings import SettingsPopup
+        settings = getattr(app, "settings", None)
+        if not settings:
+            return
+        encounter_mode = None
+        on_mode_change = None
+        if getattr(app, "game_state", None):
+            encounter_mode = app.game_state.encounter_resolution_mode
+            on_mode_change = app.game_state.set_encounter_resolution_mode
+        popup = SettingsPopup(
+            settings=settings,
+            on_save=getattr(app, "apply_settings", None),
+            encounter_mode=encounter_mode,
+            on_encounter_mode_change=on_mode_change,
+        )
+        popup.open()
 
     def _on_load(self, *args):
         from kivy.app import App
