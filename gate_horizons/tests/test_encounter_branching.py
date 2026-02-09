@@ -96,6 +96,7 @@ class TestEncounterBranching(unittest.TestCase):
         state = GameState.new_game()
         system = state.galaxy.systems["sol"]
         ship = next(iter(state.fleet.ships.values()))
+        colony = next(iter(state.colonies.colonies.values()))
         encounter = EncounterData(
             type="pirates",
             strength=8,
@@ -109,6 +110,7 @@ class TestEncounterBranching(unittest.TestCase):
         loot_amount = 5
         state.resources.sync_from_colonies(state.colonies)
         starting = state.resources.global_resources["intel"]
+        starting_colony = colony.stockpiles.get("intel", 0)
         result_spec = {
             "contractVersion": "1.0",
             "encounterId": encounter_id,
@@ -122,8 +124,10 @@ class TestEncounterBranching(unittest.TestCase):
         self.assertTrue(success, message)
         post_loot = state.resources.global_resources["intel"]
         self.assertEqual(post_loot, starting + loot_amount)
+        self.assertEqual(colony.stockpiles.get("intel", 0), starting_colony + loot_amount)
         state.process_turn()
         self.assertGreaterEqual(state.resources.global_resources["intel"], post_loot)
+        self.assertGreaterEqual(colony.stockpiles.get("intel", 0), starting_colony + loot_amount)
 
 
 if __name__ == "__main__":
