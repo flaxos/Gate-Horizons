@@ -9,6 +9,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.popup import Popup
 from kivy.uix.progressbar import ProgressBar
+from kivy.uix.textinput import TextInput
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
@@ -18,6 +19,10 @@ from gate_horizons.game.colonies import (
     BUILD_COSTS,
     BUILD_TURNS,
     COLONY_LEVELS,
+)
+from gate_horizons.sim.balance_constants import (
+    POP_EXPORT_CAP_DEFAULT,
+    POP_RETAIN_PERCENT_DEFAULT,
 )
 from gate_horizons.game.resources import RESOURCE_TYPES
 from gate_horizons.sim.population import PopulationSimulator
@@ -291,12 +296,103 @@ class ColonyScreen(Screen):
         retain_pct = int(float(policy.get("retain_percent", 0.0)) * 100)
         export_cap = int(policy.get("export_cap_per_turn", 0) or 0)
         priority = str(policy.get("priority", "balanced")).replace("_", " ").title()
-        detail_content.add_widget(Label(
+        self._policy_summary_label = Label(
             text=f"POP Policy: retain {retain_pct}% / cap {export_cap} / {priority}",
             font_size="11sp",
             color=(0.55, 0.75, 0.95, 0.85),
             size_hint_y=None,
             height=dp(20),
+        )
+        detail_content.add_widget(self._policy_summary_label)
+
+        detail_content.add_widget(Label(
+            text="Population Policy",
+            font_size="13sp",
+            bold=True,
+            color=(0.6, 0.8, 1, 1),
+            size_hint_y=None,
+            height=dp(24),
+            halign="left",
+            text_size=(dp(500), None),
+        ))
+
+        policy_controls = GridLayout(
+            cols=2,
+            size_hint_y=None,
+            row_default_height=dp(28),
+            row_force_default=True,
+            spacing=dp(6),
+        )
+        policy_controls.bind(minimum_height=policy_controls.setter("height"))
+
+        policy_controls.add_widget(Label(
+            text="Retain Percent:",
+            font_size="11sp",
+            color=(0.7, 0.85, 1, 0.9),
+            halign="left",
+            text_size=(dp(160), None),
+        ))
+        retain_input = TextInput(
+            text=str(retain_pct),
+            font_size="11sp",
+            input_filter="int",
+            multiline=False,
+            background_color=(0.1, 0.12, 0.18, 0.9),
+            foreground_color=(0.8, 0.9, 1, 1),
+        )
+        policy_controls.add_widget(retain_input)
+
+        policy_controls.add_widget(Label(
+            text="Export Cap / Turn:",
+            font_size="11sp",
+            color=(0.7, 0.85, 1, 0.9),
+            halign="left",
+            text_size=(dp(160), None),
+        ))
+        export_input = TextInput(
+            text=str(export_cap),
+            font_size="11sp",
+            input_filter="int",
+            multiline=False,
+            background_color=(0.1, 0.12, 0.18, 0.9),
+            foreground_color=(0.8, 0.9, 1, 1),
+        )
+        policy_controls.add_widget(export_input)
+
+        policy_controls.add_widget(Label(
+            text="Priority:",
+            font_size="11sp",
+            color=(0.7, 0.85, 1, 0.9),
+            halign="left",
+            text_size=(dp(160), None),
+        ))
+        priority_input = TextInput(
+            text=str(policy.get("priority", "balanced")).replace("_", " "),
+            font_size="11sp",
+            multiline=False,
+            background_color=(0.1, 0.12, 0.18, 0.9),
+            foreground_color=(0.8, 0.9, 1, 1),
+        )
+        policy_controls.add_widget(priority_input)
+
+        for inp in (retain_input, export_input, priority_input):
+            inp.bind(text=lambda inst, value: self._on_policy_change(
+                colony,
+                retain_input,
+                export_input,
+                priority_input,
+            ))
+
+        detail_content.add_widget(policy_controls)
+
+        detail_content.add_widget(Label(
+            text="Defaults: retain 70% / cap 50 / priority balanced.",
+            font_size="10sp",
+            color=(0.5, 0.7, 0.9, 0.75),
+            size_hint_y=None,
+            height=dp(18),
+            halign="left",
+            text_size=(dp(500), None),
         ))
 
         pop_report = colony.last_population_report or {}
@@ -743,6 +839,50 @@ class ColonyScreen(Screen):
 
         scroll.add_widget(detail_content)
         self.detail_panel.add_widget(scroll)
+
+    def _on_policy_change(self, colony, retain_input, export_input, priority_input):
+        policy = colony.get_population_policy()
+
+        retain_text = retain_input.text.strip()
+        if retain_text == "":
+            retain_fraction = POP_RETAIN_PERCENT_DEFAULT
+        else:
+            try:
+                retain_value = int(retain_text)
+            except ValueError:
+                retain_value = int(POP_RETAIN_PERCENT_DEFAULT * 100)
+            retain_value = max(0, min(100, retain_value))
+            retain_fraction = retain_value / 100.0
+
+        export_text = export_input.text.strip()
+        if export_text == "":
+            export_cap = POP_EXPORT_CAP_DEFAULT
+        else:
+            try:
+                export_cap = int(export_text)
+            except ValueError:
+                export_cap = POP_EXPORT_CAP_DEFAULT
+            export_cap = max(0, export_cap)
+
+        priority_text = priority_input.text.strip()
+        if priority_text == "":
+            priority_value = "balanced"
+        else:
+            priority_value = priority_text.replace(" ", "_").lower()
+
+        policy.update({
+            "retain_percent": retain_fraction,
+            "export_cap_per_turn": export_cap,
+            "priority": priority_value,
+        })
+        colony.population_policy = policy
+
+        if hasattr(self, "_policy_summary_label") and self._policy_summary_label:
+            priority_label = priority_value.replace("_", " ").title()
+            retain_pct = int(retain_fraction * 100)
+            self._policy_summary_label.text = (
+                f"POP Policy: retain {retain_pct}% / cap {export_cap} / {priority_label}"
+            )
 
     def _on_build(self, btn):
         if not self.game_state or not self.selected_colony:
