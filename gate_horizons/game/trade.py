@@ -203,6 +203,22 @@ class TradeManager:
         self.in_transit: list[Shipment] = []  # Goods currently being shipped
 
     @staticmethod
+    def _apply_population_export(colony, amount: int) -> int:
+        if not colony or amount <= 0:
+            return 0
+        available = colony.get_population_export_available(amount)
+        if available <= 0:
+            return 0
+        take = min(amount, available)
+        return max(0, -colony.apply_population_transfer(-take))
+
+    @staticmethod
+    def _apply_population_import(colony, amount: int) -> int:
+        if not colony or amount <= 0:
+            return 0
+        return max(0, colony.apply_population_transfer(amount))
+
+    @staticmethod
     def _build_auto_manifest(
         route: TradeRoute,
         colonies=None,
@@ -440,7 +456,7 @@ class TradeManager:
                     if colony:
                         for resource, amount in shipment.resources.items():
                             if resource == "pop":
-                                added = colony.apply_population_transfer(amount)
+                                added = self._apply_population_import(colony, amount)
                                 report["delivered"][resource] = added
                                 continue
                             if resource in colony.stockpiles:
@@ -541,10 +557,7 @@ class TradeManager:
                     source_colony = colonies.colonies.get(route.source_system)
                     if source_colony:
                         if resource == "pop":
-                            available = source_colony.get_population_export_available(amount)
-                            take = min(amount, available)
-                            removed = -source_colony.apply_population_transfer(-take)
-                            actual = removed
+                            actual = self._apply_population_export(source_colony, amount)
                         elif resource in source_colony.stockpiles:
                             available = source_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)
@@ -596,10 +609,7 @@ class TradeManager:
                     dest_colony = colonies.colonies.get(route.destination_system)
                     if dest_colony:
                         if resource == "pop":
-                            available = dest_colony.get_population_export_available(amount)
-                            take = min(amount, available)
-                            removed = -dest_colony.apply_population_transfer(-take)
-                            actual = removed
+                            actual = self._apply_population_export(dest_colony, amount)
                         elif resource in dest_colony.stockpiles:
                             available = dest_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)

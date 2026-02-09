@@ -25,9 +25,9 @@ Prevent diplomacy actions and encounter branches until the unlock_diplomacy tech
 Ensure POP transfers update colony populations exactly once across ship actions, logistics, and trade, with regression coverage.
 
 ### Steps
-1. Centralize immediate POP transfer adjustments and update ship/logistics/trade paths to use it.
-2. Keep trade/logistics POP shipments from double-applying migration with colony turn processing.
-3. Add a regression test for single-turn POP export/import adjustments.
+1. Keep ship POP load/unload paths using immediate transfer without pending migration bookkeeping.
+2. Ensure trade/logistics POP transfers only apply once and do not duplicate migration with colony turn processing.
+3. Add a regression test that advances a turn and asserts POP export/import changes match the transfer amount.
 
 ## PR: Fix audited gameplay/blocker issues (A-F)
 

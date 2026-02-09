@@ -312,6 +312,32 @@ class LogisticsManager:
 
         if resource_id == "pop" and colony:
             available = colony.get_population_export_available(rule.amount or 0)
+
+            # Apply min threshold
+            if rule.min_threshold > 0 and available <= rule.min_threshold:
+                return actions
+
+            loadable = available - rule.min_threshold if rule.min_threshold > 0 else available
+
+            if rule.amount > 0:
+                loadable = min(loadable, rule.amount)
+
+            loadable = min(loadable, ship.cargo_free)
+            if loadable <= 0:
+                return actions
+
+            removed = -colony.apply_population_transfer(-loadable)
+            if removed <= 0:
+                return actions
+
+            ship.add_cargo(resource_id, removed)
+            actions.append({
+                "type": "loaded",
+                "resource": resource_id,
+                "amount": removed,
+                "at": ship.location,
+            })
+            return actions
         # Check production inventory first
         if resource_id in prod_inv:
             available = prod_inv.get(resource_id, 0)
@@ -336,12 +362,7 @@ class LogisticsManager:
             return actions
 
         # Deduct from source
-        if resource_id == "pop" and colony:
-            removed = -colony.apply_population_transfer(-loadable)
-            if removed <= 0:
-                return actions
-            loadable = removed
-        elif resource_id in prod_inv and prod_inv.get(resource_id, 0) >= loadable:
+        if resource_id in prod_inv and prod_inv.get(resource_id, 0) >= loadable:
             prod_inv[resource_id] -= loadable
         elif colony and resource_id in colony.stockpiles:
             colony.stockpiles[resource_id] = max(
@@ -386,6 +407,13 @@ class LogisticsManager:
                 return actions
             unloadable = added
             ship.remove_cargo(resource_id, unloadable)
+            actions.append({
+                "type": "unloaded",
+                "resource": resource_id,
+                "amount": unloadable,
+                "at": ship.location,
+            })
+            return actions
         else:
             ship.remove_cargo(resource_id, unloadable)
             if resource_id in prod_inv or resource_id not in (colony.stockpiles if colony else {}):
