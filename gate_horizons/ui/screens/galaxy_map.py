@@ -16,6 +16,7 @@ from kivy.metrics import dp
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
 from ..widgets.save_load import SaveGamePopup, LoadGamePopup
+from ..widgets.nav_menu import build_command_bar
 from gate_horizons.game.resources import RESOURCE_TYPES
 
 
@@ -544,99 +545,14 @@ class GalaxyMapScreen(Screen):
 
         main_layout.add_widget(middle)
 
-        # Bottom bar
-        bottom_bar = BoxLayout(
-            orientation="horizontal",
-            size_hint_y=None,
-            height=dp(56),
-            padding=[dp(8), dp(6)],
-            spacing=dp(8),
+        # Bottom command bar (categorised dropdowns + always-visible END TURN)
+        bottom_bar, self.flow_toggle_btn = build_command_bar(
+            nav_callback=self._on_nav_by_name,
+            end_turn_callback=self._on_end_turn,
+            save_callback=self._on_save,
+            load_callback=self._on_load,
+            flow_toggle_callback=self._on_toggle_trade_flows,
         )
-        with bottom_bar.canvas.before:
-            Color(0.05, 0.08, 0.15, 1)
-            self._bottom_bg = Rectangle(pos=bottom_bar.pos, size=bottom_bar.size)
-        bottom_bar.bind(
-            size=lambda w, v: setattr(self._bottom_bg, 'size', v),
-            pos=lambda w, v: setattr(self._bottom_bg, 'pos', v),
-        )
-
-        nav_buttons = [
-            ("🗺 Map", "galaxy_map"),
-            ("🚀 Fleet", "fleet_screen"),
-            ("🧬 Tech", "tech_screen"),
-            ("🎯 Missions", "mission_screen"),
-            ("⚔ Encounters", "encounter_screen"),
-            ("🤝 Relations", "relations_screen"),
-            ("🏛 Colonies", "colony_screen"),
-            ("💱 Trade", "trade_screen"),
-            ("🏭 Prod", "production_screen"),
-            ("📦 Logistics", "logistics_screen"),
-            ("🛠 Shipyard", "shipyard_screen"),
-        ]
-
-        for text, screen_name in nav_buttons:
-            btn = Button(
-                text=text,
-                size_hint=(None, 1),
-                width=dp(72),
-                font_size="12sp",
-                background_color=(0.08, 0.15, 0.25, 0.6),
-                color=(0.7, 0.85, 1, 1),
-            )
-            btn.screen_name = screen_name
-            btn.bind(on_release=self._on_nav)
-            bottom_bar.add_widget(btn)
-
-        # Save button
-        save_btn = Button(
-            text="Save",
-            size_hint=(None, 1),
-            width=dp(64),
-            font_size="12sp",
-            background_color=(0.15, 0.15, 0.35, 0.8),
-            color=(0.7, 0.7, 1, 1),
-        )
-        save_btn.bind(on_release=self._on_save)
-        bottom_bar.add_widget(save_btn)
-
-        # Load button
-        load_btn = Button(
-            text="Load",
-            size_hint=(None, 1),
-            width=dp(64),
-            font_size="12sp",
-            background_color=(0.15, 0.15, 0.35, 0.8),
-            color=(0.7, 0.7, 1, 1),
-        )
-        load_btn.bind(on_release=self._on_load)
-        bottom_bar.add_widget(load_btn)
-
-        self.flow_toggle_btn = Button(
-            text="Flows Off",
-            size_hint=(None, 1),
-            width=dp(86),
-            font_size="12sp",
-            background_color=(0.12, 0.2, 0.35, 0.8),
-            color=(0.7, 0.85, 1, 1),
-        )
-        self.flow_toggle_btn.bind(on_release=self._on_toggle_trade_flows)
-        bottom_bar.add_widget(self.flow_toggle_btn)
-
-        # Spacer
-        bottom_bar.add_widget(Widget())
-
-        # End turn button
-        end_turn_btn = Button(
-            text="END TURN",
-            size_hint=(None, 1),
-            width=dp(110),
-            font_size="14sp",
-            bold=True,
-            background_color=(0.2, 0.6, 0.3, 1),
-            color=(1, 1, 1, 1),
-        )
-        end_turn_btn.bind(on_release=self._on_end_turn)
-        bottom_bar.add_widget(end_turn_btn)
 
         main_layout.add_widget(bottom_bar)
         root.add_widget(main_layout)
@@ -722,7 +638,7 @@ class GalaxyMapScreen(Screen):
         enabled = not self.star_map.show_trade_flows
         self.star_map.set_trade_flows_enabled(enabled)
         if self.flow_toggle_btn:
-            self.flow_toggle_btn.text = "Flows On" if enabled else "Flows Off"
+            self.flow_toggle_btn.text = "Flows: ON" if enabled else "Toggle Flows"
         self._update_flow_legend()
 
     def _update_flow_legend(self):
@@ -1209,6 +1125,13 @@ class GalaxyMapScreen(Screen):
         app = App.get_running_app()
         if app and hasattr(btn, "screen_name"):
             app.switch_screen(btn.screen_name)
+
+    def _on_nav_by_name(self, screen_name):
+        """Navigate to a screen by name (used by the command bar dropdowns)."""
+        from kivy.app import App
+        app = App.get_running_app()
+        if app:
+            app.switch_screen(screen_name)
 
     def _on_end_turn(self, *args):
         if not self.game_state:

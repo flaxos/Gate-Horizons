@@ -168,6 +168,46 @@ class SystemMapWidget(MapCameraWidget):
         self.selected_ship_id = None
         self.reset_camera()
 
+    # ------------------------------------------------------------------
+    # Orbital spacing helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _log_orbit_radius(index, total, max_radius):
+        """Compute orbital radius using logarithmic spacing.
+
+        Inner planets are packed closer together while outer planets
+        get progressively more room — mimicking Titius-Bode spacing.
+        """
+        if total <= 1:
+            return max_radius * 0.5
+        # Map index [0..total-1] to a log-spaced value in [0.18 .. 1.0]
+        t = index / (total - 1)  # 0 → 1
+        # Use a logarithmic curve: log(1 + t*k) / log(1 + k)
+        k = 6.0  # Controls how compressed the inner orbits are
+        norm = math.log(1 + t * k) / math.log(1 + k)
+        return max_radius * (0.18 + 0.80 * norm)
+
+    @staticmethod
+    def _classify_planet_zone(index, total):
+        """Return 'inner', 'habitable', or 'outer' zone for a planet.
+
+        Uses a simple heuristic: first ~30% inner, next ~20% habitable,
+        rest outer.  Gas giants are always outer regardless of index.
+        """
+        if total <= 1:
+            return "habitable"
+        frac = index / (total - 1)
+        if frac <= 0.3:
+            return "inner"
+        elif frac <= 0.5:
+            return "habitable"
+        return "outer"
+
+    # ------------------------------------------------------------------
+    # Main draw
+    # ------------------------------------------------------------------
+
     def _redraw(self, *args):
         self.canvas.clear()
         if not self.game_state or not self.system_id:
@@ -182,11 +222,87 @@ class SystemMapWidget(MapCameraWidget):
 
         cx_base = self.center_x
         cy_base = self.center_y
-        max_radius = min(self.width, self.height) * 0.38
+        max_radius = min(self.width, self.height) * 0.40
         is_surveyed = bool(system.surveyed)
+        ring_cx, ring_cy = self._apply_transform(cx_base, cy_base)
+        num_planets = len(system.planets)
+
+        # Pre-compute orbit radii (log-spaced)
+        orbit_radii = []
+        for i in range(num_planets):
+            orbit_radii.append(self._log_orbit_radius(i, num_planets, max_radius))
+
+        # Determine zone boundaries for habitable zone band
+        hab_inner_r = None
+        hab_outer_r = None
+        for i in range(num_planets):
+            zone = self._classify_planet_zone(i, num_planets)
+            r = orbit_radii[i] if i < len(orbit_radii) else max_radius * 0.5
+            if zone == "habitable":
+                if hab_inner_r is None:
+                    hab_inner_r = r
+                hab_outer_r = r
 
         with self.canvas:
-            # ---- Stars ----
+            # ============================================================
+            # Layer 1: Background zones (drawn first, behind everything)
+            # ============================================================
+
+            # -- Stellar gravity well (radial gradient around star) --
+            gw_r = max_radius * 0.22 * self._scale
+            for step in range(5, 0, -1):
+                alpha = 0.025 * step
+                r = gw_r * (step / 5.0)
+                Color(1, 0.9, 0.5, alpha)
+                Ellipse(
+                    pos=(ring_cx - r, ring_cy - r),
+                    size=(r * 2, r * 2),
+                )
+
+            # -- Habitable zone band (subtle green ring) --
+            if hab_inner_r is not None and hab_outer_r is not None:
+                hz_inner = (hab_inner_r - max_radius * 0.06) * self._scale
+                hz_outer = (hab_outer_r + max_radius * 0.06) * self._scale
+                # Draw as concentric filled rings
+                Color(0.15, 0.45, 0.2, 0.08)
+                Ellipse(
+                    pos=(ring_cx - hz_outer, ring_cy - hz_outer),
+                    size=(hz_outer * 2, hz_outer * 2),
+                )
+                # Punch out the inner part with background colour
+                Color(0.02, 0.03, 0.08, 1)
+                Ellipse(
+                    pos=(ring_cx - hz_inner, ring_cy - hz_inner),
+                    size=(hz_inner * 2, hz_inner * 2),
+                )
+                # Dashed boundary lines for the zone
+                Color(0.2, 0.55, 0.25, 0.2)
+                Line(
+                    circle=(ring_cx, ring_cy, hz_inner),
+                    width=0.7,
+                    dash_length=dp(4),
+                    dash_offset=dp(4),
+                )
+                Line(
+                    circle=(ring_cx, ring_cy, hz_outer),
+                    width=0.7,
+                    dash_length=dp(4),
+                    dash_offset=dp(4),
+                )
+
+            # -- Frost line indicator (dashed ring at ~60% of max radius) --
+            frost_r = max_radius * 0.58 * self._scale
+            Color(0.3, 0.5, 0.8, 0.12)
+            Line(
+                circle=(ring_cx, ring_cy, frost_r),
+                width=0.6,
+                dash_length=dp(6),
+                dash_offset=dp(3),
+            )
+
+            # ============================================================
+            # Layer 2: Stars
+            # ============================================================
             stars = system.stars if system.stars else [{"name": system.name}]
             star_orbit_r = dp(20) if len(stars) > 1 else 0
             star_sizes = [dp(36), dp(26), dp(20)]
@@ -206,27 +322,46 @@ class SystemMapWidget(MapCameraWidget):
 
                 _draw_star_icon(self.canvas, sx, sy, size, color)
 
-            # ---- Orbital rings + Planets ----
-            num_planets = len(system.planets)
+            # ============================================================
+            # Layer 3: Orbital rings + Planets
+            # ============================================================
+            planet_positions = {}  # planet.id -> (px, py) base coords
+
             for i, planet in enumerate(system.planets):
-                orbit_r = max_radius * (0.25 + 0.7 * (i / max(1, num_planets)))
+                orbit_r = orbit_radii[i]
                 orbit_r_scaled = orbit_r * self._scale
 
-                # Orbital ring
-                ring_cx, ring_cy = self._apply_transform(cx_base, cy_base)
-                Color(0.2, 0.3, 0.4, 0.25)
+                # Orbital ring (lighter in habitable zone)
+                zone = self._classify_planet_zone(i, num_planets)
+                if zone == "habitable":
+                    Color(0.25, 0.4, 0.35, 0.3)
+                else:
+                    Color(0.2, 0.3, 0.4, 0.2)
                 Line(circle=(ring_cx, ring_cy, orbit_r_scaled), width=0.8)
 
-                # Planet position
-                angle = (i * 137.5 + 45) * math.pi / 180
+                # Planet position — spread using golden angle for nice distribution
+                angle = (i * 137.508 + 30) * math.pi / 180
                 px_base = cx_base + orbit_r * math.cos(angle)
                 py_base = cy_base + orbit_r * math.sin(angle)
                 px, py = self._apply_transform(px_base, py_base)
+                planet_positions[planet.id] = (px_base, py_base)
 
                 color = BODY_TYPE_COLORS.get(planet.type, (0.5, 0.5, 0.5, 1))
                 is_gas = planet.type == "gas_giant"
                 is_asteroid = "asteroid" in planet.type.lower()
                 has_atmo = planet.type in ("oceanic", "garden", "toxic", "gas_giant")
+
+                # Gas giants get a subtle gravity well of their own
+                if is_gas and is_surveyed:
+                    gj_well_r = dp(22) * self._scale
+                    for step in range(3, 0, -1):
+                        ga = 0.02 * step
+                        gr = gj_well_r * (step / 3.0)
+                        Color(color[0], color[1], color[2], ga)
+                        Ellipse(
+                            pos=(px - gr, py - gr),
+                            size=(gr * 2, gr * 2),
+                        )
 
                 if not is_surveyed:
                     silhouette = (0.15, 0.18, 0.25, 0.85)
@@ -279,7 +414,9 @@ class SystemMapWidget(MapCameraWidget):
                         Ellipse(pos=(px - c_s / 2, py + p_size * 0.5),
                                 size=(c_s, c_s))
 
-            # ---- Gate indicator ----
+            # ============================================================
+            # Layer 4: Gate indicator (edge of system)
+            # ============================================================
             gate_x, gate_y = self._apply_transform(
                 cx_base + max_radius * 0.95,
                 cy_base + max_radius * 0.95,
@@ -287,6 +424,13 @@ class SystemMapWidget(MapCameraWidget):
             gate_anchor = (gate_x, gate_y)
             gate_size = dp(14) * self._scale
             if system.gate_active:
+                # Subtle gate field glow
+                Color(0.2, 0.7, 0.8, 0.08)
+                gf_r = dp(24) * self._scale
+                Ellipse(
+                    pos=(gate_x - gf_r, gate_y - gf_r),
+                    size=(gf_r * 2, gf_r * 2),
+                )
                 _draw_station_icon(self.canvas, gate_x, gate_y, gate_size,
                                    color=(0.2, 0.8, 0.9, 0.9))
             else:
@@ -294,7 +438,9 @@ class SystemMapWidget(MapCameraWidget):
                                    color=(0.9, 0.4, 0.2, 0.7))
             self._body_positions["__gate__"] = (gate_x, gate_y, gate_size)
 
-            # ---- Ships ----
+            # ============================================================
+            # Layer 5: Ships — positioned near their context
+            # ============================================================
             ships = self.game_state.fleet.get_ships_at(self.system_id)
             class_colors = {
                 "scout": (0.3, 1, 0.7, 0.9),
@@ -302,54 +448,95 @@ class SystemMapWidget(MapCameraWidget):
                 "miner": (0.8, 0.5, 0.2, 0.9),
                 "corvette": (1, 0.3, 0.3, 0.9),
             }
-            ship_area_x = cx_base - max_radius * 0.7
-            ship_area_y = cy_base - max_radius * 0.85
-            for idx, ship in enumerate(ships):
-                sx_base = ship_area_x + idx * dp(22)
-                sy_base = ship_area_y
-                sx, sy = self._apply_transform(sx_base, sy_base)
-                s_size = dp(12) * self._scale
-                scolor = class_colors.get(ship.ship_class, (0.7, 0.7, 0.7, 0.9))
 
-                if ship.path:
-                    is_selected = ship.id == self.selected_ship_id
-                    if is_selected:
-                        Color(0.4, 0.8, 1.0, 0.55)
-                        width = 1.5
-                        dash_length = dp(6)
-                    else:
-                        Color(0.35, 0.65, 0.9, 0.35)
-                        width = 1.1
-                        dash_length = dp(4)
-                    Line(
-                        points=[sx, sy, gate_anchor[0], gate_anchor[1]],
-                        width=width,
-                        dash_length=dash_length,
-                        dash_offset=self._dash_offset,
-                    )
+            # Group ships by context: mining ships near colony planet,
+            # travelling ships near the gate, idle ships orbit the star.
+            gate_ships = []
+            orbit_ships = []
+            colony_planet_id = None
+            if self.system_id in self.game_state.colonies.colonies:
+                colony_planet_id = self.game_state.colonies.colonies[self.system_id].planet_id
 
-                if ship.id == self.selected_ship_id:
-                    pulse = 0.5 + 0.5 * math.sin(self._pulse_t * 1.4)
-                    ring_alpha = 0.35 + 0.45 * pulse
-                    ring_radius = s_size * (1.1 + 0.25 * pulse)
-                    Color(0.9, 0.95, 1.0, ring_alpha)
-                    Line(circle=(sx, sy, ring_radius), width=1.2)
-                    scolor = (
-                        min(1.0, scolor[0] + 0.15 * pulse),
-                        min(1.0, scolor[1] + 0.15 * pulse),
-                        min(1.0, scolor[2] + 0.15 * pulse),
-                        min(1.0, scolor[3] + 0.2 * pulse),
-                    )
+            for ship in ships:
+                if ship.path or ship.destination:
+                    gate_ships.append(ship)
+                elif ship.mining and colony_planet_id and colony_planet_id in planet_positions:
+                    orbit_ships.append((ship, colony_planet_id))
+                elif colony_planet_id and colony_planet_id in planet_positions:
+                    orbit_ships.append((ship, colony_planet_id))
+                else:
+                    gate_ships.append(ship)
 
-                Color(*scolor)
-                # Diamond shape for ships
-                half = s_size * 0.6
+            # Draw ships near gate
+            for idx, ship in enumerate(gate_ships):
+                # Fan out around the gate in a small arc
+                spread_angle = (idx - len(gate_ships) / 2.0) * 25 * math.pi / 180
+                offset_r = dp(28 + idx * 6)
+                gx_base = cx_base + max_radius * 0.95 - offset_r * math.cos(
+                    math.pi / 4 + spread_angle)
+                gy_base = cy_base + max_radius * 0.95 - offset_r * math.sin(
+                    math.pi / 4 + spread_angle)
+                sx, sy = self._apply_transform(gx_base, gy_base)
+                self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
+
+            # Draw ships orbiting a body
+            for idx, (ship, body_id) in enumerate(orbit_ships):
+                bx_base, by_base = planet_positions[body_id]
+                # Small orbit around the planet
+                orbit_angle = (idx * 90 + 45) * math.pi / 180
+                offset_r = dp(20 + idx * 5)
+                ox_base = bx_base + offset_r * math.cos(orbit_angle)
+                oy_base = by_base + offset_r * math.sin(orbit_angle)
+                sx, sy = self._apply_transform(ox_base, oy_base)
+                self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
+
+    def _draw_ship(self, ship, sx, sy, gate_anchor, class_colors):
+        """Draw a single ship icon at screen position (sx, sy)."""
+        s_size = dp(12) * self._scale
+        scolor = class_colors.get(ship.ship_class, (0.7, 0.7, 0.7, 0.9))
+
+        with self.canvas:
+            # Travel path line to gate
+            if ship.path:
+                is_selected = ship.id == self.selected_ship_id
+                if is_selected:
+                    Color(0.4, 0.8, 1.0, 0.55)
+                    width = 1.5
+                    dash_length = dp(6)
+                else:
+                    Color(0.35, 0.65, 0.9, 0.35)
+                    width = 1.1
+                    dash_length = dp(4)
                 Line(
-                    points=[sx, sy + half, sx + half, sy,
-                            sx, sy - half, sx - half, sy, sx, sy + half],
-                    width=1.3,
+                    points=[sx, sy, gate_anchor[0], gate_anchor[1]],
+                    width=width,
+                    dash_length=dash_length,
+                    dash_offset=self._dash_offset,
                 )
-                self._ship_positions[ship.id] = (sx, sy)
+
+            # Selection ring
+            if ship.id == self.selected_ship_id:
+                pulse = 0.5 + 0.5 * math.sin(self._pulse_t * 1.4)
+                ring_alpha = 0.35 + 0.45 * pulse
+                ring_radius = s_size * (1.1 + 0.25 * pulse)
+                Color(0.9, 0.95, 1.0, ring_alpha)
+                Line(circle=(sx, sy, ring_radius), width=1.2)
+                scolor = (
+                    min(1.0, scolor[0] + 0.15 * pulse),
+                    min(1.0, scolor[1] + 0.15 * pulse),
+                    min(1.0, scolor[2] + 0.15 * pulse),
+                    min(1.0, scolor[3] + 0.2 * pulse),
+                )
+
+            Color(*scolor)
+            # Diamond shape for ships
+            half = s_size * 0.6
+            Line(
+                points=[sx, sy + half, sx + half, sy,
+                        sx, sy - half, sx - half, sy, sx, sy + half],
+                width=1.3,
+            )
+        self._ship_positions[ship.id] = (sx, sy)
 
     def _handle_tap(self, touch):
         # Check ship taps first
@@ -868,8 +1055,10 @@ class GravityWellScreen(Screen):
             ("Planet", (0.6, 0.5, 0.3, 1)),
             ("Gas Giant", (0.8, 0.6, 0.2, 1)),
             ("Asteroid", (0.55, 0.45, 0.35, 1)),
-            ("Station/Gate", (0.3, 0.85, 0.9, 1)),
+            ("Gate", (0.3, 0.85, 0.9, 1)),
             ("Colony", (1, 1, 0.3, 1)),
+            ("Hab Zone", (0.2, 0.55, 0.25, 0.6)),
+            ("Frost Line", (0.3, 0.5, 0.8, 0.5)),
         ]
         for label_text, color in legend_items:
             item = BoxLayout(orientation="horizontal", size_hint_x=None, width=dp(90))
