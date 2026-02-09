@@ -452,6 +452,9 @@ class GameState:
         defender = pending.get("defender", {})
         faction_id = defender.get("faction_id") or defender.get("type", "unknown")
         outcome = self.diplomacy.resolve_action(faction_id, action)
+        affordability_message = self._validate_resource_delta_affordable(outcome.resource_delta)
+        if affordability_message:
+            return False, affordability_message
         result_spec = {
             "contractVersion": "1.0",
             "encounterId": encounter_id,
@@ -465,6 +468,20 @@ class GameState:
             "relations": {faction_id: outcome.relation_delta},
         }
         return self.submit_encounter_result(result_spec)
+
+    def _validate_resource_delta_affordable(self, delta: dict) -> str | None:
+        shortfalls = []
+        for resource, amount in (delta or {}).items():
+            if amount >= 0:
+                continue
+            required = abs(int(amount))
+            available = self.resources.global_resources.get(resource, 0)
+            if available < required:
+                shortfalls.append(f"{resource} ({available}/{required})")
+        if not shortfalls:
+            return None
+        shortfall_list = ", ".join(shortfalls)
+        return f"Insufficient resources for diplomacy outcome: {shortfall_list}"
 
     def resolve_evasion(self, encounter_id: str) -> tuple[bool, str]:
         """Resolve a pending encounter through evasion."""
