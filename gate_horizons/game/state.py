@@ -204,6 +204,19 @@ class GameState:
         scout = state.fleet.create_ship("scout", starting_system_id, "ISS Pathfinder")
         corvette = state.fleet.create_ship("corvette", starting_system_id, "ISS Sentinel")
         freighter = state.fleet.create_ship("freighter", starting_system_id, "ISS Hauler")
+        colony_ship = state.fleet.create_ship("colony_ship", starting_system_id, "ISS Ark")
+        miner = state.fleet.create_ship("miner", starting_system_id, "ISS Prospector")
+
+        if colony_ship:
+            starter_cargo = state.colonies.get_starter_cargo_requirement()
+            for resource, amount in starter_cargo.items():
+                colony_ship.add_cargo(resource, amount)
+            colony_ship.add_cargo("pop", state.colonies.get_colonist_requirement())
+
+        if miner:
+            mining_starter_cargo = state.colonies.get_starter_cargo_requirement()
+            for resource, amount in mining_starter_cargo.items():
+                miner.add_cargo(resource, amount)
 
         # Mark initial fog of war
         state.game_clock = GameClock()
