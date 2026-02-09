@@ -19,6 +19,16 @@ Ensure trade route pause/resume in the UI maps to the execution flag and that tu
 1. Align trade route toggle and trade execution to the same enabled flag while preserving legacy active state on load.
 2. Add a turn-processing test that pauses a route and asserts no shipments are created.
 
+## PR: Trade route pause toggle uses enabled flag
+
+### Goal
+Ensure the trade route pause/resume toggle flips the execution flag and turn processing skips paused routes, with a regression test.
+
+### Steps
+1. Update the trade route toggle UI to flip the enabled flag used by execution and keep legacy active in sync.
+2. Confirm `compute_and_ship` respects the enabled flag (sync legacy state if needed).
+3. Add a test that pauses a route, runs a turn, and asserts no shipments are created.
+
 ## PR: Gate diplomacy actions behind Signal Decryption
 
 ### Goal
