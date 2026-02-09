@@ -7,52 +7,366 @@
     {
       "id": "sol",
       "name": "Sol",
-      "x": 0.50,
-      "y": 0.50,
+      "x": 0.5,
+      "y": 0.5,
       "discovered": true,
       "surveyed": true,
       "tier": 1,
       "stars": [
-        { "name": "Sol", "spectral": "G" }
+        {
+          "name": "Sol",
+          "spectral": "G"
+        }
       ],
       "gate_connections": [
-        { "target": "alpha_centauri", "status": "active" }
+        {
+          "target": "alpha_centauri",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
         {
+          "id": "sol_mercury",
+          "name": "Mercury",
+          "type": "rocky",
+          "body_type": "terrestrial",
+          "orbit_index": 1,
+          "colonizable": false,
+          "habitability": 0.1,
+          "gravity": 0.38,
+          "traits": [
+            "mineral_rich"
+          ],
+          "resources": {
+            "metals": 5,
+            "energy": 2
+          },
+          "baseline_output": {
+            "metals": 5,
+            "energy": 2
+          },
+          "description": "A scorched, metal-rich world close to Sol."
+        },
+        {
+          "id": "sol_venus",
+          "name": "Venus",
+          "type": "toxic",
+          "body_type": "terrestrial",
+          "orbit_index": 2,
+          "colonizable": false,
+          "habitability": 0.05,
+          "gravity": 0.9,
+          "traits": [
+            "volatile"
+          ],
+          "resources": {
+            "energy": 4,
+            "metals": 3
+          },
+          "baseline_output": {
+            "energy": 4,
+            "metals": 3
+          },
+          "description": "A toxic greenhouse world with crushing pressure and heat."
+        },
+        {
           "id": "sol_earth",
           "name": "Earth",
-          "type": "rocky",
+          "type": "garden",
+          "body_type": "terrestrial",
+          "orbit_index": 3,
           "colonizable": true,
+          "habitability": 1.0,
+          "gravity": 1.0,
+          "traits": [
+            "hub"
+          ],
           "resources": {
             "energy": 10,
             "metals": 8,
-            "food": 12
+            "exotics": 2
           },
-          "description": "Cradle of humanity. A lush, temperate world teeming with life and the heart of the gate network."
+          "baseline_output": {
+            "energy": 10,
+            "metals": 8,
+            "exotics": 2
+          },
+          "description": "Cradle of humanity and the heart of the gate network."
+        },
+        {
+          "id": "sol_moon",
+          "name": "Moon",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 3.1,
+          "colonizable": true,
+          "habitability": 0.25,
+          "gravity": 0.16,
+          "traits": [
+            "mineral_rich"
+          ],
+          "resources": {
+            "metals": 4,
+            "energy": 1
+          },
+          "baseline_output": {
+            "metals": 4,
+            "energy": 1
+          },
+          "description": "Earth's natural satellite, rich in accessible regolith."
         },
         {
           "id": "sol_mars",
           "name": "Mars",
-          "type": "rocky",
+          "type": "desert",
+          "body_type": "terrestrial",
+          "orbit_index": 4,
           "colonizable": true,
+          "habitability": 0.45,
+          "gravity": 0.38,
+          "traits": [
+            "frontier"
+          ],
           "resources": {
             "metals": 6,
             "energy": 3
           },
-          "description": "The Red Planet. Dusty basins and ancient riverbeds hint at a warmer past. Early terraforming efforts are underway."
+          "baseline_output": {
+            "metals": 6,
+            "energy": 3
+          },
+          "description": "A cold desert world with ongoing terraforming efforts."
+        },
+        {
+          "id": "sol_asteroid_belt",
+          "name": "Asteroid Belt",
+          "type": "asteroid_belt",
+          "body_type": "asteroid_belt",
+          "orbit_index": 5,
+          "colonizable": false,
+          "habitability": 0.0,
+          "gravity": 0.01,
+          "traits": [
+            "mineral_rich"
+          ],
+          "resources": {
+            "metals": 12,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "metals": 12,
+            "exotics": 2
+          },
+          "description": "A dense ring of mining-rich asteroid clusters."
         },
         {
           "id": "sol_jupiter",
           "name": "Jupiter",
           "type": "gas_giant",
+          "body_type": "gas_giant",
+          "orbit_index": 6,
           "colonizable": false,
+          "habitability": 0.0,
+          "gravity": 2.5,
+          "traits": [],
           "resources": {
-            "fuel": 20,
-            "energy": 5
+            "energy": 8,
+            "exotics": 3
           },
-          "description": "A colossal gas giant ringed by dozens of moons. Its radiation belts shelter vast fuel-harvesting platforms."
+          "baseline_output": {
+            "energy": 8,
+            "exotics": 3
+          },
+          "description": "A massive gas giant with fierce storms and radiation belts."
+        },
+        {
+          "id": "sol_io",
+          "name": "Io",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 6.1,
+          "colonizable": false,
+          "habitability": 0.1,
+          "gravity": 0.18,
+          "traits": [
+            "volatile"
+          ],
+          "resources": {
+            "energy": 4,
+            "metals": 2
+          },
+          "baseline_output": {
+            "energy": 4,
+            "metals": 2
+          },
+          "description": "Volcanic moon with intense tidal heating."
+        },
+        {
+          "id": "sol_europa",
+          "name": "Europa",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 6.2,
+          "colonizable": true,
+          "habitability": 0.4,
+          "gravity": 0.13,
+          "traits": [
+            "frontier"
+          ],
+          "resources": {
+            "energy": 3,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "energy": 3,
+            "exotics": 2
+          },
+          "description": "Ice-covered ocean moon with subsurface seas."
+        },
+        {
+          "id": "sol_ganymede",
+          "name": "Ganymede",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 6.3,
+          "colonizable": true,
+          "habitability": 0.35,
+          "gravity": 0.15,
+          "traits": [
+            "mineral_rich"
+          ],
+          "resources": {
+            "metals": 4,
+            "energy": 2
+          },
+          "baseline_output": {
+            "metals": 4,
+            "energy": 2
+          },
+          "description": "Largest moon in the Sol system, with metallic deposits."
+        },
+        {
+          "id": "sol_callisto",
+          "name": "Callisto",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 6.4,
+          "colonizable": true,
+          "habitability": 0.32,
+          "gravity": 0.13,
+          "traits": [],
+          "resources": {
+            "metals": 3,
+            "energy": 2
+          },
+          "baseline_output": {
+            "metals": 3,
+            "energy": 2
+          },
+          "description": "Heavily cratered moon with a stable orbital environment."
+        },
+        {
+          "id": "sol_saturn",
+          "name": "Saturn",
+          "type": "gas_giant",
+          "body_type": "gas_giant",
+          "orbit_index": 7,
+          "colonizable": false,
+          "habitability": 0.0,
+          "gravity": 1.1,
+          "traits": [],
+          "resources": {
+            "energy": 7,
+            "exotics": 3
+          },
+          "baseline_output": {
+            "energy": 7,
+            "exotics": 3
+          },
+          "description": "Ringed gas giant with complex moon systems."
+        },
+        {
+          "id": "sol_titan",
+          "name": "Titan",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 7.1,
+          "colonizable": true,
+          "habitability": 0.3,
+          "gravity": 0.14,
+          "traits": [
+            "frontier"
+          ],
+          "resources": {
+            "energy": 3,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "energy": 3,
+            "exotics": 2
+          },
+          "description": "Thick-atmosphere moon with hydrocarbon seas."
+        },
+        {
+          "id": "sol_enceladus",
+          "name": "Enceladus",
+          "type": "moon",
+          "body_type": "moon",
+          "orbit_index": 7.2,
+          "colonizable": true,
+          "habitability": 0.28,
+          "gravity": 0.11,
+          "traits": [],
+          "resources": {
+            "energy": 2,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "energy": 2,
+            "exotics": 2
+          },
+          "description": "Cryovolcanic moon with active geysers."
+        },
+        {
+          "id": "sol_uranus",
+          "name": "Uranus",
+          "type": "gas_giant",
+          "body_type": "gas_giant",
+          "orbit_index": 8,
+          "colonizable": false,
+          "habitability": 0.0,
+          "gravity": 0.9,
+          "traits": [],
+          "resources": {
+            "energy": 6,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "energy": 6,
+            "exotics": 2
+          },
+          "description": "An ice giant with extreme axial tilt."
+        },
+        {
+          "id": "sol_neptune",
+          "name": "Neptune",
+          "type": "gas_giant",
+          "body_type": "gas_giant",
+          "orbit_index": 9,
+          "colonizable": false,
+          "habitability": 0.0,
+          "gravity": 1.1,
+          "traits": [],
+          "resources": {
+            "energy": 6,
+            "exotics": 2
+          },
+          "baseline_output": {
+            "energy": 6,
+            "exotics": 2
+          },
+          "description": "Distant ice giant with powerful storms."
         }
       ],
       "anomalies": [],
@@ -68,19 +382,34 @@
     {
       "id": "alpha_centauri",
       "name": "Alpha Centauri",
-      "x": 0.70,
+      "x": 0.7,
       "y": 0.35,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "Alpha Centauri A", "spectral": "G" },
-        { "name": "Alpha Centauri B", "spectral": "K" },
-        { "name": "Proxima Centauri", "spectral": "M" }
+        {
+          "name": "Alpha Centauri A",
+          "spectral": "G"
+        },
+        {
+          "name": "Alpha Centauri B",
+          "spectral": "K"
+        },
+        {
+          "name": "Proxima Centauri",
+          "spectral": "M"
+        }
       ],
       "gate_connections": [
-        { "target": "sol", "status": "active" },
-        { "target": "sirius", "status": "active" }
+        {
+          "target": "sol",
+          "status": "active"
+        },
+        {
+          "target": "sirius",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -134,15 +463,21 @@
       "id": "tau_ceti",
       "name": "Tau Ceti",
       "x": 0.35,
-      "y": 0.30,
+      "y": 0.3,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "Tau Ceti", "spectral": "G" }
+        {
+          "name": "Tau Ceti",
+          "spectral": "G"
+        }
       ],
       "gate_connections": [
-        { "target": "epsilon_eridani", "status": "active" }
+        {
+          "target": "epsilon_eridani",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -184,16 +519,22 @@
     {
       "id": "barnards_star",
       "name": "Barnard's Star",
-      "x": 0.50,
-      "y": 0.70,
+      "x": 0.5,
+      "y": 0.7,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "Barnard's Star", "spectral": "M" }
+        {
+          "name": "Barnard's Star",
+          "spectral": "M"
+        }
       ],
       "gate_connections": [
-        { "target": "luytens_star", "status": "active" }
+        {
+          "target": "luytens_star",
+          "status": "active"
+        }
       ],
       "gate_active": false,
       "gate_activation_cost": {
@@ -236,13 +577,28 @@
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "Sirius A", "spectral": "A" },
-        { "name": "Sirius B", "spectral": "D" }
+        {
+          "name": "Sirius A",
+          "spectral": "A"
+        },
+        {
+          "name": "Sirius B",
+          "spectral": "D"
+        }
       ],
       "gate_connections": [
-        { "target": "alpha_centauri", "status": "active" },
-        { "target": "procyon", "status": "active" },
-        { "target": "vega", "status": "dormant" }
+        {
+          "target": "alpha_centauri",
+          "status": "active"
+        },
+        {
+          "target": "procyon",
+          "status": "active"
+        },
+        {
+          "target": "vega",
+          "status": "dormant"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -283,14 +639,20 @@
     {
       "id": "epsilon_eridani",
       "name": "Epsilon Eridani",
-      "x": 0.20,
-      "y": 0.20,
+      "x": 0.2,
+      "y": 0.2,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "gate_connections": [
-        { "target": "tau_ceti", "status": "active" },
-        { "target": "sixty_one_cygni", "status": "active" }
+        {
+          "target": "tau_ceti",
+          "status": "active"
+        },
+        {
+          "target": "sixty_one_cygni",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -332,14 +694,20 @@
     {
       "id": "luytens_star",
       "name": "Luyten's Star",
-      "x": 0.60,
+      "x": 0.6,
       "y": 0.85,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "gate_connections": [
-        { "target": "barnards_star", "status": "active" },
-        { "target": "ross_128", "status": "dormant" }
+        {
+          "target": "barnards_star",
+          "status": "active"
+        },
+        {
+          "target": "ross_128",
+          "status": "dormant"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -369,17 +737,26 @@
     {
       "id": "procyon",
       "name": "Procyon",
-      "x": 0.90,
+      "x": 0.9,
       "y": 0.45,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "Procyon A", "spectral": "F" },
-        { "name": "Procyon B", "spectral": "D" }
+        {
+          "name": "Procyon A",
+          "spectral": "F"
+        },
+        {
+          "name": "Procyon B",
+          "spectral": "D"
+        }
       ],
       "gate_connections": [
-        { "target": "sirius", "status": "active" }
+        {
+          "target": "sirius",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -421,12 +798,15 @@
       "id": "vega",
       "name": "Vega",
       "x": 0.95,
-      "y": 0.10,
+      "y": 0.1,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "gate_connections": [
-        { "target": "sirius", "status": "dormant" }
+        {
+          "target": "sirius",
+          "status": "dormant"
+        }
       ],
       "gate_active": false,
       "gate_activation_cost": {
@@ -476,18 +856,30 @@
     {
       "id": "sixty_one_cygni",
       "name": "61 Cygni",
-      "x": 0.10,
+      "x": 0.1,
       "y": 0.35,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "stars": [
-        { "name": "61 Cygni A", "spectral": "K" },
-        { "name": "61 Cygni B", "spectral": "K" }
+        {
+          "name": "61 Cygni A",
+          "spectral": "K"
+        },
+        {
+          "name": "61 Cygni B",
+          "spectral": "K"
+        }
       ],
       "gate_connections": [
-        { "target": "epsilon_eridani", "status": "active" },
-        { "target": "kapteyns_star", "status": "active" }
+        {
+          "target": "epsilon_eridani",
+          "status": "active"
+        },
+        {
+          "target": "kapteyns_star",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [
@@ -529,13 +921,16 @@
     {
       "id": "ross_128",
       "name": "Ross 128",
-      "x": 0.70,
+      "x": 0.7,
       "y": 0.95,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "gate_connections": [
-        { "target": "luytens_star", "status": "dormant" }
+        {
+          "target": "luytens_star",
+          "status": "dormant"
+        }
       ],
       "gate_active": false,
       "gate_activation_cost": {
@@ -587,12 +982,15 @@
       "id": "kapteyns_star",
       "name": "Kapteyn's Star",
       "x": 0.05,
-      "y": 0.50,
+      "y": 0.5,
       "discovered": false,
       "surveyed": false,
       "tier": 3,
       "gate_connections": [
-        { "target": "sixty_one_cygni", "status": "active" }
+        {
+          "target": "sixty_one_cygni",
+          "status": "active"
+        }
       ],
       "gate_active": true,
       "planets": [

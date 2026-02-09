@@ -12,6 +12,35 @@ in dedicated gameplay docs and code modules.
 
 ---
 
+## Population System (Core Sim)
+
+Each colony now tracks **population as a strategic resource** and a set of indices:
+
+- `population_units`: total colonists on-world
+- `health_index`, `education_index`, `pollution_index` (0–100)
+- `carrying_capacity` derived from housing + tech bonuses + world traits
+
+Per turn, colonies apply a deterministic `births - deaths + net_migration` model. Health
+and education dampen mortality and fertility, while pollution increases mortality and can
+reverse growth on over-industrialised worlds. POP units can be exported via trade routes
+and freighter rules, bounded by **retain %**, **export cap**, and **priority** policies.
+
+Founding new colonies requires POP units delivered to the target system (colony ships must
+carry colonists in cargo), alongside the existing credit/material costs.
+
+---
+
+## Astronomy & System Generation
+
+- **Known systems** load from `data/astronomy/known_systems/` via a registry; Sol is
+  hardcoded with real planets, key moons, and an asteroid belt entry.
+- **Procedural systems** generate plausible star classes, planet counts, and orbit-zone
+  body types (rocky inner, gas giants outer) with deterministic seeds.
+- Moons are generated as a small number of major bodies for gameplay scale, not full
+  orbital catalogs.
+
+---
+
 ## 1. Resource Taxonomy
 
 ### Tier 0 — Raw Resources (extracted from worlds)
@@ -257,7 +286,7 @@ Each facility type has tunable `build_cost`, `build_turns`, `max_concurrent_buil
 | Ship construction | Credits + metals at spaceport | + Component-based construction at orbital facilities |
 | Ship types | 4 (scout, freighter, miner, corvette) | + 4 (small/medium/large freighters, colony ship) |
 | Production inventory | None | Per-colony inventory for 20 production resources |
-| Save/load | Schema v3 | Schema v10 with migration for new fields + RNG state |
+| Save/load | Schema v3 | Schema v11 with migration for new fields + RNG state |
 | Tests | 32 tests | Expanded production/logistics + trade capacity coverage |
 | UI screens | 8 screens | + 3 screens (production, logistics, shipyard) |
 
@@ -296,3 +325,9 @@ To adjust game balance, edit `gate_horizons/data/production_config.json`:
 - **Adjust freight economics**: Change `freighter_ops_cost_per_trip` and
   `fuel_cost_per_hop`
 - **Scale difficulty**: Adjust `maintenance_scaling` for fleet upkeep curve
+
+Additional tuning knobs live in `gate_horizons/sim/balance_constants.py`, including:
+
+- Population birth/death rates and education/health modifiers
+- Pollution penalties and index adjustment rates
+- POP export policy defaults and per-level population backfill

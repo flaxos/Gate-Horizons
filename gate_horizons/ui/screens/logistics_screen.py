@@ -206,6 +206,7 @@ class CreateFreightRoutePopup(Popup):
         for resource_id in self.game_state.resources.global_resources.keys():
             if resource_id not in definitions:
                 options.append((resource_id, resource_id.replace("_", " ").title()))
+        options.append(("pop", "POP (Population)"))
         return sorted(options, key=lambda item: item[1])
 
     def _populate_resource_buttons(self):

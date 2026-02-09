@@ -85,7 +85,7 @@ class CreateRoutePopup(Popup):
 
         self.manifest_inputs = {}
         manifest_grid = GridLayout(cols=2, size_hint_y=None, height=dp(100), spacing=dp(4))
-        for res in ["energy", "metals", "exotics", "credits", "fuel"]:
+        for res in ["energy", "metals", "exotics", "credits", "fuel", "pop"]:
             manifest_grid.add_widget(Label(
                 text=f"{res.title()}:",
                 font_size="11sp",

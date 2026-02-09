@@ -434,6 +434,11 @@ class TradeManager:
                     colony = colonies.colonies.get(shipment.to_world)
                     if colony:
                         for resource, amount in shipment.resources.items():
+                            if resource == "pop":
+                                added = colony.add_population_units(amount)
+                                colony.pending_population_migration += added
+                                report["delivered"][resource] = added
+                                continue
                             if resource in colony.stockpiles:
                                 caps = colony.get_storage_caps()
                                 current = colony.stockpiles.get(resource, 0)
@@ -531,7 +536,13 @@ class TradeManager:
                 if colonies:
                     source_colony = colonies.colonies.get(route.source_system)
                     if source_colony:
-                        if resource in source_colony.stockpiles:
+                        if resource == "pop":
+                            available = source_colony.get_population_export_available(amount)
+                            take = min(amount, available)
+                            source_colony.population = source_colony.population_units - take
+                            source_colony.pending_population_migration -= take
+                            actual = take
+                        elif resource in source_colony.stockpiles:
                             available = source_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)
                             source_colony.stockpiles[resource] = available - take
@@ -543,7 +554,7 @@ class TradeManager:
                             actual = take
 
                 # Fall back to global resources if colony doesn't have enough
-                if actual < amount and resources:
+                if actual < amount and resources and resource != "pop":
                     remaining = amount - actual
                     taken = resources.spend_and_return_actual(
                         resource, remaining, route.source_system
@@ -581,7 +592,13 @@ class TradeManager:
                 if colonies:
                     dest_colony = colonies.colonies.get(route.destination_system)
                     if dest_colony:
-                        if resource in dest_colony.stockpiles:
+                        if resource == "pop":
+                            available = dest_colony.get_population_export_available(amount)
+                            take = min(amount, available)
+                            dest_colony.population = dest_colony.population_units - take
+                            dest_colony.pending_population_migration -= take
+                            actual = take
+                        elif resource in dest_colony.stockpiles:
                             available = dest_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)
                             dest_colony.stockpiles[resource] = available - take
@@ -592,7 +609,7 @@ class TradeManager:
                             dest_colony.production_inventory[resource] = available - take
                             actual = take
 
-                if actual < amount and resources:
+                if actual < amount and resources and resource != "pop":
                     remaining = amount - actual
                     taken = resources.spend_and_return_actual(
                         resource, remaining, route.destination_system
@@ -660,12 +677,16 @@ class TradeManager:
 
             if resources:
                 for resource, amount in throughput.get("outbound", {}).items():
+                    if resource == "pop":
+                        continue
                     if amount > 0 and resources.global_resources.get(resource, 0) >= amount:
                         resources.spend(resource, amount, route.source_system)
                         resources.add(resource, amount, route.destination_system)
                         report["transferred"][f"outbound_{resource}"] = amount
 
                 for resource, amount in throughput.get("inbound", {}).items():
+                    if resource == "pop":
+                        continue
                     if amount > 0 and resources.global_resources.get(resource, 0) >= amount:
                         resources.spend(resource, amount, route.destination_system)
                         resources.add(resource, amount, route.source_system)

@@ -447,6 +447,19 @@ class FleetManager:
                     risk="low",
                 ))
 
+        # Colony ship actions
+        elif ship.ship_class == "colony_ship":
+            if has_colony:
+                if ship.cargo.get("pop", 0) > 0:
+                    actions.insert(0, Action(
+                        name="Unload Colonists",
+                        description="Return colonists to the colony",
+                    ))
+                actions.append(Action(
+                    name="Load Colonists",
+                    description="Load POP units for colonization",
+                ))
+
         # Miner actions
         elif ship.ship_class == "miner":
             if ship.mining:

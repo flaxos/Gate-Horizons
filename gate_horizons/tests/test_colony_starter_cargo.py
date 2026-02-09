@@ -35,6 +35,7 @@ class TestColonyStarterCargo(unittest.TestCase):
 
     def test_establish_colony_order_rejects_missing_starter_cargo(self):
         state, colony_ship, target_system, _ = self._prepare_state_with_colony_ship()
+        colony_ship.cargo["pop"] = state.colonies.get_colonist_requirement()
         success, message, order = state.issue_ship_order(
             colony_ship.id,
             "Establish Colony",
@@ -50,6 +51,7 @@ class TestColonyStarterCargo(unittest.TestCase):
         starter = state.colonies.get_starter_cargo_requirement()
         for resource, amount in starter.items():
             colony_ship.cargo[resource] = amount
+        colony_ship.cargo["pop"] = state.colonies.get_colonist_requirement()
 
         success, message, order = state.issue_ship_order(
             colony_ship.id,
@@ -71,3 +73,4 @@ class TestColonyStarterCargoUI(unittest.TestCase):
             source = handle.read()
 
         self.assertIn("Starter cargo", source)
+        self.assertIn("Colonists required", source)

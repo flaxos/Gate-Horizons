@@ -1,5 +1,28 @@
 # ExecPlans
 
+## Population resource + realistic system generation
+
+### Recon summary (current structure)
+- Colony stats/live state: `gate_horizons/game/colonies.py` (Colony + ColonyManager, per-turn growth in `Colony.process_turn()`).
+- Resources/stockpiles/trade: `gate_horizons/game/resources.py` (global/per-system), `gate_horizons/game/trade.py` (abstract routes/shipments), `gate_horizons/game/logistics.py` (freighter routes).
+- Galaxy/system/world data: `gate_horizons/game/galaxy.py` (Planet/StarSystem/GalaxyMap), demo data in `gate_horizons/data/galaxy_templates/demo_galaxy.json`.
+- Save/load schema + migrations: `gate_horizons/game/state.py` (`CURRENT_SCHEMA_VERSION`, `from_dict` migrations), SQLite wrapper in `gate_horizons/game/save_load.py` (no schema_version column yet).
+
+### Goal
+Add population-as-a-resource mechanics + deterministic, realistic system generation (with hardcoded Sol) while keeping save compatibility, offline-only constraints, and UI integration.
+
+### Steps
+1. **Population system core**: add population attributes, policy knobs, and deterministic per-turn dynamics; integrate POP transfers through trade/logistics and colony founding requirements.
+2. **System generation**: introduce `astro/` known-system registry + procedural generator; add Sol data JSON and wire to galaxy generation and demo galaxy data.
+3. **Persistence + migrations**: add SQLite schema_versioning + migrate existing saves; bump game schema version and backfill new colony fields.
+4. **UI + tests + docs**: expose population metrics and POP trade in Kivy UI, add deterministic tests (population, migration, Sol fixture, generator rules), and update README/DESIGN_SUMMARY/PROJECT_PLAN with tuning knobs.
+
+### Risks
+- **Save compatibility**: new fields in colonies + SQLite versioning could break older saves.
+- **Balance sensitivity**: population dynamics can destabilize if constants are off.
+- **Generator regressions**: galaxy/system generation changes may break existing assumptions/tests.
+- **UI clutter**: additional population/pollution/education data could reduce readability.
+
 ## Colonization starter cargo gating + UI clarity
 
 ### Goal

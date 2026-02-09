@@ -6,6 +6,8 @@ import sqlite3
 from datetime import datetime
 from typing import Optional
 
+from gate_horizons.persistence.sqlite_migrations import migrate_save_schema
+
 
 class SaveManager:
     def __init__(self, db_path: str = "saves.db"):
@@ -24,6 +26,7 @@ class SaveManager:
                     timestamp TEXT NOT NULL,
                     turn_number INTEGER NOT NULL,
                     game_data TEXT NOT NULL,
+                    schema_version INTEGER NOT NULL DEFAULT 0,
                     thumbnail_data TEXT
                 )
             """)
@@ -35,18 +38,21 @@ class SaveManager:
                 "timestamp": "TEXT NOT NULL DEFAULT ''",
                 "turn_number": "INTEGER NOT NULL DEFAULT 0",
                 "game_data": "TEXT NOT NULL DEFAULT '{}'",
+                "schema_version": "INTEGER NOT NULL DEFAULT 0",
                 "thumbnail_data": "TEXT",
             }
             for column, definition in migrations.items():
                 if column not in columns:
                     conn.execute(f"ALTER TABLE saves ADD COLUMN {column} {definition}")
-            conn.commit()
+            migrate_save_schema(conn)
 
     def save_game(self, game_state, save_name: str) -> int:
         """Save game state. Returns save ID."""
-        game_data = json.dumps(game_state.to_dict())
+        payload = game_state.to_dict()
+        game_data = json.dumps(payload)
         timestamp = datetime.now().isoformat()
         turn_number = game_state.turn_number
+        schema_version = int(payload.get("schema_version", 0) or 0)
 
         with sqlite3.connect(self.db_path) as conn:
             # Check if save with this name exists
@@ -57,14 +63,14 @@ class SaveManager:
 
             if existing:
                 conn.execute(
-                    "UPDATE saves SET timestamp = ?, turn_number = ?, game_data = ? WHERE save_name = ?",
-                    (timestamp, turn_number, game_data, save_name)
+                    "UPDATE saves SET timestamp = ?, turn_number = ?, game_data = ?, schema_version = ? WHERE save_name = ?",
+                    (timestamp, turn_number, game_data, schema_version, save_name)
                 )
                 save_id = existing[0]
             else:
                 cursor = conn.execute(
-                    "INSERT INTO saves (save_name, timestamp, turn_number, game_data) VALUES (?, ?, ?, ?)",
-                    (save_name, timestamp, turn_number, game_data)
+                    "INSERT INTO saves (save_name, timestamp, turn_number, game_data, schema_version) VALUES (?, ?, ?, ?, ?)",
+                    (save_name, timestamp, turn_number, game_data, schema_version)
                 )
                 save_id = cursor.lastrowid
 
