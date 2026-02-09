@@ -75,6 +75,16 @@ Ensure resource spending for maintenance and shipyard actions is reflected in co
 2. Update maintenance and shipyard/orbital build call sites to use colony-aware spending.
 3. Align shipyard UI affordance checks with colony stockpiles and adjust tests accordingly.
 
+## Preserve non-colony resource deltas across sync
+
+### Goal
+Ensure combat loot and diplomacy rewards persist by syncing resource deltas into colony stockpiles (or global buffer) before colony-based resource sync, with coverage.
+
+### Steps
+1. Add colony-aware resource delta helpers in game state and use them for spend/add rewards.
+2. Update combat/diplomacy reward paths to use the colony-aware helpers.
+3. Add regression test: grant combat loot, process turn, and assert resources persist.
+
 ## Escort target selection flow
 
 ### Goal
