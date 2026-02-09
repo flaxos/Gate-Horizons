@@ -1,5 +1,18 @@
 # ExecPlans
 
+## Bug triage and fixes from codebase review
+
+### Goal
+Resolve critical bugs, balance issues, illogical mechanics, and UI dead-ends identified in the code review.
+
+### Steps
+1. Fix global resource loss when unloading cargo by preventing `sync_from_colonies` from wiping non-colony resources and add regression coverage.
+2. Consume colony ships on successful colony founding and add turn-report/log messaging to reflect the ship loss.
+3. Implement handlers for “Emergency Stop” and “Return Home,” or remove them from contextual actions when unsupported; ensure the UI provides feedback for “Continue Mining.”
+4. Align freight route cancellation with ship state (clear `mission`/assignment) and validate freight mission cleanup.
+5. Add a UI entry point for manual encounter result import/export to make manual resolution reachable.
+6. Rebalance mining or add operating costs/fuel usage so miners do not generate free resources indefinitely.
+
 ## Encounter export uses pending entries
 
 ### Goal
