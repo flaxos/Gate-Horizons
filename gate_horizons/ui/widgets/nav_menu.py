@@ -190,6 +190,7 @@ def build_command_bar(nav_callback, end_turn_callback, save_callback,
         color=(0.7, 0.85, 1, 1),
     )
     map_options_dd = _build_map_options_dropdown()
+    map_opt_btn._dropdown = map_options_dd
     map_opt_btn.bind(on_release=map_options_dd.open)
     bar.add_widget(map_opt_btn)
 
@@ -248,6 +249,7 @@ def _make_dropdown_btn(label, width, items, nav_callback, special_callbacks=None
         background_color=(0.08, 0.15, 0.25, 0.6),
         color=(0.7, 0.85, 1, 1),
     )
+    btn._dropdown = dropdown
     btn.bind(on_release=dropdown.open)
     return btn
 
