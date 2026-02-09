@@ -1,5 +1,15 @@
 # ExecPlans
 
+## PR: Deduplicate POP transfer adjustments
+
+### Goal
+Ensure POP transfers update colony populations exactly once across ship actions, logistics, and trade, with regression coverage.
+
+### Steps
+1. Centralize immediate POP transfer adjustments and update ship/logistics/trade paths to use it.
+2. Keep trade/logistics POP shipments from double-applying migration with colony turn processing.
+3. Add a regression test for single-turn POP export/import adjustments.
+
 ## PR: Fix audited gameplay/blocker issues (A-F)
 
 ### Goal

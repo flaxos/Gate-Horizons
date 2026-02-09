@@ -337,7 +337,10 @@ class LogisticsManager:
 
         # Deduct from source
         if resource_id == "pop" and colony:
-            colony.population = colony.population_units - loadable
+            removed = -colony.apply_population_transfer(-loadable)
+            if removed <= 0:
+                return actions
+            loadable = removed
         elif resource_id in prod_inv and prod_inv.get(resource_id, 0) >= loadable:
             prod_inv[resource_id] -= loadable
         elif colony and resource_id in colony.stockpiles:
@@ -376,16 +379,19 @@ class LogisticsManager:
         if unloadable <= 0:
             return actions
 
-        ship.remove_cargo(resource_id, unloadable)
-
         # Add to production inventory or colony stockpile
         if resource_id == "pop" and colony:
-            added = colony.add_population_units(unloadable)
+            added = colony.apply_population_transfer(unloadable)
+            if added <= 0:
+                return actions
             unloadable = added
-        elif resource_id in prod_inv or resource_id not in (colony.stockpiles if colony else {}):
-            prod_inv[resource_id] = prod_inv.get(resource_id, 0) + unloadable
-        elif colony:
-            colony.stockpiles[resource_id] = colony.stockpiles.get(resource_id, 0) + unloadable
+            ship.remove_cargo(resource_id, unloadable)
+        else:
+            ship.remove_cargo(resource_id, unloadable)
+            if resource_id in prod_inv or resource_id not in (colony.stockpiles if colony else {}):
+                prod_inv[resource_id] = prod_inv.get(resource_id, 0) + unloadable
+            elif colony:
+                colony.stockpiles[resource_id] = colony.stockpiles.get(resource_id, 0) + unloadable
 
         actions.append({
             "type": "unloaded",

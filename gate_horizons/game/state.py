@@ -1670,9 +1670,12 @@ class GameState:
         if loadable <= 0:
             return {}
 
-        colony.population = colony.population_units - loadable
-        ship.add_cargo("pop", loadable)
-        return {"pop": loadable}
+        removed = -colony.apply_population_transfer(-loadable)
+        if removed <= 0:
+            return {}
+
+        ship.add_cargo("pop", removed)
+        return {"pop": removed}
 
     def unload_colonists_to_colony(self, ship_id: str) -> dict:
         """Unload POP units from a ship into the local colony."""
@@ -1688,7 +1691,10 @@ class GameState:
         if on_ship <= 0:
             return {}
 
-        added = colony.add_population_units(on_ship)
+        added = colony.apply_population_transfer(on_ship)
+        if added <= 0:
+            return {}
+
         ship.remove_cargo("pop", added)
         return {"pop": added}
 

@@ -435,7 +435,7 @@ class TradeManager:
                     if colony:
                         for resource, amount in shipment.resources.items():
                             if resource == "pop":
-                                added = colony.add_population_units(amount)
+                                added = colony.apply_population_transfer(amount)
                                 report["delivered"][resource] = added
                                 continue
                             if resource in colony.stockpiles:
@@ -538,8 +538,8 @@ class TradeManager:
                         if resource == "pop":
                             available = source_colony.get_population_export_available(amount)
                             take = min(amount, available)
-                            source_colony.population = source_colony.population_units - take
-                            actual = take
+                            removed = -source_colony.apply_population_transfer(-take)
+                            actual = removed
                         elif resource in source_colony.stockpiles:
                             available = source_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)
@@ -593,8 +593,8 @@ class TradeManager:
                         if resource == "pop":
                             available = dest_colony.get_population_export_available(amount)
                             take = min(amount, available)
-                            dest_colony.population = dest_colony.population_units - take
-                            actual = take
+                            removed = -dest_colony.apply_population_transfer(-take)
+                            actual = removed
                         elif resource in dest_colony.stockpiles:
                             available = dest_colony.stockpiles.get(resource, 0)
                             take = min(amount, available)
