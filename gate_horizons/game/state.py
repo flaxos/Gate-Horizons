@@ -634,6 +634,33 @@ class GameState:
         self.log.append(f"EncounterSpec exported to {filepath}")
         return True, str(filepath)
 
+    def export_pending_encounter(
+        self,
+        encounter_id: str,
+        exports_dir: str = "exports/encounters",
+        filename: str = "EncounterSpec.json",
+    ) -> tuple[bool, str]:
+        if not encounter_id:
+            return False, "Encounter id missing"
+        pending_entry = next(
+            (entry for entry in self.pending_encounters if entry.get("encounter_id") == encounter_id),
+            None,
+        )
+        if not pending_entry:
+            return False, f"Pending encounter {encounter_id} not found"
+        payload = pending_entry.get("spec")
+        if not payload:
+            return False, f"Pending encounter {encounter_id} has no spec"
+        valid, message = self.combat.validate_encounter_spec(payload)
+        if not valid:
+            return False, message
+        export_path = Path(exports_dir)
+        export_path.mkdir(parents=True, exist_ok=True)
+        filepath = export_path / filename
+        filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        self.log.append(f"EncounterSpec exported to {filepath}")
+        return True, str(filepath)
+
     def import_result_spec(
         self,
         imports_dir: str = "imports/results",
