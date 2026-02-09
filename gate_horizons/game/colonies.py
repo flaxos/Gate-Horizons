@@ -97,6 +97,9 @@ BASE_STORAGE = {
 # Colony founding costs
 FOUNDING_COST = {"credits": 80, "metals": 50, "energy": 20}
 
+# Starter cargo required on the colony ship to establish a new outpost
+COLONY_STARTER_CARGO = {"energy": 15, "metals": 20, "credits": 30}
+
 # World trait modifiers
 WORLD_TRAIT_MODIFIERS = {
     "hub": {
@@ -705,6 +708,10 @@ class ColonyManager:
     def get_founding_cost(self) -> dict:
         """Get the resource cost to found a new colony."""
         return dict(FOUNDING_COST)
+
+    def get_starter_cargo_requirement(self) -> dict:
+        """Get the starter cargo required to establish a colony."""
+        return dict(COLONY_STARTER_CARGO)
 
     def abandon_colony(self, system_id: str) -> bool:
         if system_id in self.colonies:
