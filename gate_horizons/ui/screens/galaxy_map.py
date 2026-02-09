@@ -19,6 +19,12 @@ from ..widgets.save_load import SaveGamePopup, LoadGamePopup
 from ..widgets.nav_menu import build_command_bar
 from gate_horizons.game.resources import RESOURCE_TYPES
 
+NAVIGATION_SCREENS = [
+    "production_screen",
+    "logistics_screen",
+    "shipyard_screen",
+]
+
 
 class NavButton(Button):
     pass
