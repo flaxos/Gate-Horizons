@@ -59,6 +59,8 @@ class ColonizeConfirmPopup(Popup):
         self,
         planet_name="",
         cost=None,
+        starter_cargo=None,
+        missing_cargo=None,
         can_afford=True,
         can_confirm=True,
         reason_text=None,
@@ -67,6 +69,8 @@ class ColonizeConfirmPopup(Popup):
     ):
         self.confirm_callback = on_confirm
         cost = cost or {}
+        starter_cargo = starter_cargo or {}
+        missing_cargo = missing_cargo or {}
 
         content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
 
@@ -87,6 +91,26 @@ class ColonizeConfirmPopup(Popup):
             size_hint_y=None,
             height=dp(24),
         ))
+
+        if starter_cargo:
+            starter_text = ", ".join(f"{v} {k}" for k, v in starter_cargo.items())
+            content.add_widget(Label(
+                text=f"Starter cargo: {starter_text}",
+                font_size="11sp",
+                color=(0.7, 0.85, 1, 0.85),
+                size_hint_y=None,
+                height=dp(22),
+            ))
+
+        if missing_cargo:
+            missing_text = ", ".join(f"{v} {k}" for k, v in missing_cargo.items())
+            content.add_widget(Label(
+                text=f"Missing cargo: {missing_text}",
+                font_size="11sp",
+                color=(1, 0.4, 0.3, 1),
+                size_hint_y=None,
+                height=dp(22),
+            ))
 
         if not can_afford:
             content.add_widget(Label(
@@ -490,6 +514,7 @@ class SystemViewScreen(Screen):
             # Colonize button
             if planet.colonizable and self.system_id not in self.game_state.colonies.colonies:
                 cost = self.game_state.colonies.get_founding_cost()
+                starter_cargo = self.game_state.colonies.get_starter_cargo_requirement()
                 researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
                 colony_ship = next(
                     (
@@ -507,8 +532,15 @@ class SystemViewScreen(Screen):
                     ship_id=colony_ship.id if colony_ship else None,
                     resources=self.game_state.resources,
                 )
+                missing_cargo = {}
+                if colony_ship:
+                    missing_cargo = {
+                        resource: amount - colony_ship.cargo.get(resource, 0)
+                        for resource, amount in starter_cargo.items()
+                        if colony_ship.cargo.get(resource, 0) < amount
+                    }
                 can_afford = self.game_state.resources.can_afford(cost)
-                can_confirm = can_found and can_afford
+                can_confirm = can_found and can_afford and not missing_cargo
                 cost_text = ", ".join(f"{v} {k}" for k, v in cost.items())
                 col_btn = Button(
                     text=f"Establish Colony ({cost_text})",
@@ -523,6 +555,32 @@ class SystemViewScreen(Screen):
                 col_btn.planet_name = planet.name
                 col_btn.bind(on_release=self._on_colonize)
                 card.add_widget(col_btn)
+                if starter_cargo:
+                    starter_text = ", ".join(
+                        f"{amount} {resource}" for resource, amount in starter_cargo.items()
+                    )
+                    card.add_widget(Label(
+                        text=f"Starter cargo: {starter_text}",
+                        font_size="10sp",
+                        color=(0.6, 0.8, 1, 0.85),
+                        size_hint_y=None,
+                        height=dp(18),
+                        halign="left",
+                        text_size=(dp(300), None),
+                    ))
+                if missing_cargo:
+                    missing_text = ", ".join(
+                        f"{amount} {resource}" for resource, amount in missing_cargo.items()
+                    )
+                    card.add_widget(Label(
+                        text=f"Missing cargo: {missing_text}",
+                        font_size="10sp",
+                        color=(1, 0.4, 0.3, 0.9),
+                        size_hint_y=None,
+                        height=dp(18),
+                        halign="left",
+                        text_size=(dp(300), None),
+                    ))
 
             planet_list.add_widget(card)
 
@@ -619,6 +677,7 @@ class SystemViewScreen(Screen):
         if not self.game_state:
             return
         cost = self.game_state.colonies.get_founding_cost()
+        starter_cargo = self.game_state.colonies.get_starter_cargo_requirement()
         researched = {t.id for t in self.game_state.tech.techs.values() if t.researched}
         colony_ship = next(
             (
@@ -637,16 +696,27 @@ class SystemViewScreen(Screen):
             resources=self.game_state.resources,
         )
         can_afford = self.game_state.resources.can_afford(cost)
+        missing_cargo = {}
+        if colony_ship:
+            missing_cargo = {
+                resource: amount - colony_ship.cargo.get(resource, 0)
+                for resource, amount in starter_cargo.items()
+                if colony_ship.cargo.get(resource, 0) < amount
+            }
         reason_text = None
         if not can_found:
             reason_text = reason
         elif not can_afford:
             reason_text = "Insufficient resources"
-        can_confirm = can_found and can_afford
+        elif missing_cargo:
+            reason_text = f"Missing starter cargo: {missing_cargo}"
+        can_confirm = can_found and can_afford and not missing_cargo
 
         popup = ColonizeConfirmPopup(
             planet_name=btn.planet_name,
             cost=cost,
+            starter_cargo=starter_cargo,
+            missing_cargo=missing_cargo,
             can_afford=can_afford,
             can_confirm=can_confirm,
             reason_text=reason_text,
