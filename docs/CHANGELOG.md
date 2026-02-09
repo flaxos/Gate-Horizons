@@ -6,6 +6,7 @@
 - Reality sync: update engagement release plan and feature status tracking.
 - Refresh README implemented/future lists to match shipped systems.
 - Align roadmap, plans, and feature status with gravity well map work and pending UX items.
+- Add mini-map sphere-of-influence overlay for player colonies.
 - Add deterministic encounter/event/mission RNG tied to saved state for repeatable outcomes.
 - Harden EncounterSpec/ResultSpec import/export validation and JSON error handling.
 - Prevent invalid EncounterSpec exports from queuing pending encounters.

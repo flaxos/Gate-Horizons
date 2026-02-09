@@ -767,6 +767,27 @@ class MiniMapWidget(Widget):
             Color(0.03, 0.05, 0.1, 0.9)
             Rectangle(pos=self.pos, size=self.size)
 
+            influence_markers = []
+            if self.game_state:
+                influence_markers = self.game_state.colonies.get_player_influence_markers(
+                    self.game_state.galaxy
+                )
+
+            for marker in influence_markers:
+                system = self.game_state.galaxy.systems.get(marker["system_id"])
+                if not system:
+                    continue
+                nx = (system.x - min_x) / span_x
+                ny = (system.y - min_y) / span_y
+                sx = self.x + pad + nx * width
+                sy = self.y + pad + ny * height
+                radius = dp(10 + marker.get("level", 0) * 4)
+                Color(0.2, 0.6, 1, 0.18)
+                Ellipse(
+                    pos=(sx - radius, sy - radius),
+                    size=(radius * 2, radius * 2),
+                )
+
             for system in systems:
                 nx = (system.x - min_x) / span_x
                 ny = (system.y - min_y) / span_y
