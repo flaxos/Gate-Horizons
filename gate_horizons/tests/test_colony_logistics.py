@@ -216,6 +216,30 @@ class TestColonyLogistics30Turns(unittest.TestCase):
             "Frontier should have positive metal stockpile after 30 turns"
         )
 
+    def test_paused_route_creates_no_shipments(self):
+        state = make_minimal_game_state()
+
+        route = state.trade.create_route(
+            source="system_a",
+            dest="system_b",
+            capacity_per_turn=15,
+            latency_turns=2,
+            manifest={
+                "outbound": {"metals": 8, "energy": 7},
+                "inbound": {},
+            },
+            galaxy=state.galaxy,
+        )
+        self.assertIsNotNone(route)
+
+        route.enabled = False
+        route.active = False
+
+        report = state.turn_processor.process_turn(state)
+
+        self.assertEqual(len(state.trade.in_transit), 0)
+        self.assertEqual(report.logistics_shipments, [])
+
     def test_exotics_flow_back_to_hub(self):
         """Exotics from frontier can be shipped back to hub."""
         state = make_minimal_game_state()

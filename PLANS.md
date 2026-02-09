@@ -1,5 +1,14 @@
 # ExecPlans
 
+## PR: Pause trade routes halts shipments
+
+### Goal
+Ensure trade route pause/resume in the UI maps to the execution flag and that turn processing skips paused routes, with a regression test.
+
+### Steps
+1. Align trade route toggle and trade execution to the same enabled flag while preserving legacy active state on load.
+2. Add a turn-processing test that pauses a route and asserts no shipments are created.
+
 ## PR: Deduplicate POP transfer adjustments
 
 ### Goal

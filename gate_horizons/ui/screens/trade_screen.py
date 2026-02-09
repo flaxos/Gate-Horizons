@@ -690,6 +690,7 @@ class TradeScreen(Screen):
         route = self.game_state.trade.routes.get(btn.route_id)
         if route:
             route.enabled = not route.enabled
+            route.active = route.enabled
             self._update_routes()
 
     def _cancel_route(self, btn):

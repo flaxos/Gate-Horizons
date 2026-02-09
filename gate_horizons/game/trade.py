@@ -189,7 +189,12 @@ class TradeRoute:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TradeRoute":
-        return cls(**{k: v for k, v in data.items() if k in cls._INIT_FIELDS})
+        payload = {k: v for k, v in data.items() if k in cls._INIT_FIELDS}
+        if "enabled" not in data and "active" in data:
+            payload["enabled"] = bool(data.get("active", True))
+        if "active" not in payload and "enabled" in payload:
+            payload["active"] = payload["enabled"]
+        return cls(**payload)
 
 
 class TradeManager:
@@ -283,7 +288,7 @@ class TradeManager:
     ) -> list[dict]:
         segments: list[dict] = []
         for route in self.routes.values():
-            if not route.enabled or not route.active:
+            if not route.enabled:
                 continue
 
             capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
@@ -486,7 +491,7 @@ class TradeManager:
         reports = []
 
         for route in self.routes.values():
-            if not route.enabled or not route.active:
+            if not route.enabled:
                 continue
 
             capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
@@ -646,7 +651,7 @@ class TradeManager:
         reports = []
 
         for route in self.routes.values():
-            if not route.active or not route.enabled:
+            if not route.enabled:
                 continue
 
             throughput = route.calculate_throughput(fleet=fleet, tech_effects=tech_effects)
