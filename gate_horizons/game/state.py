@@ -486,10 +486,10 @@ class GameState:
 
     def resolve_relation_action(self, faction_id: str, action: str) -> tuple[bool, str]:
         """Resolve a diplomacy action directly from the relations screen."""
-        if not hasattr(self, "diplomacy"):
-            return False, "Diplomacy system unavailable."
         if not self._is_diplomacy_unlocked():
             return False, "Diplomacy actions require Signal Decryption research."
+        if not hasattr(self, "diplomacy"):
+            return False, "Diplomacy system unavailable."
         if not faction_id:
             return False, "No faction selected."
         if faction_id not in self.diplomacy.relations:
@@ -580,11 +580,9 @@ class GameState:
 
     def _get_encounter_branches(self, encounter: EncounterData) -> list[str]:
         branches = ["tactical", "evasion"]
-        if (
-            hasattr(self, "diplomacy")
-            and encounter.faction_id in self.diplomacy.relations
-            and self._is_diplomacy_unlocked()
-        ):
+        if not self._is_diplomacy_unlocked():
+            return branches
+        if hasattr(self, "diplomacy") and encounter.faction_id in self.diplomacy.relations:
             branches.append("diplomacy")
         return branches
 
