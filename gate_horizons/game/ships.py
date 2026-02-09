@@ -378,6 +378,7 @@ class FleetManager:
                 "Move To",
                 "Continue",
                 "Reroute",
+                "Reposition (Local)",
                 "Emergency Stop",
                 "Begin Mining",
                 "Continue Mining",
@@ -437,6 +438,10 @@ class FleetManager:
         append_action(Action(
             name="Move To",
             description="Set course for another system",
+        ))
+        append_action(Action(
+            name="Reposition (Local)",
+            description="Adjust position within the current system",
         ))
 
         # Ship is in transit
