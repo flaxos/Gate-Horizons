@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Encounter resolution branching + UI toggle
+
+### Goal
+Add encounter resolution branching in `resolve_encounter` and expose an in-game UI control to switch modes.
+
+### Steps
+1. Update encounter resolution flow to branch on auto/manual/tactical and apply results/export specs as required.
+2. Add an in-game settings control that calls `set_encounter_resolution_mode`.
+3. Verify encounter logging/reporting is preserved for each resolution path.
+
 ## Return Home nearest reachable colony
 
 ### Goal

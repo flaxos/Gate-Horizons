@@ -257,6 +257,73 @@ class GameState:
             encounter_id=encounter_id,
         )
         branch_options = self._get_encounter_branches(encounter)
+        mode = (self.encounter_resolution_mode or "tactical").strip().lower()
+        if mode == "auto":
+            combat_rng = None
+            if hasattr(self, "rng_for_context"):
+                combat_rng = self.rng_for_context(f"combat:{encounter_id}")
+            combat_result = self.combat.auto_resolve(
+                attacker_ships,
+                encounter,
+                rng=combat_rng,
+                apply_damage=False,
+            )
+            combat_result.encounter_id = encounter_id
+            combat_result.encounter_contract = encounter_spec.to_dict()
+            self._apply_manual_combat_result(combat_result, attacker_ships)
+            system_id = getattr(system, "id", "")
+            if system_id:
+                self._apply_gate_damage(system_id, encounter, combat_result, report)
+                outcome = "victory" if combat_result.victory else "defeat"
+                self._apply_encounter_outcome_effects(system_id, {"outcome": outcome})
+            outcome_label = "Victory" if combat_result.victory else "Defeat"
+            self.log.append(f"Encounter {encounter_id} auto-resolved: {outcome_label}")
+            report.combat_encounters.append(
+                {
+                    "encounter_id": encounter_id,
+                    "status": "resolved_auto",
+                    "narrative": combat_result.narrative,
+                    "outcome": outcome_label.lower(),
+                    "encounter_spec": encounter_spec.to_dict(),
+                    "combat_result": combat_result.to_dict(),
+                }
+            )
+            return
+
+        if mode == "manual":
+            payload = encounter_spec.to_dict()
+            valid, message = self.combat.validate_encounter_spec(payload)
+            if not valid:
+                self.log.append(f"Encounter {encounter_id} export failed: {message}")
+                report.warnings.append(f"Encounter {encounter_id} export failed: {message}")
+            else:
+                export_path = Path("exports/encounters")
+                export_path.mkdir(parents=True, exist_ok=True)
+                filepath = export_path / "EncounterSpec.json"
+                filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+                self.log.append(f"EncounterSpec exported to {filepath}")
+                report.combat_encounters.append(
+                    {
+                        "encounter_id": encounter_id,
+                        "status": "pending_manual",
+                        "narrative": "Encounter exported for manual resolution.",
+                        "encounter_spec": payload,
+                        "branch_options": branch_options,
+                        "export_path": str(filepath),
+                    }
+                )
+            pending_entry = {
+                "encounter_id": encounter_id,
+                "spec": payload,
+                "attacker_ship_ids": [ship.id for ship in attacker_ships],
+                "defender": encounter.to_dict(),
+                "system_id": getattr(system, "id", ""),
+                "branch_options": branch_options,
+            }
+            self.pending_encounters.append(pending_entry)
+            self.log.append(f"Encounter {encounter_id} awaiting manual resolution")
+            return
+
         pending_entry = {
             "encounter_id": encounter_id,
             "spec": encounter_spec.to_dict(),

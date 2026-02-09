@@ -159,6 +159,7 @@ class CombatResolver:
         defender: EncounterData,
         odds: float = None,
         rng: Optional[random.Random] = None,
+        apply_damage: bool = True,
     ) -> CombatResult:
         """Auto-resolve combat with variance."""
         rng = rng or random
@@ -192,9 +193,12 @@ class CombatResolver:
                 damage = rng.randint(0, max(1, defender.strength // len(attacker_ships)))
                 if damage > 0:
                     result.attacker_damage[ship.id] = damage
-                    ship.hull -= damage
-                    if ship.hull <= 0:
-                        ship.hull = 0
+                    if apply_damage:
+                        ship.hull -= damage
+                        if ship.hull <= 0:
+                            ship.hull = 0
+                            result.ships_destroyed.append(ship.id)
+                    elif ship.hull - damage <= 0:
                         result.ships_destroyed.append(ship.id)
         else:
             # Defeat: heavier damage
@@ -207,9 +211,12 @@ class CombatResolver:
                     max(2, defender.strength // len(attacker_ships)),
                 )
                 result.attacker_damage[ship.id] = damage
-                ship.hull -= damage
-                if ship.hull <= 0:
-                    ship.hull = 0
+                if apply_damage:
+                    ship.hull -= damage
+                    if ship.hull <= 0:
+                        ship.hull = 0
+                        result.ships_destroyed.append(ship.id)
+                elif ship.hull - damage <= 0:
                     result.ships_destroyed.append(ship.id)
 
         return result

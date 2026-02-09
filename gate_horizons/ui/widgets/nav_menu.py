@@ -71,7 +71,7 @@ class NavCategoryButton(Button):
 
 
 def build_command_bar(nav_callback, end_turn_callback, save_callback,
-                      load_callback, flow_toggle_callback):
+                      load_callback, flow_toggle_callback, settings_callback=None):
     """Build the redesigned bottom command bar.
 
     Returns (bar_widget, flow_toggle_btn) so the caller can update
@@ -108,9 +108,16 @@ def build_command_bar(nav_callback, end_turn_callback, save_callback,
         ("Save Game", "_save"),
         ("Load Game", "_load"),
     ]
+    special_callbacks = {
+        "_save": save_callback,
+        "_load": load_callback,
+    }
+    if settings_callback:
+        menu_items.append(("Settings", "_settings"))
+        special_callbacks["_settings"] = settings_callback
     menu_btn = _make_dropdown_btn(
         "Menu", dp(64), menu_items, nav_callback,
-        special_callbacks={"_save": save_callback, "_load": load_callback},
+        special_callbacks=special_callbacks,
     )
     bar.add_widget(menu_btn)
 
