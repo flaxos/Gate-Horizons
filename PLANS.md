@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Logistics route editor expansion
+
+### Goal
+Expand the logistics route UI to support multiple waypoints, multi-rule cargo handling per waypoint, and optional wait turns.
+
+### Steps
+1. Redesign the freight route creation popup to manage a list of waypoints with editable cargo rules, thresholds, and wait turns.
+2. Validate multi-waypoint inputs in the UI and create routes with the configured waypoints and rules.
+3. Update route detail rendering to show wait turns and cargo rule thresholds per waypoint.
+
 ## Galaxy map action handling and menu alignment
 
 ### Goal
