@@ -271,6 +271,22 @@ class Colony:
         self.population = self.population_units + added
         return added
 
+    def apply_population_transfer(
+        self,
+        amount: int,
+        tech_effects: dict | None = None,
+    ) -> int:
+        """Apply a population transfer immediately without using pending migration."""
+        if amount == 0:
+            return 0
+        if amount > 0:
+            return self.add_population_units(amount, tech_effects=tech_effects)
+        removal = min(-amount, self.population_units)
+        if removal <= 0:
+            return 0
+        self.population = self.population_units - removal
+        return -removal
+
     def get_tier(self) -> int:
         """Map colony level to world tier for backward compatibility."""
         levels = [

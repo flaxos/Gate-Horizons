@@ -625,6 +625,44 @@ class TestColonyLogisticsDemo(unittest.TestCase):
         )
 
 
+class TestPopulationTransfers(unittest.TestCase):
+    def test_pop_transfer_applies_once(self):
+        state = make_minimal_game_state()
+        hub = state.colonies.colonies["system_a"]
+        frontier = state.colonies.colonies["system_b"]
+
+        hub.population = 30
+        frontier.population = 10
+
+        route = state.trade.create_route(
+            source="system_a",
+            dest="system_b",
+            capacity_per_turn=10,
+            latency_turns=1,
+            manifest={
+                "outbound": {"pop": 6},
+                "inbound": {},
+            },
+            galaxy=state.galaxy,
+        )
+
+        initial_hub = hub.population_units
+        initial_frontier = frontier.population_units
+
+        first_report = state.turn_processor.process_turn(state)
+        route.enabled = False
+
+        shipped = 0
+        if first_report.logistics_shipments:
+            shipped = first_report.logistics_shipments[0].get("shipped", {}).get("outbound_pop", 0)
+
+        self.assertEqual(shipped, 6)
+
+        state.turn_processor.process_turn(state)
+
+        self.assertEqual(hub.population_units, initial_hub - shipped)
+        self.assertEqual(frontier.population_units, initial_frontier + shipped)
+
 def run_demo():
     """Run the logistics demo and print results for manual inspection."""
     print("=" * 70)
