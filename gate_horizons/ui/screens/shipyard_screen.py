@@ -89,6 +89,18 @@ class ShipyardScreen(Screen):
         )
         self.facilities_label.bind(size=self.facilities_label.setter("text_size"))
 
+        self.status_label = Label(
+            text="",
+            font_size="11sp",
+            color=(1, 0.7, 0.6, 1),
+            markup=True,
+            halign="left",
+            valign="top",
+            size_hint_y=None,
+            height=dp(80),
+        )
+        self.status_label.bind(size=self.status_label.setter("text_size"))
+
         # Build queue section
         self.queue_label = Label(
             text="", font_size="12sp", color=(0.9, 0.7, 0.3, 1),
@@ -125,6 +137,8 @@ class ShipyardScreen(Screen):
                 background_color=(0.15, 0.25, 0.15, 0.9),
                 color=(0.7, 1, 0.7, 1),
             )
+            btn.enabled_color = (0.15, 0.25, 0.15, 0.9)
+            btn.disabled_color = (0.2, 0.2, 0.2, 0.6)
             btn.facility_type = ftype
             btn.bind(on_release=self._build_facility)
             self.facility_buttons.add_widget(btn)
@@ -151,6 +165,8 @@ class ShipyardScreen(Screen):
                 background_color=(0.2, 0.15, 0.3, 0.9),
                 color=(0.8, 0.7, 1, 1),
             )
+            btn.enabled_color = (0.2, 0.15, 0.3, 0.9)
+            btn.disabled_color = (0.2, 0.2, 0.2, 0.6)
             btn.blueprint_id = blueprint
             btn.bind(on_release=self._build_ship)
             self.ship_buttons.add_widget(btn)
@@ -159,6 +175,7 @@ class ShipyardScreen(Screen):
         details_box = BoxLayout(orientation="vertical", size_hint_y=None, spacing=dp(4))
         details_box.bind(minimum_height=details_box.setter("height"))
         details_box.add_widget(self.facilities_label)
+        details_box.add_widget(self.status_label)
         details_box.add_widget(self.facility_buttons)
         details_box.add_widget(self.queue_label)
         details_box.add_widget(self.queue_actions)
@@ -210,6 +227,8 @@ class ShipyardScreen(Screen):
         if not self.game_state or not self.selected_system_id:
             return
         system_id = self.selected_system_id
+        colony = self.game_state.colonies.colonies.get(system_id)
+        config = self.game_state.production.config.to_dict()
         facilities = self.game_state.shipyard.get_facilities(system_id)
 
         fac_text = f"[b]Orbital Facilities at {system_id}[/b]\n\n"
@@ -247,16 +266,67 @@ class ShipyardScreen(Screen):
             queue_text += "  (empty)\n"
         self.queue_label.text = queue_text
 
+        status_lines = []
+        facility_statuses = []
+        for btn in self.facility_buttons.children:
+            can_build, reason = self._can_build_facility(
+                system_id,
+                btn.facility_type,
+                colony,
+                config,
+            )
+            btn.disabled = not can_build
+            btn.background_color = btn.enabled_color if can_build else btn.disabled_color
+            btn.color = (0.7, 1, 0.7, 1) if can_build else (0.7, 0.7, 0.7, 1)
+            if not can_build:
+                facility_statuses.append(
+                    f"{btn.facility_type.replace('_', ' ').title()}: {reason}"
+                )
+        if facility_statuses:
+            status_lines.append("[b]Facility build unavailable:[/b]")
+            status_lines.extend(f"- {line}" for line in facility_statuses)
+
+        ship_statuses = []
+        for btn in self.ship_buttons.children:
+            can_build, reason = self._can_build_ship(
+                system_id,
+                btn.blueprint_id,
+                colony,
+                config,
+            )
+            btn.disabled = not can_build
+            btn.background_color = btn.enabled_color if can_build else btn.disabled_color
+            btn.color = (0.8, 0.7, 1, 1) if can_build else (0.7, 0.7, 0.7, 1)
+            if not can_build:
+                ship_statuses.append(
+                    f"{btn.blueprint_id.replace('_', ' ').title()}: {reason}"
+                )
+        if ship_statuses:
+            status_lines.append("[b]Ship build unavailable:[/b]")
+            status_lines.extend(f"- {line}" for line in ship_statuses)
+
+        self.status_label.text = "\n".join(status_lines) if status_lines else ""
+
     def _build_facility(self, instance):
         if not self.game_state or not self.selected_system_id:
             return
         colony = self.game_state.colonies.colonies.get(self.selected_system_id)
         if not colony:
             return
+        config = self.game_state.production.config.to_dict()
+        can_build, reason = self._can_build_facility(
+            self.selected_system_id,
+            instance.facility_type,
+            colony,
+            config,
+        )
+        if not can_build:
+            self.status_label.text = f"[b]Facility build unavailable:[/b] {reason}"
+            return
         self.game_state.shipyard.build_facility(
             self.selected_system_id,
             instance.facility_type,
-            self.game_state.production.config.to_dict(),
+            config,
             colony.production_inventory,
             self.game_state.resources,
         )
@@ -265,10 +335,35 @@ class ShipyardScreen(Screen):
     def _build_ship(self, instance):
         if not self.game_state or not self.selected_system_id:
             return
-        self.game_state.build_ship_orbital(
+        colony = self.game_state.colonies.colonies.get(self.selected_system_id)
+        if not colony:
+            return
+        config = self.game_state.production.config.to_dict()
+        can_build, reason = self._can_build_ship(
             self.selected_system_id,
             instance.blueprint_id,
+            colony,
+            config,
         )
+        if not can_build:
+            self.status_label.text = f"[b]Ship build unavailable:[/b] {reason}"
+            return
+        if not self.game_state.build_ship_orbital(
+            self.selected_system_id,
+            instance.blueprint_id,
+        ):
+            _, failure_reason = self._can_build_ship(
+                self.selected_system_id,
+                instance.blueprint_id,
+                colony,
+                config,
+            )
+            self.status_label.text = (
+                f"[b]Ship build failed:[/b] {failure_reason}"
+                if failure_reason
+                else "[b]Ship build failed.[/b]"
+            )
+            return
         self.refresh()
 
     def _cancel_oldest_build(self, instance):
@@ -312,3 +407,79 @@ class ShipyardScreen(Screen):
 
     def _go_back(self, instance):
         self.manager.current = "galaxy_map"
+
+    def _can_build_facility(
+        self,
+        system_id: str,
+        facility_type: str,
+        colony,
+        config: dict,
+    ) -> tuple:
+        if not colony:
+            return False, "No colony at this system"
+        facility_config = config.get("orbital_facility_types", {}).get(facility_type)
+        if not facility_config:
+            return False, "Unknown facility"
+
+        prereq = facility_config.get("prerequisite")
+        if prereq:
+            existing_types = {
+                f.facility_type
+                for f in self.game_state.shipyard.facilities.get(system_id, [])
+                if not f.building
+            }
+            if prereq not in existing_types:
+                return False, f"Requires {prereq.replace('_', ' ').title()}"
+
+        build_cost = facility_config.get("build_cost", {})
+        for res, amount in build_cost.items():
+            if res == "credits":
+                have = self.game_state.resources.global_resources.get("credits", 0)
+                if have < amount:
+                    return False, f"Need {amount - have} more credits"
+            else:
+                have = colony.production_inventory.get(res, 0)
+                if have < amount:
+                    return False, f"Need {amount - have} more {res}"
+
+        return True, "OK"
+
+    def _can_build_ship(
+        self,
+        system_id: str,
+        blueprint_id: str,
+        colony,
+        config: dict,
+    ) -> tuple:
+        if not colony:
+            return False, "No colony at this system"
+        can_build, reason = self.game_state.shipyard.can_build_ship(
+            system_id,
+            blueprint_id,
+            config,
+        )
+        if not can_build:
+            return False, reason
+
+        blueprint = config.get("ship_blueprints", {}).get(blueprint_id)
+        if not blueprint:
+            return False, f"Unknown blueprint: {blueprint_id}"
+
+        components = blueprint.get("components", {})
+        missing_components = []
+        for component, amount in components.items():
+            have = colony.production_inventory.get(component, 0)
+            if have < amount:
+                missing_components.append(
+                    f"{component.replace('_', ' ')} ({amount - have} short)"
+                )
+        if missing_components:
+            return False, f"Missing components: {', '.join(missing_components)}"
+
+        credit_cost = blueprint.get("credits", 0)
+        if credit_cost > 0:
+            have_credits = self.game_state.resources.global_resources.get("credits", 0)
+            if have_credits < credit_cost:
+                return False, f"Need {credit_cost - have_credits} more credits"
+
+        return True, "OK"
