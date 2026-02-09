@@ -59,6 +59,18 @@ class EncounterScreen(Screen):
         header.add_widget(back_btn)
         root.add_widget(header)
 
+        self.status_label = Label(
+            text="",
+            font_size="11sp",
+            color=(0.6, 0.9, 0.7, 1),
+            size_hint_y=None,
+            height=dp(26),
+            halign="left",
+            valign="middle",
+            text_size=(None, None),
+        )
+        root.add_widget(self.status_label)
+
         scroll = ScrollView(size_hint=(1, 1))
         self.list_container = BoxLayout(
             orientation="vertical",
@@ -96,7 +108,7 @@ class EncounterScreen(Screen):
         card = BoxLayout(
             orientation="vertical",
             size_hint_y=None,
-            height=dp(110),
+            height=dp(150),
             padding=[dp(8), dp(6)],
             spacing=dp(4),
         )
@@ -193,6 +205,35 @@ class EncounterScreen(Screen):
 
         btn_row.add_widget(Widget())
         card.add_widget(btn_row)
+
+        utility_row = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=dp(30),
+            spacing=dp(8),
+        )
+        export_btn = Button(
+            text="Export Spec",
+            font_size="11sp",
+            background_color=(0.25, 0.25, 0.45, 0.9),
+            color=(0.85, 0.95, 1, 1),
+        )
+        export_btn.encounter_id = encounter_id
+        export_btn.system_id = system_id
+        export_btn.encounter_type = defender.get("type", "pirates")
+        export_btn.bind(on_release=self._export_encounter_spec)
+        utility_row.add_widget(export_btn)
+
+        import_btn = Button(
+            text="Import Result",
+            font_size="11sp",
+            background_color=(0.3, 0.2, 0.4, 0.9),
+            color=(0.9, 0.85, 1, 1),
+        )
+        import_btn.bind(on_release=self._import_result_spec)
+        utility_row.add_widget(import_btn)
+        utility_row.add_widget(Widget())
+        card.add_widget(utility_row)
         return card
 
     @staticmethod
@@ -223,8 +264,43 @@ class EncounterScreen(Screen):
         self.game_state.resolve_evasion(btn.encounter_id)
         self.refresh()
 
+    def _export_encounter_spec(self, btn):
+        if not self.game_state:
+            self._set_status("No game state available to export encounter spec.", success=False)
+            return
+        success, message = self.game_state.export_encounter_spec(
+            system_id=btn.system_id,
+            encounter_type=btn.encounter_type,
+            encounter_id=btn.encounter_id,
+        )
+        if success:
+            self._set_status(f"Encounter spec exported to {message}.", success=True)
+            self.refresh()
+        else:
+            self._set_status(f"Export failed: {message}", success=False)
+
+    def _import_result_spec(self, *_args):
+        if not self.game_state:
+            self._set_status("No game state available to import result spec.", success=False)
+            return
+        success, message = self.game_state.import_result_spec()
+        if success:
+            self._set_status(f"Result spec imported: {message}", success=True)
+            self.refresh()
+        else:
+            self._set_status(f"Import failed: {message}", success=False)
+
     def _go_back(self, *args):
         from kivy.app import App
         app = App.get_running_app()
         if app:
             app.switch_screen("galaxy_map")
+
+    def _set_status(self, message: str, success: bool = True) -> None:
+        if not hasattr(self, "status_label"):
+            return
+        self.status_label.text = message or ""
+        if success:
+            self.status_label.color = (0.6, 0.9, 0.7, 1)
+        else:
+            self.status_label.color = (0.95, 0.6, 0.6, 1)
