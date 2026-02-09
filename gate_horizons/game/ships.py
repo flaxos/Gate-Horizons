@@ -420,7 +420,7 @@ class FleetManager:
                 ))
             actions.append(Action(
                 name="Return Home",
-                description="Return to nearest colony",
+                description="Return to nearest reachable colony",
             ))
 
         # Freighter actions
