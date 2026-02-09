@@ -1566,6 +1566,9 @@ class GameState:
         if not colony:
             return {}
 
+        if not self.resources.per_system_resources:
+            self.resources.sync_from_colonies(self.colonies)
+
         system_resources = self.resources.per_system_resources.get(ship.location, {})
         if not system_resources:
             return {}
