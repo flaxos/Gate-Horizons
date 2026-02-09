@@ -1616,7 +1616,7 @@ class GravityWellScreen(Screen):
                 color=(0.3, 1, 0.5, 1),
             )
             view_colony_btn.bind(on_release=self._on_view_colony)
-        self.info_panel.add_widget(view_colony_btn)
+            self.info_panel.add_widget(view_colony_btn)
 
         self.info_panel.add_widget(Widget(size_hint_y=None, height=dp(8)))
 
