@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Galaxy map action handling and menu alignment
+
+### Goal
+Ensure ship context menus only show actions with UI/state handlers and add notices for unimplemented actions.
+
+### Steps
+1. Add handler checks in FleetManager contextual actions and remove unsupported action entries.
+2. Add missing action dispatch/notice logic in the galaxy map action executor.
+3. Expose a ship action handler availability helper in game state for UI gating.
+
 ## Colony trait effects in production and stability
 
 ### Goal
