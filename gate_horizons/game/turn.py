@@ -542,10 +542,8 @@ class TurnProcessor:
                 continue
             at_colony = ship.location in game_state.colonies.colonies if hasattr(game_state, "colonies") else False
             cargo_full = ship.cargo_used >= ship.stats.cargo_capacity * 0.8
-            if at_colony or cargo_full:
-                for resource, amount in list(ship.cargo.items()):
-                    game_state.resources.add(resource, amount, ship.location)
-                ship.cargo.clear()
+            if (at_colony or cargo_full) and hasattr(game_state, "colonies"):
+                game_state.unload_ship_cargo_to_colony(ship.id)
 
         report.mining_output = mining_output
 

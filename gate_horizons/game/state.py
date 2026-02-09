@@ -1592,12 +1592,23 @@ class GameState:
             return {}
 
         unloaded = {}
+        caps = colony.get_storage_caps()
         for resource, amount in list(ship.cargo.items()):
             if resource not in RESOURCE_TYPES or amount <= 0:
                 continue
-            self.resources.add(resource, amount, ship.location)
-            ship.remove_cargo(resource, amount)
-            unloaded[resource] = amount
+            current = colony.stockpiles.get(resource, 0)
+            cap = caps.get(resource)
+            if cap is None:
+                added = amount
+            else:
+                added = min(amount, max(0, cap - current))
+            if added <= 0:
+                continue
+            colony.stockpiles[resource] = current + added
+            ship.remove_cargo(resource, added)
+            unloaded[resource] = added
+        if unloaded:
+            self.resources.sync_from_colonies(self.colonies)
         return unloaded
 
     def investigate_anomaly(self, system_id: str):

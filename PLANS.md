@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Colony stockpile cargo unload alignment
+
+### Goal
+Ensure ship cargo unloads (mining, UI actions) deposit into colony stockpiles with storage caps and keep UI behavior consistent.
+
+### Steps
+1. Update mining and GameState unload logic to add cargo to colony stockpiles with caps.
+2. Route fleet screen and galaxy map unload/deliver actions through the updated GameState helper.
+3. Validate global resource syncing still reflects colony stockpiles after unloads.
+
 ## Freighter class checks across fleet, trade, and actions
 
 ### Goal
