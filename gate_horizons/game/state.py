@@ -658,6 +658,12 @@ class GameState:
         if ship.path:
             return False, f"{ship.name} is currently in transit", None
 
+        normalized_action = (action_name or "").strip().lower()
+        if normalized_action == "establish colony":
+            can_queue, message = self._validate_establish_colony_order(ship, params or {})
+            if not can_queue:
+                return False, message, None
+
         handler = self._get_ship_action_handler(action_name)
         if not handler:
             return False, f"Unsupported action: {action_name}", None
@@ -789,6 +795,49 @@ class GameState:
             "establish colony": self._handle_establish_colony,
             "repair": self._handle_repair,
             "refuel": self._handle_refuel,
+        }
+
+    def _validate_establish_colony_order(self, ship, params: dict) -> tuple[bool, str]:
+        system_id = params.get("system_id") or ship.location
+        if system_id != ship.location:
+            return False, "Colony ship must be in target system"
+
+        system = self.galaxy.systems.get(system_id)
+        if not system:
+            return False, "System not found"
+
+        planet_id = params.get("planet_id")
+        if not planet_id:
+            colonizable = [planet for planet in system.planets if planet.colonizable]
+            if not colonizable:
+                return False, "No colonizable planet in system"
+            planet_id = colonizable[0].id
+
+        researched = {t.id for t in self.tech.techs.values() if t.researched}
+        can_found, reason = self.colonies.can_found_colony(
+            system_id,
+            planet_id,
+            galaxy=self.galaxy,
+            researched_techs=researched,
+            fleet=self.fleet,
+            ship_id=ship.id,
+            resources=self.resources,
+        )
+        if not can_found:
+            return False, reason
+
+        missing_starter = self.get_missing_starter_cargo(ship)
+        if missing_starter:
+            return False, f"Colony ship lacks starter cargo: {missing_starter}"
+
+        return True, "OK"
+
+    def get_missing_starter_cargo(self, ship) -> dict:
+        starter_cargo = self.colonies.get_starter_cargo_requirement()
+        return {
+            resource: amount - ship.cargo.get(resource, 0)
+            for resource, amount in starter_cargo.items()
+            if ship.cargo.get(resource, 0) < amount
         }
 
     def _handle_scan_system(self, ship, params: dict) -> tuple[bool, str, dict]:
@@ -1126,11 +1175,7 @@ class GameState:
             return False, reason
 
         starter_cargo = self.colonies.get_starter_cargo_requirement()
-        missing_starter = {
-            resource: amount - ship.cargo.get(resource, 0)
-            for resource, amount in starter_cargo.items()
-            if ship.cargo.get(resource, 0) < amount
-        }
+        missing_starter = self.get_missing_starter_cargo(ship)
         if missing_starter:
             return False, f"Colony ship lacks starter cargo: {missing_starter}"
 

@@ -1,5 +1,24 @@
 # ExecPlans
 
+## Colonization starter cargo gating + UI clarity
+
+### Goal
+Make colonization actionable by surfacing the starter cargo requirement in the UI
+and preventing colony orders when the colony ship lacks required cargo.
+
+### Steps
+1. Add preflight validation for "Establish Colony" orders to block queueing when
+   starter cargo is missing.
+2. Surface starter cargo requirements and missing amounts in the system view
+   colonization button/confirmation flow.
+3. Add tests covering order validation and UI messaging.
+
+### Acceptance
+- "Establish Colony" orders fail fast if the colony ship lacks starter cargo.
+- System view colonization UI displays starter cargo requirements and disables the
+  action when cargo is missing.
+- Tests cover both order validation and UI copy presence.
+
 ## Colony starter cargo requirement
 
 ### Goal
