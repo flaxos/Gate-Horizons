@@ -1691,7 +1691,104 @@ class GravityWellScreen(Screen):
         self._show_ship_context(ship_id)
 
     def _on_region_tap(self, body_id):
-        pass  # Future: surface region interaction
+        if not self.game_state or not self.system_id or not body_id:
+            return
+        system = self.game_state.galaxy.systems.get(self.system_id)
+        if not system:
+            return
+        planet = next((p for p in system.planets if p.id == body_id), None)
+        if not planet:
+            return
+
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(10))
+        header = Label(
+            text=f"{planet.name} — Surface Overview",
+            font_size="16sp",
+            bold=True,
+            color=(0.3, 0.85, 1, 1),
+            size_hint_y=None,
+            height=dp(28),
+        )
+        content.add_widget(header)
+
+        type_label = Label(
+            text=f"Type: {planet.type.replace('_', ' ').title()}",
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(20),
+            halign="left",
+            text_size=(dp(260), None),
+        )
+        content.add_widget(type_label)
+
+        surveyed_text = "Surveyed" if system.surveyed else "Unsurveyed"
+        content.add_widget(Label(
+            text=f"Status: {surveyed_text}",
+            font_size="12sp",
+            color=(0.6, 0.8, 0.6, 0.9) if system.surveyed else (0.9, 0.6, 0.4, 0.9),
+            size_hint_y=None,
+            height=dp(20),
+            halign="left",
+            text_size=(dp(260), None),
+        ))
+
+        colony = self.game_state.colonies.colonies.get(self.system_id)
+        if colony and colony.planet_id == planet.id:
+            content.add_widget(Label(
+                text=f"Colony: {colony.name} (Pop {colony.population})",
+                font_size="12sp",
+                color=(1, 1, 0.4, 0.95),
+                size_hint_y=None,
+                height=dp(20),
+                halign="left",
+                text_size=(dp(260), None),
+            ))
+
+        if planet.resources:
+            resources = ", ".join(
+                f"{res.title()} {amount}/turn"
+                for res, amount in planet.resources.items()
+                if amount > 0
+            )
+            if resources:
+                content.add_widget(Label(
+                    text=f"Resources: {resources}",
+                    font_size="11sp",
+                    color=(0.7, 0.85, 1, 0.85),
+                    size_hint_y=None,
+                    height=dp(20),
+                    halign="left",
+                    text_size=(dp(260), None),
+                ))
+
+        content.add_widget(Widget(size_hint_y=None, height=dp(6)))
+        content.add_widget(Label(
+            text="Region interactions are not yet available.",
+            font_size="12sp",
+            color=(0.8, 0.8, 0.8, 0.9),
+            size_hint_y=None,
+            height=dp(24),
+            halign="center",
+            text_size=(dp(260), None),
+        ))
+
+        close_btn = Button(
+            text="Close",
+            size_hint_y=None,
+            height=dp(36),
+            background_color=(0.15, 0.25, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        popup = Popup(
+            title="Surface Region",
+            content=content,
+            size_hint=(0.7, 0.6),
+            auto_dismiss=True,
+        )
+        close_btn.bind(on_release=popup.dismiss)
+        content.add_widget(close_btn)
+        popup.open()
 
     def _show_ship_context(self, ship_id):
         """Show ship context menu (reuse Galaxy Map's pattern)."""
