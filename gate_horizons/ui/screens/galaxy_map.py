@@ -1083,7 +1083,26 @@ class GalaxyMapScreen(Screen):
             ship.mission = None
             self.refresh()
         elif action.name == "Return Home":
-            self.game_state.fleet.move_ship(ship_id, "sol", self.game_state.galaxy)
+            colony_systems = list(self.game_state.colonies.colonies.keys())
+            shortest_path = None
+            nearest_system = None
+            for system_id in colony_systems:
+                path = self.game_state.galaxy.get_path(ship.location, system_id)
+                if not path:
+                    continue
+                if shortest_path is None or len(path) < len(shortest_path):
+                    shortest_path = path
+                    nearest_system = system_id
+            if nearest_system:
+                self.game_state.fleet.move_ship(
+                    ship_id,
+                    nearest_system,
+                    self.game_state.galaxy,
+                )
+            else:
+                self.game_state.log.append(
+                    f"{ship.name} cannot return home: no reachable colony."
+                )
             self.refresh()
 
     def _show_destination_menu(self, ship_id):

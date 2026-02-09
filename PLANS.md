@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Return Home nearest reachable colony
+
+### Goal
+Update the Return Home ship action to target the nearest reachable colony by gate path length and provide feedback when no colony is reachable, keeping the UI action text aligned.
+
+### Steps
+1. Update Return Home action handling to select the shortest reachable colony path.
+2. Add feedback (log entry) when no reachable colony exists.
+3. Align the Return Home action description with the new behavior.
+
 ## Population resource + realistic system generation
 
 ### Recon summary (current structure)
