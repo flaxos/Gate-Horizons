@@ -946,15 +946,11 @@ class TurnProcessor:
 
     def _process_resources(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "colonies"):
-            summary = game_state.resources.process_turn(
-                colonies=game_state.colonies,
-                fleet=game_state.fleet,
-                include_maintenance=False,
-            )
-            for k, v in summary.get("income", {}).items():
-                report.resources_gained[k] = report.resources_gained.get(k, 0) + v
-            for k, v in summary.get("expenses", {}).items():
-                report.resources_spent[k] = report.resources_spent.get(k, 0) + v
+            game_state.resources.sync_from_colonies(game_state.colonies)
+        game_state.resources.update_projections(
+            report.resources_gained,
+            report.resources_spent,
+        )
 
     def _process_events(self, game_state, report: TurnReport) -> None:
         if hasattr(game_state, "events"):
