@@ -225,25 +225,6 @@ class CreateRoutePopup(Popup):
             btn.bind(on_release=self._on_select_system)
             layout.add_widget(btn)
 
-        # Also show discovered systems without colonies
-        for sid, system in self.game_state.galaxy.systems.items():
-            if sid in self.game_state.colonies.colonies:
-                continue
-            if not system.discovered or not system.gate_active:
-                continue
-            btn = Button(
-                text=f"{system.name}",
-                size_hint_x=None,
-                width=dp(100),
-                font_size="10sp",
-                background_color=(0.08, 0.15, 0.25, 0.6),
-                color=(0.6, 0.7, 0.8, 0.8),
-            )
-            btn.system_id = sid
-            btn.target = target
-            btn.bind(on_release=self._on_select_system)
-            layout.add_widget(btn)
-
     def _on_select_system(self, btn):
         if btn.target == "source":
             self.selected_source = btn.system_id
@@ -338,6 +319,14 @@ class CreateRoutePopup(Popup):
             self.status_label.color = (1, 0.3, 0.2, 1)
             return
         if not self.selected_source or not self.selected_dest:
+            return
+        if self.selected_source not in self.game_state.colonies.colonies:
+            self.status_label.text = "Source must be a colonized system."
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
+        if self.selected_dest not in self.game_state.colonies.colonies:
+            self.status_label.text = "Destination must be a colonized system."
+            self.status_label.color = (1, 0.3, 0.2, 1)
             return
         if self.selected_source == self.selected_dest:
             return

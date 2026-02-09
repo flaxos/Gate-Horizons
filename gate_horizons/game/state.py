@@ -1915,6 +1915,8 @@ class GameState:
             trade_routes_unlocked = bool(tech and tech.researched)
         if not trade_routes_unlocked:
             return None, "Trade routes require Logistics I research."
+        if source not in self.colonies.colonies or dest not in self.colonies.colonies:
+            return None, "Trade routes must connect colonized systems."
         # Compute capacity from colony infrastructure if not specified
         if capacity_per_turn is None:
             source_colony = self.colonies.colonies.get(source)
