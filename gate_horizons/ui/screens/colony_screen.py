@@ -20,6 +20,7 @@ from gate_horizons.game.colonies import (
     COLONY_LEVELS,
 )
 from gate_horizons.game.resources import RESOURCE_TYPES
+from gate_horizons.sim.population import PopulationSimulator
 
 
 class NoticePopup(Popup):
@@ -248,7 +249,7 @@ class ColonyScreen(Screen):
         )
 
         housing_level = colony.infrastructure.get("housing", {}).get("level", 0)
-        housing_cap = 100 + housing_level * 200  # matches HOUSING_PER_LEVEL in colonies.py
+        housing_cap = colony.get_carrying_capacity()
         stats.add_widget(Label(
             text=f"Population: {colony.population}/{housing_cap}",
             font_size="13sp",
@@ -262,6 +263,51 @@ class ColonyScreen(Screen):
             color=happy_color,
         ))
         detail_content.add_widget(stats)
+
+        indices = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=dp(30),
+            spacing=dp(16),
+        )
+        indices.add_widget(Label(
+            text=f"Health: {colony.health_index}",
+            font_size="12sp",
+            color=(0.6, 0.9, 0.7, 1),
+        ))
+        indices.add_widget(Label(
+            text=f"Education: {colony.education_index}",
+            font_size="12sp",
+            color=(0.6, 0.8, 1, 1),
+        ))
+        indices.add_widget(Label(
+            text=f"Pollution: {colony.pollution_index}",
+            font_size="12sp",
+            color=(1, 0.6, 0.3, 1),
+        ))
+        detail_content.add_widget(indices)
+
+        policy = colony.get_population_policy()
+        retain_pct = int(float(policy.get("retain_percent", 0.0)) * 100)
+        export_cap = int(policy.get("export_cap_per_turn", 0) or 0)
+        priority = str(policy.get("priority", "balanced")).replace("_", " ").title()
+        detail_content.add_widget(Label(
+            text=f"POP Policy: retain {retain_pct}% / cap {export_cap} / {priority}",
+            font_size="11sp",
+            color=(0.55, 0.75, 0.95, 0.85),
+            size_hint_y=None,
+            height=dp(20),
+        ))
+
+        pop_report = colony.last_population_report or {}
+        pop_net = pop_report.get("net_change", 0) + pop_report.get("net_migration", 0)
+        detail_content.add_widget(Label(
+            text=f"Net Growth / Turn: {pop_net} (Births {pop_report.get('births', 0)} / Deaths {pop_report.get('deaths', 0)})",
+            font_size="11sp",
+            color=(0.5, 0.7, 0.9, 0.85),
+            size_hint_y=None,
+            height=dp(20),
+        ))
 
         # Warnings
         warnings = []
@@ -683,17 +729,10 @@ class ColonyScreen(Screen):
             text_size=(dp(500), None),
         ))
 
-        # Growth projection
-        growth_rate = 0.05
-        if colony.happiness >= 80:
-            growth_rate += 0.02
-        elif colony.happiness < 40:
-            growth_rate -= 0.03
-        projected_growth = max(1, int(colony.population * growth_rate))
-        if colony.population >= housing_cap:
-            projected_growth = 0
+        # Growth projection (indices only; excludes migration)
+        projected = PopulationSimulator.simulate_turn(colony)
         detail_content.add_widget(Label(
-            text=f"Growth: ~+{projected_growth} pop/turn",
+            text=f"Projected net change: {projected.net_change:+d} pop/turn",
             font_size="11sp",
             color=(0.5, 0.8, 1, 0.8),
             size_hint_y=None,

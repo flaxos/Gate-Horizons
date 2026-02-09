@@ -8,13 +8,16 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .types import Traversable
+from gate_horizons.astro import SystemGenerator
 
 
 @dataclass
 class Planet:
     id: str
     name: str
-    type: str  # rocky, gas_giant, ice, volcanic, oceanic, barren, desert, toxic, garden
+    type: str  # rocky, gas_giant, ice, volcanic, oceanic, barren, desert, toxic, garden, moon
+    body_type: str = ""  # terrestrial, gas_giant, moon, asteroid_belt
+    orbit_index: float = 0.0
     resources: dict = field(default_factory=dict)
     colonizable: bool = False
     description: str = ""
@@ -28,6 +31,8 @@ class Planet:
             "id": self.id,
             "name": self.name,
             "type": self.type,
+            "body_type": self.body_type,
+            "orbit_index": self.orbit_index,
             "resources": dict(self.resources),
             "colonizable": self.colonizable,
             "description": self.description,
@@ -160,17 +165,13 @@ class GalaxyMap:
         max_connections: int = 3,
         width: int = 1200,
         height: int = 700,
+        known_system_ids: set[str] | None = None,
     ) -> None:
         rng = random.Random(seed)
         self.systems.clear()
         self._path_cache.clear()
-
-        planet_types = [
-            "rocky", "gas_giant", "ice", "volcanic", "oceanic",
-            "barren", "desert", "toxic", "garden",
-        ]
-        colonizable_types = {"rocky", "oceanic", "garden", "desert"}
-        traits_pool = ["hub", "frontier", "mineral_rich", "volatile"]
+        generator = SystemGenerator()
+        known_system_ids = set(known_system_ids or [])
 
         system_ids = []
         for idx in range(system_count):
@@ -182,25 +183,12 @@ class GalaxyMap:
             tier = rng.randint(1, 4)
             gate_connections = []
 
-            planets = []
-            for pidx in range(rng.randint(1, 3)):
-                p_type = rng.choice(planet_types)
-                planet_id = f"{sys_id}_p{pidx + 1}"
-                planet_name = f"{name}-{pidx + 1}"
-                colonizable = p_type in colonizable_types
-                traits = []
-                if colonizable and rng.random() < 0.4:
-                    traits.append(rng.choice(traits_pool))
-                planet = Planet(
-                    id=planet_id,
-                    name=planet_name,
-                    type=p_type,
-                    colonizable=colonizable,
-                    habitability=round(rng.uniform(0.2, 0.9), 2),
-                    gravity=round(rng.uniform(0.6, 1.4), 2),
-                    traits=traits,
-                )
-                planets.append(planet)
+            generated = generator.generate_system(sys_id, name, rng, use_known=sys_id in known_system_ids)
+            stars = generated.stars or [{"name": name, "spectral": "G"}]
+            planets = [
+                Planet.from_dict(p) if isinstance(p, dict) else p
+                for p in generated.planets
+            ]
 
             system = StarSystem(
                 id=sys_id,
@@ -210,6 +198,7 @@ class GalaxyMap:
                 discovered=False,
                 surveyed=False,
                 tier=tier,
+                stars=stars,
                 planets=planets,
                 gate_connections=gate_connections,
                 gate_active=True,

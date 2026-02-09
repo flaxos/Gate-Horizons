@@ -48,27 +48,30 @@ Gate Horizons is a canon-owned setting for hard-sci strategy, narrative, and vis
 ### Demo Slice Scope
 - 12 star systems connected by jump gates
 - 4 ship types (Scout, Freighter, Miner, Corvette)
-- 5 resources (Energy, Metals, Exotics, Credits, Intel)
+- 5 global resources (Energy, Metals, Exotics, Credits, Intel) + POP as a logistics commodity
 - Colony management with 8 infrastructure types (housing, industry, defense, research, spaceport, power, mining, logistics)
 - Colony levels (Outpost -> Settlement -> Colony -> Hub City)
 - Abstracted logistics network with latency-based trade routes
 - Per-colony stockpiles with storage caps
-- Colony founding (tech-gated) and upgrade mechanics
+- Colony founding (tech + POP required) and upgrade mechanics
 - World traits (Hub, Frontier, Mineral Rich, Volatile)
 - Shortage penalties and stability system
 - Auto-resolve combat with probability display
 - 100+ pre-generated exploration events
 - Tech tree with 24 unlocks (including Colonisation, Logistics I/II/III)
-- Save/Load via SQLite
+- Save/Load via SQLite (schema versioned migrations)
 - Full turn processing loop with deterministic 5-phase resolution
 
 ### Architecture
 ```
 MVC Pattern:
-  game/    → Model + Controller (pure Python, no Kivy imports)
-  ui/      → View (Kivy screens and widgets)
-  data/    → Static game content (JSON)
-  assets/  → Art and sound (placeholder → AI-generated)
+  game/        → Model + Controller (pure Python, no Kivy imports)
+  astro/       → Known systems + procedural system generator
+  sim/         → Population simulation + balance constants
+  persistence/ → Save/load migrations and helpers
+  ui/          → View (Kivy screens and widgets)
+  data/        → Static game content (JSON)
+  assets/      → Art and sound (placeholder → AI-generated)
 ```
 
 ## Two-layer Design (Meta vs Tactical)
@@ -114,6 +117,7 @@ Canon stability beats novelty. See `docs/CANON.md`, `docs/DRIFT_GUARDRAILS.md`, 
 - **Trade Routes**: Abstract links between colonies with `capacity_per_turn`, `latency_turns`, and `risk_factor`
 - **In-Transit Queue**: Shipped goods take N turns to arrive (simulating distance)
 - **Shortages**: If a colony can't cover its consumption, stability drops and growth halts
+- **Population**: POP units are a shippable commodity, governed by per-colony retain/export policies
 
 ### Turn Resolution Order (Deterministic)
 1. **Apply arrivals** from in-transit queue -> add to colony stockpiles
@@ -141,13 +145,14 @@ test suite for the logistics system.
 ### What is Implemented vs Future
 **Implemented now**: Colony levels, stockpiles, storage caps, trade routes with
 latency/capacity, shortage penalties, stability system, world traits (hub/frontier),
-tech-gated colonisation, logistics infrastructure, tactical hex combat MVP, diplomacy
-relations, encounter branching, 24-tech research tree, physical freighter routes,
-shipyard production, procedural galaxy generation (seeded), 100+ exploration events,
-gravity well system map, intra-system movement (no turn cost), zoom-threshold auto-level
-switching, mini-map overlay, trade flow visualisation on the galaxy map, turn report
-summary screen, planet comparison view, fog of war visualization on the system map,
-deterministic test saves, and full headless test suite.
+population indices + POP shipments, tech-gated colonisation, logistics infrastructure,
+tactical hex combat MVP, diplomacy relations, encounter branching, 24-tech research tree,
+physical freighter routes, shipyard production, Sol known-system fixture, procedural
+galaxy/system generation (seeded), 100+ exploration events, gravity well system map,
+intra-system movement (no turn cost), zoom-threshold auto-level switching, mini-map
+overlay, trade flow visualisation on the galaxy map, turn report summary screen, planet
+comparison view, fog of war visualization on the system map, deterministic test saves,
+and full headless test suite.
 
 **Future (not implemented)**: Mini-map with sphere-of-influence overlay, piracy/trade
 disruption events, diplomacy-based trade agreements.

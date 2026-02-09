@@ -61,6 +61,8 @@ class ColonizeConfirmPopup(Popup):
         cost=None,
         starter_cargo=None,
         missing_cargo=None,
+        colonist_requirement: int = 0,
+        missing_colonists: int = 0,
         can_afford=True,
         can_confirm=True,
         reason_text=None,
@@ -71,6 +73,8 @@ class ColonizeConfirmPopup(Popup):
         cost = cost or {}
         starter_cargo = starter_cargo or {}
         missing_cargo = missing_cargo or {}
+        colonist_requirement = int(colonist_requirement or 0)
+        missing_colonists = int(missing_colonists or 0)
 
         content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
 
@@ -102,10 +106,28 @@ class ColonizeConfirmPopup(Popup):
                 height=dp(22),
             ))
 
+        if colonist_requirement:
+            content.add_widget(Label(
+                text=f"Colonists required: {colonist_requirement} POP",
+                font_size="11sp",
+                color=(0.7, 0.85, 1, 0.85),
+                size_hint_y=None,
+                height=dp(22),
+            ))
+
         if missing_cargo:
             missing_text = ", ".join(f"{v} {k}" for k, v in missing_cargo.items())
             content.add_widget(Label(
                 text=f"Missing cargo: {missing_text}",
+                font_size="11sp",
+                color=(1, 0.4, 0.3, 1),
+                size_hint_y=None,
+                height=dp(22),
+            ))
+
+        if missing_colonists:
+            content.add_widget(Label(
+                text=f"Missing colonists: {missing_colonists} POP",
                 font_size="11sp",
                 color=(1, 0.4, 0.3, 1),
                 size_hint_y=None,
@@ -130,13 +152,14 @@ class ColonizeConfirmPopup(Popup):
                 height=dp(22),
             ))
 
-        content.add_widget(Label(
-            text="A new colony starts with 50 population.",
-            font_size="11sp",
-            color=(0.5, 0.7, 0.9, 0.8),
-            size_hint_y=None,
-            height=dp(22),
-        ))
+        if colonist_requirement:
+            content.add_widget(Label(
+                text=f"A new colony starts with {colonist_requirement} POP.",
+                font_size="11sp",
+                color=(0.5, 0.7, 0.9, 0.8),
+                size_hint_y=None,
+                height=dp(22),
+            ))
 
         btn_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(44), spacing=dp(8))
 
@@ -696,13 +719,16 @@ class SystemViewScreen(Screen):
             resources=self.game_state.resources,
         )
         can_afford = self.game_state.resources.can_afford(cost)
+        colonist_requirement = self.game_state.colonies.get_colonist_requirement()
         missing_cargo = {}
+        missing_colonists = 0
         if colony_ship:
             missing_cargo = {
                 resource: amount - colony_ship.cargo.get(resource, 0)
                 for resource, amount in starter_cargo.items()
                 if colony_ship.cargo.get(resource, 0) < amount
             }
+            missing_colonists = max(0, colonist_requirement - colony_ship.cargo.get("pop", 0))
         reason_text = None
         if not can_found:
             reason_text = reason
@@ -710,13 +736,17 @@ class SystemViewScreen(Screen):
             reason_text = "Insufficient resources"
         elif missing_cargo:
             reason_text = f"Missing starter cargo: {missing_cargo}"
-        can_confirm = can_found and can_afford and not missing_cargo
+        elif missing_colonists:
+            reason_text = f"Missing colonists: {missing_colonists} POP"
+        can_confirm = can_found and can_afford and not missing_cargo and not missing_colonists
 
         popup = ColonizeConfirmPopup(
             planet_name=btn.planet_name,
             cost=cost,
             starter_cargo=starter_cargo,
             missing_cargo=missing_cargo,
+            colonist_requirement=colonist_requirement,
+            missing_colonists=missing_colonists,
             can_afford=can_afford,
             can_confirm=can_confirm,
             reason_text=reason_text,

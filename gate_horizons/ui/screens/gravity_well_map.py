@@ -48,6 +48,7 @@ BODY_TYPE_COLORS = {
     "garden": (0.3, 0.7, 0.3, 1),
     "artificial": (0.4, 0.9, 0.9, 1),
     "asteroid_belt": (0.55, 0.45, 0.35, 1),
+    "moon": (0.7, 0.7, 0.8, 1),
 }
 
 SPECTRAL_COLORS = {

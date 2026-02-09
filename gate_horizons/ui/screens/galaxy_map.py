@@ -1042,6 +1042,12 @@ class GalaxyMapScreen(Screen):
         elif action.name == "Load Cargo":
             self.game_state.load_ship_cargo_from_colony(ship_id)
             self.refresh()
+        elif action.name == "Load Colonists":
+            self.game_state.load_colonists_to_ship(ship_id)
+            self.refresh()
+        elif action.name == "Unload Colonists":
+            self.game_state.unload_colonists_to_colony(ship_id)
+            self.refresh()
         elif action.name == "Emergency Jettison":
             ship.cargo.clear()
             self.refresh()

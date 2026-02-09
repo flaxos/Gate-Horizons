@@ -2,6 +2,7 @@
 
 Colonies are abstracted settlements on worlds. Each colony tracks:
 - Level (0=Outpost, 1=Settlement, 2=Colony, 3=Hub City)
+- Population units with health/education/pollution indices
 - Local stockpiles with storage caps
 - Stability (affected by shortages, overcrowding, traits)
 - Infrastructure slots with per-type effects
@@ -14,6 +15,14 @@ as abstracted per-turn quantities through the logistics network.
 """
 
 from typing import Optional
+
+from gate_horizons.sim.population import PopulationSimulator
+from gate_horizons.sim.balance_constants import (
+    POP_RETAIN_PERCENT_DEFAULT,
+    POP_EXPORT_CAP_DEFAULT,
+    POP_POLICY_PRIORITY_MULTIPLIERS,
+    POPULATION_DEFAULT_BY_LEVEL,
+)
 
 from .production import (
     ExtractionSite,
@@ -100,6 +109,9 @@ FOUNDING_COST = {"credits": 80, "metals": 50, "energy": 20}
 # Starter cargo required on the colony ship to establish a new outpost
 COLONY_STARTER_CARGO = {"energy": 15, "metals": 20, "credits": 30}
 
+# Colonist requirement for founding a new colony
+COLONY_COLONIST_REQUIREMENT = 50
+
 # World trait modifiers
 WORLD_TRAIT_MODIFIERS = {
     "hub": {
@@ -107,12 +119,14 @@ WORLD_TRAIT_MODIFIERS = {
         "storage_bonus": 50,         # +50 to all storage caps
         "research_penalty": -1,      # -1 to research output
         "stability_bonus": 5,        # +5 base stability
+        "capacity_bonus": 150,       # +150 to carrying capacity
     },
     "frontier": {
         "exotics_chance": 0.3,       # 30% chance of bonus exotics per turn
         "stability_penalty": -10,    # -10 base stability
         "capacity_penalty": -20,     # -20 to all storage caps
         "exotics_bonus": 2,          # +2 exotics output when triggered
+        "capacity_bonus": -80,       # -80 to carrying capacity
     },
     "mineral_rich": {
         "metals_bonus": 3,           # +3 metals per turn
@@ -125,18 +139,27 @@ WORLD_TRAIT_MODIFIERS = {
 
 
 class Colony:
+    HOUSING_BASE_CAP = HOUSING_BASE_CAP
+    HOUSING_PER_LEVEL = HOUSING_PER_LEVEL
+    WORLD_TRAIT_MODIFIERS = WORLD_TRAIT_MODIFIERS
+
     def __init__(
         self,
         system_id: str,
         planet_id: str,
         name: str = "New Colony",
         population: int = 100,
+        population_units: Optional[int] = None,
         happiness: int = 70,
         infrastructure: dict = None,
         build_queue: list = None,
         shipyard_queue: list = None,
         level: int = 0,
         stability: int = 60,
+        health_index: int = 60,
+        education_index: int = 50,
+        pollution_index: int = 15,
+        population_policy: dict = None,
         stockpiles: dict = None,
         owner_faction: str = "player",
         upgrade_progress: int = 0,
@@ -152,7 +175,9 @@ class Colony:
         self.system_id = system_id
         self.planet_id = planet_id
         self.name = name
-        self.population = population
+        self._population_units = int(
+            population_units if population_units is not None else population
+        )
         self.happiness = happiness
         self.infrastructure = infrastructure or {
             k: dict(v) for k, v in DEFAULT_INFRASTRUCTURE.items()
@@ -161,6 +186,14 @@ class Colony:
         self.shipyard_queue = shipyard_queue or []
         self.level = level
         self.stability = stability
+        self.health_index = int(health_index)
+        self.education_index = int(education_index)
+        self.pollution_index = int(pollution_index)
+        self.population_policy = population_policy or {
+            "retain_percent": POP_RETAIN_PERCENT_DEFAULT,
+            "export_cap_per_turn": POP_EXPORT_CAP_DEFAULT,
+            "priority": "balanced",
+        }
         self.stockpiles = stockpiles or {
             "energy": 0, "metals": 0, "exotics": 0, "credits": 0, "intel": 0,
         }
@@ -174,6 +207,61 @@ class Colony:
         self.factories = factories or []
         self.resource_ledger = list(resource_ledger or [])
         self.last_bottlenecks = list(last_bottlenecks or [])
+        self.last_population_report = {
+            "births": 0,
+            "deaths": 0,
+            "net_change": 0,
+            "net_migration": 0,
+        }
+        self.pending_population_migration = 0
+
+    @property
+    def population(self) -> int:
+        return self._population_units
+
+    @population.setter
+    def population(self, value: int) -> None:
+        self._population_units = max(0, int(value))
+
+    @property
+    def population_units(self) -> int:
+        return self._population_units
+
+    def get_carrying_capacity(self, tech_effects: dict | None = None) -> int:
+        return PopulationSimulator.compute_carrying_capacity(self, tech_effects=tech_effects)
+
+    def get_population_policy(self) -> dict:
+        policy = dict(self.population_policy or {})
+        policy.setdefault("retain_percent", POP_RETAIN_PERCENT_DEFAULT)
+        policy.setdefault("export_cap_per_turn", POP_EXPORT_CAP_DEFAULT)
+        policy.setdefault("priority", "balanced")
+        return policy
+
+    def get_population_export_available(self, requested: int) -> int:
+        policy = self.get_population_policy()
+        retain_percent = max(0.0, min(1.0, float(policy.get("retain_percent", 0.0))))
+        retain_floor = int(self.population_units * retain_percent)
+        exportable = max(0, self.population_units - retain_floor)
+
+        cap = int(policy.get("export_cap_per_turn", 0) or 0)
+        priority = str(policy.get("priority", "balanced")).lower()
+        multiplier = POP_POLICY_PRIORITY_MULTIPLIERS.get(priority, 1.0)
+        if cap > 0:
+            cap = int(cap * multiplier)
+            exportable = min(exportable, cap)
+
+        if requested <= 0:
+            return exportable
+        return min(exportable, requested)
+
+    def add_population_units(self, amount: int, tech_effects: dict | None = None) -> int:
+        if amount <= 0:
+            return 0
+        capacity = self.get_carrying_capacity(tech_effects=tech_effects)
+        available = max(0, capacity - self.population_units)
+        added = min(amount, available) if capacity else amount
+        self.population = self.population_units + added
+        return added
 
     def get_tier(self) -> int:
         """Map colony level to world tier for backward compatibility."""
@@ -443,7 +531,7 @@ class Colony:
 
         return cap
 
-    def process_turn(self, build_time_reduction: int = 0) -> dict:
+    def process_turn(self, build_time_reduction: int = 0, tech_effects: dict | None = None) -> dict:
         """Process one turn for this colony. Returns summary of changes.
 
         Note: This handles construction, shipyard, population, and happiness.
@@ -454,9 +542,16 @@ class Colony:
             "construction_completed": [],
             "ships_completed": [],
             "population_growth": 0,
+            "population_births": 0,
+            "population_deaths": 0,
+            "population_migration": 0,
+            "population_net": 0,
             "happiness_change": 0,
             "tier_change": None,
             "stability": self.stability,
+            "health_index": self.health_index,
+            "education_index": self.education_index,
+            "pollution_index": self.pollution_index,
         }
 
         old_tier = self.get_tier()
@@ -492,23 +587,26 @@ class Colony:
                 })
                 self.shipyard_queue.remove(item)
 
-        # Population growth (halted if in shortage)
-        if self.shortage_turns == 0:
-            housing_level = self.infrastructure.get("housing", {}).get("level", 0)
-            housing_cap = HOUSING_BASE_CAP + housing_level * HOUSING_PER_LEVEL
-            if self.population < housing_cap:
-                growth_rate = 0.05
-                if self.stability >= 80:
-                    growth_rate += 0.02
-                elif self.stability < 40:
-                    growth_rate -= 0.03
-                # Outpost penalty: slower growth
-                if self.level == 0:
-                    growth_rate *= 0.5
-                growth = max(1, int(self.population * growth_rate))
-                growth = min(growth, housing_cap - self.population)
-                self.population += growth
-                report["population_growth"] = growth
+        # Population dynamics
+        PopulationSimulator.update_indices(self, tech_effects=tech_effects)
+        result = PopulationSimulator.simulate_turn(self, tech_effects=tech_effects)
+        net_migration = self.pending_population_migration
+        net_growth = result.net_change + net_migration
+        if net_growth != 0:
+            self.population = max(0, self.population_units + net_growth)
+
+        report["population_births"] = result.births
+        report["population_deaths"] = result.deaths
+        report["population_migration"] = net_migration
+        report["population_net"] = net_growth
+        report["population_growth"] = net_growth
+        self.last_population_report = {
+            "births": result.births,
+            "deaths": result.deaths,
+            "net_change": result.net_change,
+            "net_migration": net_migration,
+        }
+        self.pending_population_migration = 0
 
         # Happiness adjustments (now tracks stability more closely)
         housing_level = self.infrastructure.get("housing", {}).get("level", 0)
@@ -544,6 +642,7 @@ class Colony:
             "planet_id": self.planet_id,
             "name": self.name,
             "population": self.population,
+            "population_units": self.population_units,
             "happiness": self.happiness,
             "infrastructure": {
                 k: dict(v) for k, v in self.infrastructure.items()
@@ -552,6 +651,10 @@ class Colony:
             "shipyard_queue": [dict(item) for item in self.shipyard_queue],
             "level": self.level,
             "stability": self.stability,
+            "health_index": self.health_index,
+            "education_index": self.education_index,
+            "pollution_index": self.pollution_index,
+            "population_policy": dict(self.population_policy),
             "stockpiles": dict(self.stockpiles),
             "owner_faction": self.owner_faction,
             "upgrade_progress": self.upgrade_progress,
@@ -593,17 +696,29 @@ class Colony:
             Factory.from_dict(f) for f in data.get("factories", [])
         ]
 
+        population_value = data.get("population_units")
+        if population_value is None:
+            population_value = data.get("population")
+        if population_value is None:
+            level = int(data.get("level", 0))
+            population_value = POPULATION_DEFAULT_BY_LEVEL.get(level, 100)
+
         return cls(
             system_id=data.get("system_id", ""),
             planet_id=data.get("planet_id", ""),
             name=data.get("name", "New Colony"),
-            population=data.get("population", 100),
+            population=int(population_value),
+            population_units=int(population_value),
             happiness=data.get("happiness", 70),
             infrastructure=infrastructure,
             build_queue=list(data.get("build_queue", [])),
             shipyard_queue=[dict(item) for item in data.get("shipyard_queue", [])],
             level=data.get("level", 0),
             stability=data.get("stability", 60),
+            health_index=data.get("health_index", 60),
+            education_index=data.get("education_index", 50),
+            pollution_index=data.get("pollution_index", 15),
+            population_policy=data.get("population_policy"),
             stockpiles=data.get("stockpiles", {
                 "energy": 0, "metals": 0, "exotics": 0, "credits": 0, "intel": 0,
             }),
@@ -679,6 +794,10 @@ class ColonyManager:
         if "establish_colony" not in colony_ship.stats.abilities:
             return False, "Ship lacks establish_colony capability"
 
+        colonists_required = self.get_colonist_requirement()
+        if colony_ship.cargo.get("pop", 0) < colonists_required:
+            return False, f"Requires {colonists_required} POP in colony ship cargo"
+
         # Check colonisation tech
         if researched_techs is None or "colonisation" not in researched_techs:
             return False, "Colonisation technology required"
@@ -713,6 +832,10 @@ class ColonyManager:
         """Get the starter cargo required to establish a colony."""
         return dict(COLONY_STARTER_CARGO)
 
+    def get_colonist_requirement(self) -> int:
+        """Get the POP units required to establish a colony."""
+        return int(COLONY_COLONIST_REQUIREMENT)
+
     def abandon_colony(self, system_id: str) -> bool:
         if system_id in self.colonies:
             del self.colonies[system_id]
@@ -735,10 +858,13 @@ class ColonyManager:
                 total[r] = total.get(r, 0) + amount
         return total
 
-    def process_all_turns(self, build_time_reduction: int = 0) -> list:
+    def process_all_turns(self, build_time_reduction: int = 0, tech_effects: dict | None = None) -> list:
         reports = []
         for system_id, colony in self.colonies.items():
-            report = colony.process_turn(build_time_reduction=build_time_reduction)
+            report = colony.process_turn(
+                build_time_reduction=build_time_reduction,
+                tech_effects=tech_effects,
+            )
             report["system_id"] = system_id
             report["colony_name"] = colony.name
             reports.append(report)

@@ -1,9 +1,12 @@
+import json
 import os
+import sqlite3
 import tempfile
 import unittest
 
 from gate_horizons.game.save_load import SaveManager
 from gate_horizons.game.state import GameState
+from gate_horizons.sim.balance_constants import POPULATION_DEFAULT_BY_LEVEL
 
 
 class TestSaveManagerSQLite(unittest.TestCase):
@@ -63,6 +66,47 @@ class TestSaveManagerSQLite(unittest.TestCase):
             loaded = manager.load_by_name("slot-1", GameState)
             self.assertIsNotNone(loaded)
             self.assertEqual(loaded.turn_number, state.turn_number)
+        finally:
+            temp_dir.cleanup()
+
+    def test_migrate_old_save_schema_and_population_defaults(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        try:
+            db_path = os.path.join(temp_dir.name, "saves", "legacy.db")
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+            legacy_state = GameState.new_game()
+            payload = legacy_state.to_dict()
+            payload["schema_version"] = 10
+            for colony in payload.get("colonies", {}).get("colonies", {}).values():
+                colony.pop("population_units", None)
+                colony["population"] = 50
+
+            with sqlite3.connect(db_path) as conn:
+                conn.execute(
+                    """
+                    CREATE TABLE saves (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        save_name TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        turn_number INTEGER NOT NULL,
+                        game_data TEXT NOT NULL,
+                        thumbnail_data TEXT
+                    )
+                    """
+                )
+                conn.execute(
+                    "INSERT INTO saves (save_name, timestamp, turn_number, game_data) VALUES (?, ?, ?, ?)",
+                    ("legacy", "now", payload.get("turn_number", 0), json.dumps(payload)),
+                )
+                conn.commit()
+
+            manager = SaveManager(db_path)
+            loaded = manager.load_by_name("legacy", GameState)
+            self.assertIsNotNone(loaded)
+            for colony in loaded.colonies.colonies.values():
+                default_pop = POPULATION_DEFAULT_BY_LEVEL.get(colony.level, 100)
+                self.assertGreaterEqual(colony.population_units, default_pop)
         finally:
             temp_dir.cleanup()
 

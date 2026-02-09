@@ -115,7 +115,7 @@ Ships are your primary agency in the world. Each has capabilities that determine
 - **Crew Morale** — Affects efficiency, can cause mutiny at very low levels
 - **Maintenance Cost** — Per-turn upkeep in credits
 
-### 4.3 Resource System (Demo Slice — 5 resources)
+### 4.3 Resource System (Demo Slice — 5 global resources + POP)
 | Resource | Source | Used For |
 |----------|--------|----------|
 | **Energy** | Solar/fusion at colonies, fuel depots | Gate activation, ship fuel, manufacturing |
@@ -123,12 +123,14 @@ Ships are your primary agency in the world. Each has capabilities that determine
 | **Exotics** | Rare deposits, alien trade, anomalies | Gate repair, advanced tech research |
 | **Credits** | Trade, taxation of colonies | Ship maintenance, diplomacy, recruitment |
 | **Intel** | Scout missions, probes, signal intercepts | Tech tree unlocks, map reveals, diplomatic advantage |
+| **POP** | Colony population surplus | Colonisation, population transfer via trade |
 
 ### 4.4 Colony Management
-- **Infrastructure Categories:** Housing, Industry, Defense, Research, Spaceport
+- **Infrastructure Categories:** Housing, Industry, Defense, Research, Spaceport, Power, Mining, Logistics
 - **Each has 5 levels** (0-4); Level 2 world needs most at level 2+; Level 1 needs all at 3+
-- **Population:** Grows naturally, can be transported; workers assigned to infrastructure
-- **Happiness:** Affected by defense level, trade goods availability, overcrowding
+- **Population:** `population_units` with health/education/pollution indices and derived carrying capacity
+- **Policies:** POP retain %, export caps, and priority (keep/balanced/export-heavy)
+- **Happiness/Stability:** Affected by shortages, overcrowding, and infrastructure
 - **Production Queues:** Queue buildings, ships, improvements per colony
 
 ### 4.5 Trade Routes
@@ -235,6 +237,14 @@ gate_horizons/
 │   ├── events.py               # Event engine — selection, resolution
 │   ├── turn.py                 # Turn processing — tick all systems
 │   └── save_load.py            # SQLite save/load
+├── astro/                      # Known systems + procedural system generation
+│   ├── known_systems.py
+│   └── system_generator.py
+├── sim/                        # Simulation helpers + balance constants
+│   ├── population.py
+│   └── balance_constants.py
+├── persistence/                # Save/load migrations
+│   └── sqlite_migrations.py
 │
 ├── ui/                         # Kivy UI (View layer)
 │   ├── __init__.py
@@ -260,6 +270,9 @@ gate_horizons/
 ├── data/                       # Static game data (JSON)
 │   ├── galaxy_templates/       # Pre-built galaxy layouts
 │   │   └── demo_galaxy.json    # 12-system demo map
+│   ├── astronomy/              # Known system fixtures
+│   │   └── known_systems/
+│   │       └── Sol.json
 │   ├── ships.json              # Ship class definitions
 │   ├── tech_tree.json          # Tech tree structure
 │   ├── resources.json          # Resource definitions
@@ -295,7 +308,7 @@ gate_horizons/
 
 ### What's Playable
 - **12-system star map** connected by gates (pre-designed layout)
-- **Sol system** as starting point with the dormant gate
+- **Sol system** as starting point with real planets, key moons, and asteroid belt
 - **4 ship types** buildable and commandable
 - **5 resources** tracked with production/consumption
 - **Contextual menus** on ships and systems

@@ -14,6 +14,7 @@ from .galaxy import GalaxyMap
 from .ships import FleetManager
 from .resources import ResourceManager, RESOURCE_TYPES
 from .colonies import ColonyManager, Colony, FOUNDING_COST, COLONY_UPGRADE_COSTS
+from gate_horizons.sim.balance_constants import POPULATION_DEFAULT_BY_LEVEL
 from .trade import TradeManager, TradeRoute
 from .combat import CombatResolver, EncounterData
 from .diplomacy import DiplomacyManager
@@ -27,7 +28,7 @@ from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 10
+CURRENT_SCHEMA_VERSION = 11
 
 
 # Default data paths (relative to gate_horizons package)
@@ -829,6 +830,13 @@ class GameState:
         missing_starter = self.get_missing_starter_cargo(ship)
         if missing_starter:
             return False, f"Colony ship lacks starter cargo: {missing_starter}"
+        missing_colonists = self.get_missing_colonists(ship)
+        if missing_colonists > 0:
+            return False, f"Colony ship lacks colonists: {missing_colonists} POP required"
+
+        missing_colonists = self.get_missing_colonists(ship)
+        if missing_colonists > 0:
+            return False, f"Colony ship lacks colonists: {missing_colonists} POP required"
 
         return True, "OK"
 
@@ -839,6 +847,10 @@ class GameState:
             for resource, amount in starter_cargo.items()
             if ship.cargo.get(resource, 0) < amount
         }
+
+    def get_missing_colonists(self, ship) -> int:
+        required = self.colonies.get_colonist_requirement()
+        return max(0, required - ship.cargo.get("pop", 0))
 
     def _handle_scan_system(self, ship, params: dict) -> tuple[bool, str, dict]:
         system = self.galaxy.systems.get(ship.location)
@@ -1198,11 +1210,12 @@ class GameState:
 
         colony_name = name or (planet.name if planet else f"Colony at {system_id}")
 
+        colonists_required = self.colonies.get_colonist_requirement()
         colony = self.colonies.establish_colony(
             system_id=system_id,
             planet_id=planet_id,
             name=colony_name,
-            initial_pop=50,  # Outposts start small
+            initial_pop=colonists_required,  # Colonists delivered on founding
             level=0,  # Outpost
             world_traits=world_traits,
         )
@@ -1210,6 +1223,7 @@ class GameState:
         for resource, amount in starter_cargo.items():
             ship.remove_cargo(resource, amount)
             colony.stockpiles[resource] = colony.stockpiles.get(resource, 0) + amount
+        ship.remove_cargo("pop", colonists_required)
 
         # Auto-generate extraction sites based on planet body type
         if planet:
@@ -1317,6 +1331,47 @@ class GameState:
             loaded[res] = loaded.get(res, 0) + spent
             remaining_capacity -= spent
         return loaded
+
+    def load_colonists_to_ship(self, ship_id: str, amount: Optional[int] = None) -> dict:
+        """Load POP units from a colony into a ship's cargo."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return {}
+
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return {}
+
+        request = amount if amount is not None else 0
+        available = colony.get_population_export_available(request)
+        loadable = available if request <= 0 else min(available, request)
+        loadable = min(loadable, ship.cargo_free)
+        if loadable <= 0:
+            return {}
+
+        colony.population = colony.population_units - loadable
+        colony.pending_population_migration -= loadable
+        ship.add_cargo("pop", loadable)
+        return {"pop": loadable}
+
+    def unload_colonists_to_colony(self, ship_id: str) -> dict:
+        """Unload POP units from a ship into the local colony."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return {}
+
+        colony = self.colonies.colonies.get(ship.location)
+        if not colony:
+            return {}
+
+        on_ship = ship.cargo.get("pop", 0)
+        if on_ship <= 0:
+            return {}
+
+        added = colony.add_population_units(on_ship)
+        ship.remove_cargo("pop", added)
+        colony.pending_population_migration += added
+        return {"pop": added}
 
     def unload_ship_cargo_to_colony(self, ship_id: str) -> dict:
         """Unload ship cargo into local colony resources."""
@@ -1733,6 +1788,11 @@ class GameState:
         state.fleet = FleetManager.from_dict(data.get("fleet", {}))
         state.resources = ResourceManager.from_dict(data.get("resources", {}))
         state.colonies = ColonyManager.from_dict(data.get("colonies", {}))
+        if schema_version < 11:
+            for colony in state.colonies.colonies.values():
+                default_pop = POPULATION_DEFAULT_BY_LEVEL.get(colony.level, 100)
+                if colony.population_units < default_pop:
+                    colony.population = default_pop
         state.trade = TradeManager.from_dict(data.get("trade", {}))
         state.combat = CombatResolver.from_dict(data.get("combat", {}))
         state.events = EventEngine.from_dict(

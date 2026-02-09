@@ -839,6 +839,7 @@ class TurnProcessor:
 
             colony_reports = game_state.colonies.process_all_turns(
                 build_time_reduction=build_time_reduction,
+                tech_effects=tech_effects,
             )
             report.colony_reports = colony_reports
 

@@ -310,6 +310,8 @@ class LogisticsManager:
         actions = []
         available = 0
 
+        if resource_id == "pop" and colony:
+            available = colony.get_population_export_available(rule.amount or 0)
         # Check production inventory first
         if resource_id in prod_inv:
             available = prod_inv.get(resource_id, 0)
@@ -334,7 +336,10 @@ class LogisticsManager:
             return actions
 
         # Deduct from source
-        if resource_id in prod_inv and prod_inv.get(resource_id, 0) >= loadable:
+        if resource_id == "pop" and colony:
+            colony.population = colony.population_units - loadable
+            colony.pending_population_migration -= loadable
+        elif resource_id in prod_inv and prod_inv.get(resource_id, 0) >= loadable:
             prod_inv[resource_id] -= loadable
         elif colony and resource_id in colony.stockpiles:
             colony.stockpiles[resource_id] = max(
@@ -375,7 +380,11 @@ class LogisticsManager:
         ship.remove_cargo(resource_id, unloadable)
 
         # Add to production inventory or colony stockpile
-        if resource_id in prod_inv or resource_id not in (colony.stockpiles if colony else {}):
+        if resource_id == "pop" and colony:
+            added = colony.add_population_units(unloadable)
+            colony.pending_population_migration += added
+            unloadable = added
+        elif resource_id in prod_inv or resource_id not in (colony.stockpiles if colony else {}):
             prod_inv[resource_id] = prod_inv.get(resource_id, 0) + unloadable
         elif colony:
             colony.stockpiles[resource_id] = colony.stockpiles.get(resource_id, 0) + unloadable
