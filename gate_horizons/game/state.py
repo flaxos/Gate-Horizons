@@ -469,6 +469,30 @@ class GameState:
         }
         return self.submit_encounter_result(result_spec)
 
+    def resolve_relation_action(self, faction_id: str, action: str) -> tuple[bool, str]:
+        """Resolve a diplomacy action directly from the relations screen."""
+        if not hasattr(self, "diplomacy"):
+            return False, "Diplomacy system unavailable."
+        if not faction_id:
+            return False, "No faction selected."
+        if faction_id not in self.diplomacy.relations:
+            return False, f"Unknown faction: {faction_id}"
+        outcome = self.diplomacy.resolve_action(faction_id, action)
+        affordability_message = self._validate_resource_delta_affordable(outcome.resource_delta)
+        if affordability_message:
+            return False, affordability_message
+        self._apply_resource_delta(outcome.resource_delta)
+        new_score = self.diplomacy.adjust_score(faction_id, outcome.relation_delta)
+        relation_summary = (
+            f"Relations {'+' if outcome.relation_delta >= 0 else ''}{outcome.relation_delta} "
+            f"(now {new_score})."
+        )
+        resource_summary = self._format_resource_delta(outcome.resource_delta)
+        message_parts = [outcome.summary, relation_summary]
+        if resource_summary:
+            message_parts.append(resource_summary)
+        return True, " ".join(message_parts)
+
     def _validate_resource_delta_affordable(self, delta: dict) -> str | None:
         shortfalls = []
         for resource, amount in (delta or {}).items():
@@ -482,6 +506,18 @@ class GameState:
             return None
         shortfall_list = ", ".join(shortfalls)
         return f"Insufficient resources for diplomacy outcome: {shortfall_list}"
+
+    @staticmethod
+    def _format_resource_delta(delta: dict) -> str:
+        parts = []
+        for resource, amount in (delta or {}).items():
+            if amount == 0:
+                continue
+            sign = "+" if amount > 0 else ""
+            parts.append(f"{resource} {sign}{amount}")
+        if not parts:
+            return ""
+        return f"Resources: {', '.join(parts)}."
 
     def resolve_evasion(self, encounter_id: str) -> tuple[bool, str]:
         """Resolve a pending encounter through evasion."""
