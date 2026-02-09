@@ -889,6 +889,10 @@ class GameState:
             "patrol": self._handle_patrol,
             "escort": self._handle_escort,
             "blockade": self._handle_blockade,
+            "intercept": self._handle_intercept,
+            "engage": self._handle_engage,
+            "retreat": self._handle_retreat,
+            "hail": self._handle_hail,
             "investigate anomaly": self._handle_investigate_anomaly,
             "establish colony": self._handle_establish_colony,
             "repair": self._handle_repair,
@@ -948,6 +952,19 @@ class GameState:
     def get_missing_colonists(self, ship) -> int:
         required = self.colonies.get_colonist_requirement()
         return max(0, required - ship.cargo.get("pop", 0))
+
+    def _find_pending_encounter(self, system_id: str) -> Optional[dict]:
+        for entry in self.pending_encounters:
+            if not isinstance(entry, dict):
+                continue
+            entry_system_id = entry.get("system_id")
+            if not entry_system_id:
+                spec = entry.get("spec") or {}
+                strategic = spec.get("strategicContext") or {}
+                entry_system_id = strategic.get("systemId") or ""
+            if entry_system_id == system_id:
+                return entry
+        return None
 
     def _handle_scan_system(self, ship, params: dict) -> tuple[bool, str, dict]:
         system = self.galaxy.systems.get(ship.location)
@@ -1039,6 +1056,84 @@ class GameState:
             "action": "Blockade",
             "system_id": ship.location,
             "summary": f"{ship.name} is blockading {ship.location}",
+        }
+
+    def _handle_intercept(self, ship, params: dict) -> tuple[bool, str, dict]:
+        pending = self._find_pending_encounter(ship.location)
+        if not pending:
+            return False, "No hostile contacts detected in this system", {}
+        encounter_id = pending.get("encounter_id", "")
+        ship.mission = "intercept"
+        ship.mission_target = encounter_id or None
+        summary = f"{ship.name} is intercepting hostiles in {ship.location}"
+        if encounter_id:
+            summary = f"{summary} (encounter {encounter_id})"
+        return True, "Intercept order acknowledged", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Intercept",
+            "system_id": ship.location,
+            "summary": summary,
+            "encounter_id": encounter_id,
+        }
+
+    def _handle_engage(self, ship, params: dict) -> tuple[bool, str, dict]:
+        pending = self._find_pending_encounter(ship.location)
+        if not pending:
+            return False, "No hostile contacts detected in this system", {}
+        encounter_id = pending.get("encounter_id", "")
+        ship.mission = "engage"
+        ship.mission_target = encounter_id or None
+        summary = f"{ship.name} is engaging hostiles in {ship.location}"
+        if encounter_id:
+            summary = f"{summary} (encounter {encounter_id})"
+        return True, "Engagement order acknowledged", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Engage",
+            "system_id": ship.location,
+            "summary": summary,
+            "encounter_id": encounter_id,
+        }
+
+    def _handle_retreat(self, ship, params: dict) -> tuple[bool, str, dict]:
+        pending = self._find_pending_encounter(ship.location)
+        if not pending:
+            return False, "No hostile contacts detected in this system", {}
+        encounter_id = pending.get("encounter_id", "")
+        ship.mission = "retreat"
+        ship.mission_target = encounter_id or None
+        summary = f"{ship.name} is retreating from hostiles in {ship.location}"
+        if encounter_id:
+            summary = f"{summary} (encounter {encounter_id})"
+        return True, "Retreat order acknowledged", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Retreat",
+            "system_id": ship.location,
+            "summary": summary,
+            "encounter_id": encounter_id,
+        }
+
+    def _handle_hail(self, ship, params: dict) -> tuple[bool, str, dict]:
+        pending = self._find_pending_encounter(ship.location)
+        if not pending:
+            return False, "No hostile contacts detected in this system", {}
+        encounter_id = pending.get("encounter_id", "")
+        defender = pending.get("defender", {}) or {}
+        faction = defender.get("faction_id") or defender.get("type") or "hostiles"
+        ship.mission = "hail"
+        ship.mission_target = encounter_id or None
+        summary = f"{ship.name} is hailing {faction} in {ship.location}"
+        if encounter_id:
+            summary = f"{summary} (encounter {encounter_id})"
+        return True, "Hail transmitted", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Hail",
+            "system_id": ship.location,
+            "summary": summary,
+            "encounter_id": encounter_id,
         }
 
     def _handle_investigate_anomaly(self, ship, params: dict) -> tuple[bool, str, dict]:

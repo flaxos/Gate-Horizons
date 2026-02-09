@@ -386,6 +386,7 @@ class FleetScreen(Screen):
             btn.ship_id,
             galaxy=self.game_state.galaxy,
             colonies=self.game_state.colonies,
+            game_state=self.game_state,
         )
 
         ship = self.game_state.fleet.ships.get(btn.ship_id)

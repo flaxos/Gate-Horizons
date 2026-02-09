@@ -1805,6 +1805,7 @@ class GravityWellScreen(Screen):
             ship_id,
             galaxy=self.game_state.galaxy,
             colonies=self.game_state.colonies,
+            game_state=self.game_state,
         )
         menu = ContextMenu(
             title_text=f"{ship.name} ({ship.ship_class})",

@@ -344,7 +344,30 @@ class FleetManager:
         ship.mining = False
         return True
 
-    def get_contextual_actions(self, ship_id: str, galaxy=None, colonies=None) -> list:
+    @staticmethod
+    def _pending_encounter_matches_system(entry: dict, system_id: str) -> bool:
+        if not isinstance(entry, dict) or not system_id:
+            return False
+        entry_system_id = entry.get("system_id")
+        if not entry_system_id:
+            spec = entry.get("spec") or {}
+            strategic = spec.get("strategicContext") or {}
+            entry_system_id = strategic.get("systemId") or ""
+        return entry_system_id == system_id
+
+    @staticmethod
+    def _system_has_threat_flags(system) -> bool:
+        if not system:
+            return False
+        threat_level = getattr(system, "threat_level", 0) or getattr(system, "threatLevel", 0)
+        return (
+            bool(getattr(system, "hostiles", False))
+            or bool(getattr(system, "hostile_presence", False))
+            or bool(getattr(system, "threats", False))
+            or threat_level > 0
+        )
+
+    def get_contextual_actions(self, ship_id: str, galaxy=None, colonies=None, game_state=None) -> list:
         """Return available actions based on ship class, location, and state."""
         ship = self.ships.get(ship_id)
         if not ship:
@@ -370,6 +393,15 @@ class FleetManager:
                     has_asteroids = True
                 if planet.resources.get("metals", 0) > 0 or planet.resources.get("exotics", 0) > 0:
                     has_asteroids = True
+            has_hostiles = self._system_has_threat_flags(location)
+
+        if game_state and not has_hostiles:
+            pending_encounters = getattr(game_state, "pending_encounters", None)
+            if pending_encounters:
+                has_hostiles = any(
+                    self._pending_encounter_matches_system(entry, ship.location)
+                    for entry in pending_encounters
+                )
 
         # Movement is always available
         actions.append(Action(

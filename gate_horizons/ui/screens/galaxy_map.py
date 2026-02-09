@@ -997,6 +997,7 @@ class GalaxyMapScreen(Screen):
             ship_id,
             galaxy=self.game_state.galaxy,
             colonies=self.game_state.colonies,
+            game_state=self.game_state,
         )
 
         menu = ContextMenu(
@@ -1025,6 +1026,10 @@ class GalaxyMapScreen(Screen):
             "Establish Colony",
             "Repair",
             "Refuel",
+            "Intercept",
+            "Engage",
+            "Retreat",
+            "Hail",
         }:
             params = {}
             if action.name == "Deploy Probe":
