@@ -14,6 +14,7 @@ This is NOT Factorio: no belt/item micromanagement. Resources flow
 as abstracted per-turn quantities through the logistics network.
 """
 
+import random
 from typing import Optional
 
 from gate_horizons.sim.population import PopulationSimulator
@@ -171,6 +172,7 @@ class Colony:
         factories: list = None,
         resource_ledger: list = None,
         last_bottlenecks: list = None,
+        trait_stability_applied: int | None = None,
     ):
         self.system_id = system_id
         self.planet_id = planet_id
@@ -214,6 +216,12 @@ class Colony:
             "net_migration": 0,
         }
         self.pending_population_migration = 0
+        self._trait_stability_applied = (
+            int(trait_stability_applied)
+            if trait_stability_applied is not None
+            else 0
+        )
+        self.last_trait_effects: dict = {}
 
     @property
     def population(self) -> int:
@@ -312,8 +320,28 @@ class Colony:
             if self.infrastructure.get(k, {}).get("level", 0) >= 1
         )
 
-    def calculate_production(self) -> dict:
+    def get_trait_stability_modifier(self) -> int:
+        total = 0
+        for trait in self.world_traits:
+            mods = WORLD_TRAIT_MODIFIERS.get(trait, {})
+            total += int(mods.get("stability_bonus", 0))
+            total += int(mods.get("stability_penalty", 0))
+        return total
+
+    def apply_world_trait_stability(self, report: dict | None = None) -> int:
+        target = self.get_trait_stability_modifier()
+        delta = target - self._trait_stability_applied
+        if delta:
+            self.stability = max(0, min(100, self.stability + delta))
+            self._trait_stability_applied = target
+            if report is not None:
+                report["stability_trait_adjustment"] = delta
+                report["stability"] = self.stability
+        return delta
+
+    def calculate_production(self, rng: random.Random | None = None) -> dict:
         """Calculate per-turn production based on infrastructure and traits."""
+        self.apply_world_trait_stability()
         production = {}
         industry_level = self.infrastructure.get("industry", {}).get("level", 0)
         research_level = self.infrastructure.get("research", {}).get("level", 0)
@@ -341,6 +369,8 @@ class Colony:
         # Spaceport generates credits
         production["credits"] = int((spaceport_level + 1) * 3 * pop_factor)
 
+        self.last_trait_effects = {}
+
         # World trait bonuses
         for trait in self.world_traits:
             mods = WORLD_TRAIT_MODIFIERS.get(trait, {})
@@ -350,6 +380,27 @@ class Colony:
                 production["energy"] += mods["energy_bonus"]
             if "research_penalty" in mods:
                 production["intel"] = max(0, production["intel"] + mods["research_penalty"])
+            chance = mods.get("exotics_chance", 0)
+            bonus = mods.get("exotics_bonus", 0)
+            if chance and bonus:
+                local_rng = rng
+                if local_rng is None:
+                    seed_source = f"{self.system_id}:{self.population_units}:{self.stability}"
+                    local_rng = random.Random(
+                        int.from_bytes(seed_source.encode("utf-8"), "little")
+                    )
+                triggered = local_rng.random() < float(chance)
+                self.last_trait_effects.setdefault("exotics_rolls", []).append({
+                    "trait": trait,
+                    "chance": float(chance),
+                    "bonus": int(bonus),
+                    "triggered": triggered,
+                })
+                if triggered:
+                    production["exotics"] = production.get("exotics", 0) + int(bonus)
+                    self.last_trait_effects["exotics_bonus"] = (
+                        self.last_trait_effects.get("exotics_bonus", 0) + int(bonus)
+                    )
 
         return production
 
@@ -555,6 +606,7 @@ class Colony:
         }
 
         old_tier = self.get_tier()
+        self.apply_world_trait_stability(report)
 
         # Advance construction
         for infra_type in INFRASTRUCTURE_TYPES:
@@ -665,6 +717,7 @@ class Colony:
             "factories": [f.to_dict() for f in self.factories],
             "resource_ledger": list(self.resource_ledger),
             "last_bottlenecks": list(self.last_bottlenecks),
+            "trait_stability_applied": self._trait_stability_applied,
         }
 
     @classmethod
@@ -731,6 +784,7 @@ class Colony:
             factories=factories,
             resource_ledger=list(data.get("resource_ledger", [])),
             last_bottlenecks=list(data.get("last_bottlenecks", [])),
+            trait_stability_applied=data.get("trait_stability_applied"),
         )
 
 

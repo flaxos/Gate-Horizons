@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Colony trait effects in production and stability
+
+### Goal
+Apply world trait modifiers for exotics production and stability adjustments during turn processing and reporting.
+
+### Steps
+1. Add trait-aware stability adjustments in colonies with persisted offsets and report hooks.
+2. Add exotics chance/bonus handling in colony production using deterministic RNG per turn.
+3. Surface trait-driven production/stability updates in turn reports where applicable.
+
 ## Encounter resolution branching + UI toggle
 
 ### Goal
