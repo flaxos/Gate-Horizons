@@ -1048,6 +1048,11 @@ class GalaxyMapScreen(Screen):
 
         if action.name in ("Move To", "Reroute"):
             self._show_destination_menu(ship_id)
+        elif action.name == "Reposition (Local)":
+            success, message = self.game_state.execute_local_move(ship_id, ship.location)
+            if not success:
+                self._show_notice(message)
+            self.refresh()
         elif action.name == "Continue":
             self.refresh()
         elif action.name in {
@@ -1076,7 +1081,7 @@ class GalaxyMapScreen(Screen):
             ship.mission = "mining"
             self.refresh()
         elif action.name == "Continue Mining":
-            pass  # Already mining
+            self._show_notice(f"{ship.name} continues mining in {ship.location}.")
         elif action.name == "Unload Cargo":
             self.game_state.unload_ship_cargo_to_colony(ship_id)
             self.refresh()
@@ -1275,6 +1280,8 @@ class GalaxyMapScreen(Screen):
         if result:
             self.refresh()
             self._show_system_panel(system_id)
+        else:
+            self._show_notice("Unable to activate gate. Check resources or gate status.")
 
     def _on_view_system(self, btn):
         from kivy.app import App

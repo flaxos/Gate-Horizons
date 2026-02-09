@@ -299,7 +299,8 @@ class GameState:
             else:
                 export_path = Path("exports/encounters")
                 export_path.mkdir(parents=True, exist_ok=True)
-                filepath = export_path / "EncounterSpec.json"
+                filename = f"EncounterSpec_{encounter_id}.json"
+                filepath = export_path / filename
                 filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
                 self.log.append(f"EncounterSpec exported to {filepath}")
                 report.combat_encounters.append(
@@ -352,6 +353,15 @@ class GameState:
         if not valid:
             return False, message
         result_spec = self._normalize_result_spec(result_spec)
+        loot_resources = {}
+        loot_spec = result_spec.get("loot") if isinstance(result_spec, dict) else None
+        if isinstance(loot_spec, dict):
+            loot_resources = loot_spec.get("resources") or {}
+        if loot_resources and hasattr(self, "colonies"):
+            self.resources.sync_from_colonies(self.colonies)
+        affordability_message = self._validate_resource_delta_affordable(loot_resources)
+        if affordability_message:
+            return False, affordability_message
         encounter_id = result_spec.get("encounterId") if isinstance(result_spec, dict) else None
         if not encounter_id:
             return False, "ResultSpec missing encounterId"
@@ -438,6 +448,8 @@ class GameState:
 
     def resolve_diplomacy_action(self, encounter_id: str, action: str) -> tuple[bool, str]:
         """Resolve a pending encounter through diplomacy."""
+        if not self._is_diplomacy_unlocked():
+            return False, "Diplomacy actions require Signal Decryption research."
         pending_index = next(
             (
                 index
@@ -473,6 +485,8 @@ class GameState:
         """Resolve a diplomacy action directly from the relations screen."""
         if not hasattr(self, "diplomacy"):
             return False, "Diplomacy system unavailable."
+        if not self._is_diplomacy_unlocked():
+            return False, "Diplomacy actions require Signal Decryption research."
         if not faction_id:
             return False, "No faction selected."
         if faction_id not in self.diplomacy.relations:
@@ -559,9 +573,19 @@ class GameState:
 
     def _get_encounter_branches(self, encounter: EncounterData) -> list[str]:
         branches = ["tactical", "evasion"]
-        if hasattr(self, "diplomacy") and encounter.faction_id in self.diplomacy.relations:
+        if (
+            hasattr(self, "diplomacy")
+            and encounter.faction_id in self.diplomacy.relations
+            and self._is_diplomacy_unlocked()
+        ):
             branches.append("diplomacy")
         return branches
+
+    def _is_diplomacy_unlocked(self) -> bool:
+        if not hasattr(self, "tech"):
+            return False
+        tech_effects = self.tech.get_effects()
+        return bool(tech_effects.get("unlock_diplomacy", False))
 
     def _apply_manual_combat_result(self, combat_result, attacker_ships: list) -> None:
         self._apply_resource_delta(combat_result.loot)
@@ -579,13 +603,30 @@ class GameState:
             self.fleet.destroy_ship(destroyed_id)
 
     def _apply_resource_delta(self, delta: dict) -> None:
+        if not delta:
+            return
+        colony = None
+        if hasattr(self, "colonies") and getattr(self.colonies, "colonies", None):
+            colony = next(iter(self.colonies.colonies.values()), None)
         for resource, amount in (delta or {}).items():
             if amount == 0:
                 continue
-            if amount > 0:
+            if resource in RESOURCE_TYPES and colony:
+                if amount > 0:
+                    caps = colony.get_storage_caps()
+                    current = colony.stockpiles.get(resource, 0)
+                    cap = caps.get(resource)
+                    added = amount if cap is None else min(amount, max(0, cap - current))
+                    if added > 0:
+                        colony.stockpiles[resource] = current + added
+                else:
+                    self.resources.spend_from_colonies(resource, abs(amount), self.colonies)
+            elif amount > 0:
                 self.resources.add(resource, amount)
             else:
                 self.resources.spend(resource, abs(amount))
+        if colony:
+            self.resources.sync_from_colonies(self.colonies)
 
     def _apply_encounter_outcome_effects(self, system_id: str, result_spec: dict) -> None:
         outcome = ""
@@ -600,6 +641,7 @@ class GameState:
             "failure": -2,
             "defeat": -3,
             "loss": -3,
+            "retreat": -2,
         }.get(outcome, 0)
         if stability_delta == 0:
             return
@@ -692,6 +734,8 @@ class GameState:
             return False, message
         export_path = Path(exports_dir)
         export_path.mkdir(parents=True, exist_ok=True)
+        if filename == "EncounterSpec.json":
+            filename = f"EncounterSpec_{encounter_id}.json"
         filepath = export_path / filename
         filepath.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         self.log.append(f"EncounterSpec exported to {filepath}")
@@ -1627,7 +1671,6 @@ class GameState:
             return {}
 
         colony.population = colony.population_units - loadable
-        colony.pending_population_migration -= loadable
         ship.add_cargo("pop", loadable)
         return {"pop": loadable}
 
@@ -1647,7 +1690,6 @@ class GameState:
 
         added = colony.add_population_units(on_ship)
         ship.remove_cargo("pop", added)
-        colony.pending_population_migration += added
         return {"pop": added}
 
     def unload_ship_cargo_to_colony(self, ship_id: str) -> dict:

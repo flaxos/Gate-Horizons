@@ -230,6 +230,7 @@ class EncounterScreen(Screen):
             background_color=(0.3, 0.2, 0.4, 0.9),
             color=(0.9, 0.85, 1, 1),
         )
+        import_btn.encounter_id = encounter_id
         import_btn.bind(on_release=self._import_result_spec)
         utility_row.add_widget(import_btn)
         utility_row.add_widget(Widget())
@@ -255,13 +256,17 @@ class EncounterScreen(Screen):
     def _start_diplomacy(self, btn):
         if not self.game_state:
             return
-        self.game_state.resolve_diplomacy_action(btn.encounter_id, btn.action_name)
+        success, message = self.game_state.resolve_diplomacy_action(
+            btn.encounter_id, btn.action_name
+        )
+        self._set_status(message, success=success)
         self.refresh()
 
     def _start_evasion(self, btn):
         if not self.game_state:
             return
-        self.game_state.resolve_evasion(btn.encounter_id)
+        success, message = self.game_state.resolve_evasion(btn.encounter_id)
+        self._set_status(message, success=success)
         self.refresh()
 
     def _export_encounter_spec(self, btn):
@@ -279,7 +284,11 @@ class EncounterScreen(Screen):
         if not self.game_state:
             self._set_status("No game state available to import result spec.", success=False)
             return
-        success, message = self.game_state.import_result_spec()
+        encounter_id = getattr(_args[0], "encounter_id", "") if _args else ""
+        filename = "ResultSpec.json"
+        if encounter_id:
+            filename = f"ResultSpec_{encounter_id}.json"
+        success, message = self.game_state.import_result_spec(filename=filename)
         if success:
             self._set_status(f"Result spec imported: {message}", success=True)
             self.refresh()

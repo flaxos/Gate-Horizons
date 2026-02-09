@@ -186,7 +186,9 @@ class MissionManager:
 
         if metric == "discoveries":
             progress_gain = sum(
-                1 for discovery in report.discoveries if str(discovery).startswith("Discovered")
+                1
+                for discovery in report.discoveries
+                if str(discovery).startswith(("Discovered", "Detected"))
             )
         elif metric == "trade_transfers":
             progress_gain = sum(

@@ -521,8 +521,8 @@ class TradeScreen(Screen):
             )
 
             # Route header
-            status = "ACTIVE" if route.active else "PAUSED"
-            status_color = (0.3, 1, 0.5, 1) if route.active else (1, 0.5, 0.3, 1)
+            status = "ACTIVE" if route.enabled else "PAUSED"
+            status_color = (0.3, 1, 0.5, 1) if route.enabled else (1, 0.5, 0.3, 1)
             card.add_widget(Label(
                 text=f"{src_name} -> {dst_name} [{status}]",
                 font_size="13sp",
@@ -626,12 +626,12 @@ class TradeScreen(Screen):
             # Controls
             ctrl_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(32), spacing=dp(4))
 
-            toggle_text = "Pause" if route.active else "Resume"
+            toggle_text = "Pause" if route.enabled else "Resume"
             toggle_btn = Button(
                 text=toggle_text,
                 font_size="11sp",
-                background_color=(0.3, 0.3, 0.1, 0.8) if route.active else (0.1, 0.3, 0.2, 0.8),
-                color=(1, 0.8, 0.3, 1) if route.active else (0.3, 1, 0.5, 1),
+                background_color=(0.3, 0.3, 0.1, 0.8) if route.enabled else (0.1, 0.3, 0.2, 0.8),
+                color=(1, 0.8, 0.3, 1) if route.enabled else (0.3, 1, 0.5, 1),
             )
             toggle_btn.route_id = route_id
             toggle_btn.bind(on_release=self._toggle_route)
@@ -689,7 +689,7 @@ class TradeScreen(Screen):
             return
         route = self.game_state.trade.routes.get(btn.route_id)
         if route:
-            route.active = not route.active
+            route.enabled = not route.enabled
             self._update_routes()
 
     def _cancel_route(self, btn):
