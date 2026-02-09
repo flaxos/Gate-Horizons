@@ -410,7 +410,7 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         # Start build
         order = shipyard.start_ship_build(
             "sol", "small_freighter", "ISS Test Freighter",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         self.assertIsNotNone(order)
         self.assertEqual(order.blueprint_id, "small_freighter")
@@ -468,7 +468,7 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
 
         order = shipyard.start_ship_build(
             "sol", "colony_ship", "ISS Ark",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         self.assertIsNotNone(order)
         self.assertEqual(order.turns_remaining, 12)
@@ -506,7 +506,7 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
 
         order = shipyard.start_ship_build(
             "sol", "small_freighter", "ISS Builder",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         self.assertIsNotNone(order)
         self.assertEqual(order.turns_remaining, 4)
@@ -538,11 +538,11 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
 
         shipyard.start_ship_build(
             "sol", "small_freighter", "ISS First",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         shipyard.start_ship_build(
             "sol", "small_freighter", "ISS Second",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
 
         # First completes after 4 ticks, second should still be queued/active
@@ -575,14 +575,14 @@ class TestShipBuildRequiresOrbitalFacility(unittest.TestCase):
         # First build should succeed
         order1 = shipyard.start_ship_build(
             "sol", "small_freighter", "ISS First",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         self.assertIsNotNone(order1)
 
         # Second build should queue (only 1 active slot at level 1)
         order2 = shipyard.start_ship_build(
             "sol", "small_freighter", "ISS Second",
-            config_dict, inventory, resources,
+            config_dict, inventory, None, resources,
         )
         self.assertIsNotNone(order2)
 
@@ -657,7 +657,7 @@ class TestSaveLoadPreservesProductionState(unittest.TestCase):
         gs.resources.global_resources["credits"] = 500
         queued = gs.shipyard.start_ship_build(
             "sol", "small_freighter", "ISS Persist",
-            gs.production.config.to_dict(), colony.production_inventory, gs.resources,
+            gs.production.config.to_dict(), colony.production_inventory, colony, gs.resources,
         )
         self.assertIsNotNone(queued)
 

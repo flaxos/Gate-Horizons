@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Persisted spend operations across turn resource sync
+
+### Goal
+Ensure resource spending for maintenance and shipyard actions is reflected in colony stockpiles so turn sync does not overwrite costs.
+
+### Steps
+1. Add resource spending helpers that deduct from colony stockpiles while keeping global/per-system totals consistent.
+2. Update maintenance and shipyard/orbital build call sites to use colony-aware spending.
+3. Align shipyard UI affordance checks with colony stockpiles and adjust tests accordingly.
+
 ## Escort target selection flow
 
 ### Goal

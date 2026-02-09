@@ -65,6 +65,51 @@ class ResourceManager:
             self.spend(resource, amount)
         return True
 
+    def spend_from_colony(self, resource: str, amount: int, colony) -> bool:
+        if resource not in RESOURCE_TYPES or amount <= 0 or colony is None:
+            return False
+        if self.global_resources.get(resource, 0) < amount:
+            return False
+        current = colony.stockpiles.get(resource, 0)
+        if current < amount:
+            return False
+        colony.stockpiles[resource] = current - amount
+        self.global_resources[resource] -= amount
+        system_id = getattr(colony, "system_id", None)
+        if system_id and system_id in self.per_system_resources:
+            sys_current = self.per_system_resources[system_id].get(resource, 0)
+            self.per_system_resources[system_id][resource] = max(0, sys_current - amount)
+        return True
+
+    def spend_from_colonies(self, resource: str, amount: int, colonies, owner_faction: str = "player") -> bool:
+        if resource not in RESOURCE_TYPES or amount <= 0 or colonies is None:
+            return False
+        if self.global_resources.get(resource, 0) < amount:
+            return False
+        eligible = [
+            (system_id, colony)
+            for system_id, colony in colonies.colonies.items()
+            if colony.owner_faction == owner_faction
+        ]
+        total_available = sum(colony.stockpiles.get(resource, 0) for _, colony in eligible)
+        if total_available < amount:
+            return False
+        remaining = amount
+        for system_id, colony in sorted(eligible, key=lambda item: item[0]):
+            if remaining <= 0:
+                break
+            available = colony.stockpiles.get(resource, 0)
+            if available <= 0:
+                continue
+            take = min(available, remaining)
+            colony.stockpiles[resource] = available - take
+            self.global_resources[resource] -= take
+            if system_id in self.per_system_resources:
+                sys_current = self.per_system_resources[system_id].get(resource, 0)
+                self.per_system_resources[system_id][resource] = max(0, sys_current - take)
+            remaining -= take
+        return remaining == 0
+
     def get_income_summary(self) -> dict:
         """Return cached per-turn income summary."""
         return dict(self._income_cache)
