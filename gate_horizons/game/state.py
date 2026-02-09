@@ -1778,8 +1778,8 @@ class GameState:
         ship = self.fleet.ships.get(ship_id)
         if not ship:
             return False, "Assigned ship not found"
-        if ship.ship_class != "freighter":
-            return False, "Only freighters can run logistics routes"
+        if "freighter" not in ship.ship_class:
+            return False, "Only freighter-class ships (ship_class contains 'freighter') can run logistics routes"
         if ship.trade_route:
             return False, "Ship already assigned to a trade route"
         if self.logistics.get_route_for_ship(ship_id):
