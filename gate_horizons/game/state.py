@@ -359,7 +359,10 @@ class GameState:
             loot_resources = loot_spec.get("resources") or {}
         if loot_resources and hasattr(self, "colonies"):
             self.resources.sync_from_colonies(self.colonies)
-        affordability_message = self._validate_resource_delta_affordable(loot_resources)
+        affordability_message = self._validate_resource_delta_affordable(
+            loot_resources,
+            context="encounter result",
+        )
         if affordability_message:
             return False, affordability_message
         encounter_id = result_spec.get("encounterId") if isinstance(result_spec, dict) else None
@@ -507,7 +510,11 @@ class GameState:
             message_parts.append(resource_summary)
         return True, " ".join(message_parts)
 
-    def _validate_resource_delta_affordable(self, delta: dict) -> str | None:
+    def _validate_resource_delta_affordable(
+        self,
+        delta: dict,
+        context: str = "diplomacy outcome",
+    ) -> str | None:
         shortfalls = []
         for resource, amount in (delta or {}).items():
             if amount >= 0:
@@ -519,7 +526,7 @@ class GameState:
         if not shortfalls:
             return None
         shortfall_list = ", ".join(shortfalls)
-        return f"Insufficient resources for diplomacy outcome: {shortfall_list}"
+        return f"Insufficient resources for {context}: {shortfall_list}"
 
     @staticmethod
     def _format_resource_delta(delta: dict) -> str:
