@@ -528,14 +528,47 @@ class TurnProcessor:
             if not system:
                 continue
 
-            for planet in system.planets:
-                for resource, yield_per_turn in planet.resources.items():
-                    if yield_per_turn > 0:
-                        tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
-                        mining_mult = tech_effects.get("mining_yield", 1.0)
-                        amount = int(yield_per_turn * mining_mult)
-                        added = ship.add_cargo(resource, amount)
-                        mining_output[resource] = mining_output.get(resource, 0) + added
+            target_planet = None
+            if ship.mission_target:
+                target_planet = next(
+                    (planet for planet in system.planets if planet.id == ship.mission_target),
+                    None,
+                )
+
+            if not target_planet:
+                candidates = [
+                    planet for planet in system.planets
+                    if any(yield_per_turn > 0 for yield_per_turn in planet.resources.values())
+                ]
+                if candidates:
+                    target_planet = max(
+                        candidates,
+                        key=lambda planet: (
+                            sum(yield_per_turn for yield_per_turn in planet.resources.values() if yield_per_turn > 0),
+                            planet.id,
+                        ),
+                    )
+                    ship.mission_target = target_planet.id
+
+            if not target_planet or ship.cargo_free <= 0:
+                continue
+
+            tech_effects = game_state.tech.get_effects() if hasattr(game_state, "tech") else {}
+            mining_mult = tech_effects.get("mining_yield", 1.0)
+            remaining_capacity = ship.cargo_free
+            for resource, yield_per_turn in sorted(
+                target_planet.resources.items(),
+                key=lambda item: (-item[1], item[0]),
+            ):
+                if yield_per_turn <= 0 or remaining_capacity <= 0:
+                    continue
+                amount = int(yield_per_turn * mining_mult)
+                if amount <= 0:
+                    continue
+                amount = min(amount, remaining_capacity)
+                added = ship.add_cargo(resource, amount)
+                remaining_capacity -= added
+                mining_output[resource] = mining_output.get(resource, 0) + added
 
         for ship in game_state.fleet.ships.values():
             if ship.ship_class != "miner" or not ship.cargo:
