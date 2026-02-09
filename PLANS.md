@@ -15,6 +15,21 @@ Require colony ships to carry a starter cargo kit before founding a colony, cons
 - Required cargo is removed from the colony ship when the outpost is created.
 - Colony founding logs mention the starter cargo usage.
 
+## Refuel uses fuel resource
+
+### Goal
+Switch refueling costs to use the fuel production resource, sourcing it from colony production inventory and supporting trade shipments.
+
+### Steps
+1. Update refuel action costs and state handling to spend fuel from colony production inventory.
+2. Extend trade route handling to move fuel via production inventories and update UI manifests to include fuel.
+3. Adjust refuel-related UI text/cost displays to show fuel usage.
+
+### Acceptance
+- Refueling consumes fuel from the hosting colony’s production inventory.
+- Trade routes can ship fuel to colonies and the trade UI supports fuel in manifests.
+- Refuel actions display fuel costs in the action menu and summary output.
+
 ## Colony ship requirement for founding outposts
 
 ### Goal

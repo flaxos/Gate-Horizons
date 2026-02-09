@@ -528,7 +528,7 @@ class FleetManager:
                 actions.append(Action(
                     name="Refuel",
                     description=f"Refuel ({ship.fuel}/{ship.stats.fuel_capacity})",
-                    cost={"energy": (ship.stats.fuel_capacity - ship.fuel)},
+                    cost={"fuel": (ship.stats.fuel_capacity - ship.fuel)},
                 ))
 
         return actions

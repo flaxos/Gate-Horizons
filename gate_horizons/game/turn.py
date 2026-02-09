@@ -638,6 +638,7 @@ class TurnProcessor:
         if hasattr(game_state, "trade"):
             arrivals = game_state.trade.process_arrivals(
                 colonies=game_state.colonies if hasattr(game_state, "colonies") else None,
+                production=game_state.production if hasattr(game_state, "production") else None,
             )
             report.logistics_arrivals = arrivals
             for arrival in arrivals:
@@ -746,6 +747,7 @@ class TurnProcessor:
                 colonies=game_state.colonies if hasattr(game_state, "colonies") else None,
                 resources=game_state.resources if hasattr(game_state, "resources") else None,
                 fleet=game_state.fleet if hasattr(game_state, "fleet") else None,
+                production=game_state.production if hasattr(game_state, "production") else None,
                 tech_effects=tech_effects,
                 galaxy=game_state.galaxy if hasattr(game_state, "galaxy") else None,
             )
