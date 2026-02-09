@@ -758,6 +758,20 @@ class ColonyManager:
         self.colonies[system_id] = colony
         return colony
 
+    def get_player_influence_markers(self, galaxy=None) -> list[dict]:
+        """Return deterministic influence markers for player-owned colonies."""
+        if galaxy is None:
+            return []
+        markers = []
+        for system_id in sorted(self.colonies):
+            colony = self.colonies[system_id]
+            if colony.owner_faction != "player":
+                continue
+            if system_id not in galaxy.systems:
+                continue
+            markers.append({"system_id": system_id, "level": colony.level})
+        return markers
+
     def can_found_colony(
         self,
         system_id: str,

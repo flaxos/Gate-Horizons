@@ -150,11 +150,12 @@ tactical hex combat MVP, diplomacy relations, encounter branching, 24-tech resea
 physical freighter routes, shipyard production, Sol known-system fixture, procedural
 galaxy/system generation (seeded), 100+ exploration events, gravity well system map,
 intra-system movement (no turn cost), zoom-threshold auto-level switching, mini-map
-overlay, trade flow visualisation on the galaxy map, turn report summary screen, planet
-comparison view, fog of war visualization on the system map, deterministic test saves,
+overlay with sphere-of-influence, trade flow visualisation on the galaxy map, turn
+report summary screen, planet comparison view, fog of war visualization on the system
+map, deterministic test saves,
 and full headless test suite.
 
-**Future (not implemented)**: Mini-map with sphere-of-influence overlay, piracy/trade
+**Future (not implemented)**: Piracy/trade
 disruption events, diplomacy-based trade agreements.
 
 ---

@@ -25,7 +25,7 @@
 | Resource flow visualisation | `docs/ROADMAP.md` | `gate_horizons/game/trade.py`, `gate_horizons/ui/screens/galaxy_map.py`, `gate_horizons/tests/test_trade_flow_overlay.py` | Shipped | Galaxy map flow overlays show active trade route directions and dominant resources. |
 | Planet comparison view | `docs/ROADMAP.md` | `gate_horizons/game/planet_comparison.py`, `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_planet_comparison_view.py` | Shipped | Comparison popup for up to three bodies with key colonisation stats. |
 | Fog of war visualization on system map | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_ui_fog_of_war_system_map.py` | Shipped | Unsurveyed bodies render as silhouettes with redacted details. |
-| Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | — | Future | Planned for demo slice polish. |
+| Mini-map + sphere-of-influence overlay | `PROJECT_PLAN.md` | `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/game/colonies.py` | Shipped | Mini-map now renders colony influence rings. |
 | Piracy/trade disruption events | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned as part of broader event coverage. |
 | Diplomacy-based trade agreements | `PROJECT_PLAN.md`, `README.md` | — | Future | Planned diplomacy extension beyond current relations/actions. |
 | Sub-body objects (moons, stations, asteroid mining) | `docs/ROADMAP.md` | — | Future | Planned data-model expansion for moons and sub-bodies. |
