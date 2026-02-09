@@ -238,7 +238,7 @@ class CreateFreightRoutePopup(Popup):
         if not self.game_state:
             return
         for ship in self.game_state.fleet.ships.values():
-            if ship.ship_class != "freighter":
+            if "freighter" not in ship.ship_class:
                 continue
             if ship.trade_route or self.game_state.logistics.get_route_for_ship(ship.id):
                 continue
