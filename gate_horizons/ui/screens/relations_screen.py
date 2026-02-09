@@ -98,6 +98,7 @@ class RelationsScreen(Screen):
         if not self.game_state:
             return
         self.top_bar.update(self.game_state)
+        self.status_label.text = ""
         self.list_container.clear_widgets()
         diplomacy = getattr(self.game_state, "diplomacy", None)
         if not diplomacy:
@@ -107,7 +108,10 @@ class RelationsScreen(Screen):
         if hasattr(self.game_state, "tech"):
             tech_effects = self.game_state.tech.get_effects()
         if not tech_effects.get("unlock_diplomacy", False):
-            self.list_container.add_widget(self._placeholder("Diplomacy locked. Research Signal Decryption to unlock."))
+            lock_message = "Diplomacy locked. Research Signal Decryption to unlock."
+            self.status_label.text = lock_message
+            self.status_label.color = (0.85, 0.7, 0.45, 1)
+            self.list_container.add_widget(self._placeholder(lock_message))
             return
 
         for faction_id, score in diplomacy.relations.items():

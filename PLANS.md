@@ -9,6 +9,16 @@ Ensure trade route pause/resume in the UI maps to the execution flag and that tu
 1. Align trade route toggle and trade execution to the same enabled flag while preserving legacy active state on load.
 2. Add a turn-processing test that pauses a route and asserts no shipments are created.
 
+## PR: Gate diplomacy actions behind Signal Decryption
+
+### Goal
+Prevent diplomacy actions and encounter branches until the unlock_diplomacy tech is researched, with UI lock messaging and tests.
+
+### Steps
+1. Add explicit tech gating in encounter branch selection and relation action resolution paths.
+2. Surface a lock message in the relations screen and hide/disable diplomacy actions until unlocked.
+3. Add regression tests for locked diplomacy UI state and encounter branch omission when tech is unresearched.
+
 ## PR: Deduplicate POP transfer adjustments
 
 ### Goal
