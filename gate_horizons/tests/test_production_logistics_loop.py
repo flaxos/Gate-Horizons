@@ -12,7 +12,7 @@ Covers:
 
 import unittest
 
-from gate_horizons.game.state import GameState
+from gate_horizons.game.state import GameState, CURRENT_SCHEMA_VERSION
 from gate_horizons.game.production import (
     ProductionConfig,
     ProductionManager,
@@ -673,10 +673,10 @@ class TestSaveLoadPreservesProductionState(unittest.TestCase):
         self.assertTrue(any(o.get("name") == "ISS Persist" for o in summary))
 
     def test_schema_version_bumped(self):
-        """Schema version is 10 after our changes."""
+        """Schema version matches the current state schema."""
         gs = GameState.new_game()
         data = gs.to_dict()
-        self.assertEqual(data["schema_version"], 10)
+        self.assertEqual(data["schema_version"], CURRENT_SCHEMA_VERSION)
 
 
 class TestIntegrationExtractionToShipBuild(unittest.TestCase):

@@ -794,13 +794,13 @@ class ColonyManager:
         if "establish_colony" not in colony_ship.stats.abilities:
             return False, "Ship lacks establish_colony capability"
 
-        colonists_required = self.get_colonist_requirement()
-        if colony_ship.cargo.get("pop", 0) < colonists_required:
-            return False, f"Requires {colonists_required} POP in colony ship cargo"
-
         # Check colonisation tech
         if researched_techs is None or "colonisation" not in researched_techs:
             return False, "Colonisation technology required"
+
+        colonists_required = self.get_colonist_requirement()
+        if colony_ship.cargo.get("pop", 0) < colonists_required:
+            return False, f"Requires {colonists_required} POP in colony ship cargo"
 
         # Check planet exists and is colonizable
         if galaxy:
