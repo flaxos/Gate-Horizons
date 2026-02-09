@@ -816,7 +816,7 @@ class TurnProcessor:
                     elif key.startswith("inbound_") and destination:
                         resource = key.split("inbound_", 1)[1]
                         ledger_entry = self._ensure_colony_ledger_entry(report, destination)
-                        self._add_resource_delta(ledger_entry["exports"], resource, amount)
+                        self._add_resource_delta(ledger_entry["imports"], resource, amount)
 
     def _finalize_colony_ledger(self, game_state, report: TurnReport) -> None:
         if not hasattr(game_state, "colonies"):
