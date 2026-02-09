@@ -282,8 +282,10 @@ class CreateRoutePopup(Popup):
         if not self.game_state:
             return
 
+        freighter_classes = {"freighter", "small_freighter", "medium_freighter", "large_freighter"}
         for ship in self.game_state.fleet.ships.values():
-            if ship.ship_class != "freighter":
+            ship_class = ship.ship_class or ""
+            if ship_class not in freighter_classes and "freighter" not in ship_class:
                 continue
             if ship.trade_route:
                 continue  # Already assigned

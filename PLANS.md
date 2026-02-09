@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Freighter class checks across fleet, trade, and actions
+
+### Goal
+Treat all freighter variants consistently for cargo actions, trade route assignment, and fleet styling.
+
+### Steps
+1. Update FleetManager contextual actions to detect freighter variants for load/unload actions.
+2. Align trade route freighter selection with logistics screen filtering rules.
+3. Adjust fleet screen class color mapping for freighter variants.
+
 ## Persisted spend operations across turn resource sync
 
 ### Goal
