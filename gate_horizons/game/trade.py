@@ -507,6 +507,8 @@ class TradeManager:
         reports = []
 
         for route in self.routes.values():
+            if route.active != route.enabled:
+                route.active = route.enabled
             if not route.enabled:
                 continue
 
