@@ -1,5 +1,15 @@
 # ExecPlans
 
+## Encounter export uses pending entries
+
+### Goal
+Ensure encounter spec exports use existing pending encounter data without creating duplicates.
+
+### Steps
+1. Add a GameState helper to export a pending encounter by encounter_id without appending new pending entries.
+2. Update the encounter screen export button to call the new helper with the pending encounter id.
+3. Verify the export path/filename remains `exports/encounters/EncounterSpec.json` and no duplicate pending entries are created.
+
 ## Colony stockpile cargo unload alignment
 
 ### Goal

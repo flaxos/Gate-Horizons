@@ -268,11 +268,7 @@ class EncounterScreen(Screen):
         if not self.game_state:
             self._set_status("No game state available to export encounter spec.", success=False)
             return
-        success, message = self.game_state.export_encounter_spec(
-            system_id=btn.system_id,
-            encounter_type=btn.encounter_type,
-            encounter_id=btn.encounter_id,
-        )
+        success, message = self.game_state.export_pending_encounter(btn.encounter_id)
         if success:
             self._set_status(f"Encounter spec exported to {message}.", success=True)
             self.refresh()
