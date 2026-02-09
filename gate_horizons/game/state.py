@@ -1102,7 +1102,14 @@ class GameState:
             return False, "Fuel tanks are already full", {}
 
         refuel_amount = min(int(params.get("amount", missing)), missing)
-        refuel_cost = {"fuel": refuel_amount}
+        fuel_available = colony.production_inventory.get("fuel", 0)
+        fuel_used = min(fuel_available, refuel_amount)
+        energy_needed = max(0, refuel_amount - fuel_used)
+        refuel_cost = {}
+        if fuel_used:
+            refuel_cost["fuel"] = fuel_used
+        if energy_needed:
+            refuel_cost["energy"] = energy_needed * 2
         if not self.can_afford_production_cost(colony.production_inventory, refuel_cost):
             return False, f"Cannot afford refuel cost: {refuel_cost}", {}
 

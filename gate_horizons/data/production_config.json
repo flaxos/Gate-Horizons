@@ -117,6 +117,15 @@
       "power_cost": 1,
       "min_industry_level": 0
     },
+    "fuel_salvage": {
+      "tier": 1,
+      "inputs":  {"ore_iron": 2, "water_ice": 2},
+      "outputs": {"fuel": 1},
+      "time": 2,
+      "facility": "factory",
+      "power_cost": 2,
+      "min_industry_level": 0
+    },
     "electronics": {
       "tier": 1,
       "inputs":  {"rare_metals": 2, "silicates": 2},
