@@ -596,7 +596,7 @@ class GameState:
         resource_delta = dict(combat_result.loot or {})
         if combat_result.intel_gained:
             resource_delta["intel"] = resource_delta.get("intel", 0) + combat_result.intel_gained
-        self._apply_colony_resource_delta(resource_delta)
+        self._apply_colony_aware_resource_delta(resource_delta)
         for ship in attacker_ships:
             damage = combat_result.attacker_damage.get(ship.id)
             if damage:
@@ -609,34 +609,66 @@ class GameState:
             self.fleet.destroy_ship(destroyed_id)
 
     def _apply_resource_delta(self, delta: dict) -> None:
-        self._apply_colony_resource_delta(delta)
+        self._apply_colony_aware_resource_delta(delta)
 
     def _apply_colony_resource_delta(self, delta: dict) -> None:
+        self._apply_colony_aware_resource_delta(delta)
+
+    def _apply_colony_aware_resource_delta(self, delta: dict) -> None:
         if not delta:
             return
-        colony = None
-        if hasattr(self, "colonies") and getattr(self.colonies, "colonies", None):
-            colony = next(iter(self.colonies.colonies.values()), None)
-            self.resources.sync_from_colonies(self.colonies)
+        colonies = getattr(self, "colonies", None)
+        has_colonies = bool(colonies and getattr(colonies, "colonies", None))
+        if has_colonies:
+            self.resources.sync_from_colonies(colonies)
         for resource, amount in (delta or {}).items():
             if amount == 0:
                 continue
-            if resource in RESOURCE_TYPES and colony:
+            if resource in RESOURCE_TYPES:
                 if amount > 0:
-                    caps = colony.get_storage_caps()
-                    current = colony.stockpiles.get(resource, 0)
-                    cap = caps.get(resource)
-                    added = amount if cap is None else min(amount, max(0, cap - current))
-                    if added > 0:
-                        colony.stockpiles[resource] = current + added
+                    added = self._add_to_colony_stockpiles(resource, amount)
+                    if added <= 0 and not has_colonies:
+                        self.resources.add(resource, amount)
                 else:
-                    self.resources.spend_from_colonies(resource, abs(amount), self.colonies)
+                    spent = self._spend_from_colony_stockpiles(resource, abs(amount))
+                    if not spent and not has_colonies:
+                        self.resources.spend(resource, abs(amount))
             elif amount > 0:
                 self.resources.add(resource, amount)
             else:
                 self.resources.spend(resource, abs(amount))
-        if colony:
-            self.resources.sync_from_colonies(self.colonies)
+        if has_colonies:
+            self.resources.sync_from_colonies(colonies)
+
+    def _add_to_colony_stockpiles(self, resource: str, amount: int) -> int:
+        colonies = getattr(self, "colonies", None)
+        if not colonies or not getattr(colonies, "colonies", None):
+            return 0
+        best_colony = None
+        best_capacity = None
+        for colony in colonies.colonies.values():
+            caps = colony.get_storage_caps()
+            current = colony.stockpiles.get(resource, 0)
+            cap = caps.get(resource)
+            available = amount if cap is None else max(0, cap - current)
+            if best_capacity is None or available > best_capacity:
+                best_capacity = available
+                best_colony = colony
+        if not best_colony:
+            return 0
+        caps = best_colony.get_storage_caps()
+        current = best_colony.stockpiles.get(resource, 0)
+        cap = caps.get(resource)
+        added = amount if cap is None else min(amount, max(0, cap - current))
+        if added > 0:
+            best_colony.stockpiles[resource] = current + added
+        return added
+
+    def _spend_from_colony_stockpiles(self, resource: str, amount: int) -> bool:
+        colonies = getattr(self, "colonies", None)
+        if not colonies or not getattr(colonies, "colonies", None):
+            return False
+        return self.resources.spend_from_colonies(resource, amount, colonies)
 
     def _apply_encounter_outcome_effects(self, system_id: str, result_spec: dict) -> None:
         outcome = ""

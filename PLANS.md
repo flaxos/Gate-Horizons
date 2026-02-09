@@ -1,5 +1,15 @@
 # ExecPlans
 
+## PR: Persist combat/diplomacy resource deltas across colony sync
+
+### Goal
+Ensure resource gains/spends from combat/diplomacy persist through colony resource sync by applying deltas to colony stockpiles and adding regression coverage.
+
+### Steps
+1. Add colony-aware resource delta helpers in `GameState` and route combat/diplomacy rewards through them.
+2. Ensure resource delta application updates colony stockpiles before `ResourceManager.sync_from_colonies` runs.
+3. Add/strengthen a regression test that grants combat loot, processes a turn, and asserts resources persist in both global totals and colony stockpiles.
+
 ## PR: Pause trade routes halts shipments
 
 ### Goal
