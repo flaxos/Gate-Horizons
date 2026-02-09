@@ -957,7 +957,15 @@ class TurnProcessor:
         maintenance = game_state.fleet.get_total_maintenance()
         if maintenance > 0:
             if game_state.resources.global_resources.get("credits", 0) >= maintenance:
-                game_state.resources.spend("credits", maintenance)
+                spent = False
+                if hasattr(game_state, "colonies"):
+                    spent = game_state.resources.spend_from_colonies(
+                        "credits",
+                        maintenance,
+                        game_state.colonies,
+                    )
+                if not spent:
+                    game_state.resources.spend("credits", maintenance)
                 report.resources_spent["credits"] = report.resources_spent.get("credits", 0) + maintenance
             else:
                 for ship in game_state.fleet.ships.values():

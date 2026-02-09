@@ -223,7 +223,7 @@ class Test06NoNegativeShipyardInventory(unittest.TestCase):
             }
         }
         result = sm.build_facility(
-            "sol", "spaceport", prod_config, inventory, resources,
+            "sol", "spaceport", prod_config, inventory, None, resources,
         )
         # Should fail because insufficient materials
         self.assertIsNone(result)

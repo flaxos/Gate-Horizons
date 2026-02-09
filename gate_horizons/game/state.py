@@ -1692,6 +1692,7 @@ class GameState:
             ship_name=ship_name,
             config=self.production.config.to_dict(),
             inventory=colony.production_inventory,
+            colony=colony,
             resources=self.resources,
             build_time_reduction=build_time_reduction,
         )
