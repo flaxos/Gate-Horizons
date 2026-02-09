@@ -486,7 +486,10 @@ class FleetManager:
             ))
 
         # Freighter actions
-        elif ship.ship_class == "freighter":
+        elif (
+            (ship.ship_class in {"freighter", "small_freighter", "medium_freighter", "large_freighter"})
+            or ("freighter" in (ship.ship_class or ""))
+        ):
             if has_colony:
                 if ship.cargo_used > 0:
                     insert_action(0, Action(

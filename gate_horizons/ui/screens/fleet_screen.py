@@ -108,6 +108,7 @@ class FleetScreen(Screen):
             "miner": (0.8, 0.5, 0.2, 0.9),
             "corvette": (1, 0.3, 0.3, 0.9),
         }
+        freighter_classes = {"freighter", "small_freighter", "medium_freighter", "large_freighter"}
 
         for ship in sorted(
             self.game_state.fleet.ships.values(),
@@ -130,7 +131,11 @@ class FleetScreen(Screen):
 
             # Ship class icon/color indicator
             indicator = Widget(size_hint=(None, 1), width=dp(8))
-            color = class_colors.get(ship.ship_class, (0.5, 0.5, 0.5, 0.9))
+            ship_class = ship.ship_class or ""
+            color = class_colors.get(ship_class)
+            if not color and (ship_class in freighter_classes or "freighter" in ship_class):
+                color = class_colors["freighter"]
+            color = color or (0.5, 0.5, 0.5, 0.9)
             with indicator.canvas:
                 Color(*color)
                 ind_rect = Rectangle(pos=indicator.pos, size=indicator.size)
