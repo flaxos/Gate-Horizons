@@ -495,7 +495,7 @@ class GameState:
         affordability_message = self._validate_resource_delta_affordable(outcome.resource_delta)
         if affordability_message:
             return False, affordability_message
-        self._apply_resource_delta(outcome.resource_delta)
+        self._apply_colony_resource_delta(outcome.resource_delta)
         new_score = self.diplomacy.adjust_score(faction_id, outcome.relation_delta)
         relation_summary = (
             f"Relations {'+' if outcome.relation_delta >= 0 else ''}{outcome.relation_delta} "
@@ -588,9 +588,10 @@ class GameState:
         return bool(tech_effects.get("unlock_diplomacy", False))
 
     def _apply_manual_combat_result(self, combat_result, attacker_ships: list) -> None:
-        self._apply_resource_delta(combat_result.loot)
+        resource_delta = dict(combat_result.loot or {})
         if combat_result.intel_gained:
-            self.resources.add("intel", combat_result.intel_gained)
+            resource_delta["intel"] = resource_delta.get("intel", 0) + combat_result.intel_gained
+        self._apply_colony_resource_delta(resource_delta)
         for ship in attacker_ships:
             damage = combat_result.attacker_damage.get(ship.id)
             if damage:
@@ -603,11 +604,15 @@ class GameState:
             self.fleet.destroy_ship(destroyed_id)
 
     def _apply_resource_delta(self, delta: dict) -> None:
+        self._apply_colony_resource_delta(delta)
+
+    def _apply_colony_resource_delta(self, delta: dict) -> None:
         if not delta:
             return
         colony = None
         if hasattr(self, "colonies") and getattr(self.colonies, "colonies", None):
             colony = next(iter(self.colonies.colonies.values()), None)
+            self.resources.sync_from_colonies(self.colonies)
         for resource, amount in (delta or {}).items():
             if amount == 0:
                 continue
