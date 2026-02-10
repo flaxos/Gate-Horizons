@@ -381,7 +381,6 @@ class FleetManager:
                 "Reposition (Local)",
                 "Emergency Stop",
                 "Begin Mining",
-                "Continue Mining",
                 "Unload Cargo",
                 "Load Cargo",
                 "Load Colonists",
@@ -527,14 +526,9 @@ class FleetManager:
 
         # Miner actions
         elif ship.ship_class == "miner":
-            if ship.mining:
-                insert_action(0, Action(
-                    name="Continue Mining",
-                    description="Continue current mining operation",
-                ))
-            elif has_asteroids or (location and any(
+            if not ship.mining and (has_asteroids or (location and any(
                 p.resources for p in location.planets
-            )):
+            ))):
                 insert_action(0, Action(
                     name="Begin Mining",
                     description="Start mining resources in this system",

@@ -473,5 +473,40 @@ class Test14ColonyUpgradeSection(unittest.TestCase):
         self.assertIn("get_upgrade_cost", source)
 
 
+class Test16NoPlaceholderShipActions(unittest.TestCase):
+    """Player-visible ship actions should map to real behavior."""
+
+    def test_contextual_actions_exclude_placeholder_actions(self):
+        """Context menus should not surface unfinished placeholder actions."""
+        gs = GameState.new_game()
+        forbidden = {"Set Trade Route", "Prospect", "Set Auto-Mine", "Continue Mining"}
+
+        for ship_id in list(gs.fleet.ships.keys()):
+            actions = gs.fleet.get_contextual_actions(
+                ship_id,
+                galaxy=gs.galaxy,
+                colonies=gs.colonies,
+                game_state=gs,
+            )
+            action_names = {action.name for action in actions}
+            self.assertTrue(
+                action_names.isdisjoint(forbidden),
+                f"{ship_id} includes placeholder actions: {action_names & forbidden}",
+            )
+
+    def test_galaxy_map_has_no_placeholder_notice_branches(self):
+        """Galaxy map action handler should not include placeholder notice branches."""
+        gm_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "galaxy_map.py",
+        )
+        with open(gm_path) as f:
+            source = f.read()
+
+        self.assertNotIn("is not implemented yet", source)
+        for action_name in ["Set Trade Route", "Prospect", "Set Auto-Mine", "Continue Mining"]:
+            self.assertNotIn(action_name, source)
+
+
 if __name__ == "__main__":
     unittest.main()
