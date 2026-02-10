@@ -917,10 +917,10 @@ class GameState:
         if not ship:
             return False, "Ship not found", None
 
-        if ship.path:
-            return False, f"{ship.name} is currently in transit", None
-
         normalized_action = (action_name or "").strip().lower()
+
+        if ship.path and normalized_action != "emergency stop":
+            return False, f"{ship.name} is currently in transit", None
         if normalized_action == "establish colony":
             can_queue, message = self._validate_establish_colony_order(ship, params or {})
             if not can_queue:
@@ -1064,6 +1064,8 @@ class GameState:
             "establish colony": self._handle_establish_colony,
             "repair": self._handle_repair,
             "refuel": self._handle_refuel,
+            "begin mining": self._handle_begin_mining,
+            "emergency stop": self._handle_emergency_stop,
         }
 
     def _validate_establish_colony_order(self, ship, params: dict) -> tuple[bool, str]:
@@ -1386,6 +1388,31 @@ class GameState:
             "system_id": ship.location,
             "summary": f"{ship.name} refueled {refuel_amount} at {colony.name}",
             "resources_spent": refuel_cost,
+        }
+
+    def _handle_begin_mining(self, ship, params: dict) -> tuple[bool, str, dict]:
+        if ship.mining:
+            return False, f"{ship.name} is already mining", {}
+        ship.mining = True
+        ship.mission = "mining"
+        return True, "Mining initiated", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Begin Mining",
+            "system_id": ship.location,
+            "summary": f"{ship.name} began mining in {ship.location}",
+        }
+
+    def _handle_emergency_stop(self, ship, params: dict) -> tuple[bool, str, dict]:
+        ship.path.clear()
+        ship.destination = None
+        ship.mission = None
+        return True, "Emergency stop executed", {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Emergency Stop",
+            "system_id": ship.location,
+            "summary": f"{ship.name} emergency stopped at {ship.location}",
         }
 
     def _handle_establish_colony(self, ship, params: dict) -> tuple[bool, str, dict]:
