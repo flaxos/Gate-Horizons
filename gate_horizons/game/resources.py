@@ -131,19 +131,33 @@ class ResourceManager:
         self._expense_cache = dict(expenses)
 
     def sync_from_colonies(self, colonies) -> None:
-        """Synchronize global and per-system resources from colony stockpiles."""
+        """Synchronize global and per-system resources from colony stockpiles.
+
+        Applies the delta between old and new colony totals so that
+        global-only resources (e.g. intel) are preserved.
+        """
         if not colonies:
             return
+        # Compute old colony totals from current per-system snapshot
+        old_totals = {r: 0 for r in RESOURCE_TYPES}
+        for sys_res in self.per_system_resources.values():
+            for r in RESOURCE_TYPES:
+                old_totals[r] += sys_res.get(r, 0)
+
         per_system = {}
-        totals = {r: 0 for r in RESOURCE_TYPES}
+        new_totals = {r: 0 for r in RESOURCE_TYPES}
         for system_id, colony in colonies.colonies.items():
             per_system[system_id] = {r: 0 for r in RESOURCE_TYPES}
             for resource in RESOURCE_TYPES:
                 amount = int(colony.stockpiles.get(resource, 0))
                 per_system[system_id][resource] = amount
-                totals[resource] += amount
+                new_totals[resource] += amount
         self.per_system_resources = per_system
-        self.global_resources = totals
+
+        # Apply colony delta to global, preserving non-colony resources
+        for r in RESOURCE_TYPES:
+            delta = new_totals[r] - old_totals[r]
+            self.global_resources[r] = max(0, self.global_resources.get(r, 0) + delta)
 
     def process_turn(self, colonies=None, fleet=None, include_maintenance: bool = True) -> dict:
         """Calculate all production/consumption and apply. Returns summary."""

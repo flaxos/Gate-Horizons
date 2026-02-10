@@ -218,6 +218,13 @@ class GameState:
             for resource, amount in mining_starter_cargo.items():
                 miner.add_cargo(resource, amount)
 
+        # Initialize per-system resource tracking from colony stockpiles so
+        # that sync_from_colonies has a valid baseline for delta computation.
+        for sid, col in state.colonies.colonies.items():
+            state.resources.per_system_resources[sid] = {
+                r: int(col.stockpiles.get(r, 0)) for r in RESOURCE_TYPES
+            }
+
         # Mark initial fog of war
         state.game_clock = GameClock()
         state.turn_number = state.game_clock.turn_number
