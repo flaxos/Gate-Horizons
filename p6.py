@@ -12,10 +12,12 @@ It will:
 from __future__ import annotations
 
 import importlib.util
+import importlib
 import os
 import shutil
 import subprocess
 import sys
+import traceback
 from pathlib import Path
 
 
@@ -83,8 +85,14 @@ def ensure_packages() -> None:
         if importlib.util.find_spec(module_name) is None:
             print(f"[info] Missing package '{module_name}'. Installing '{pip_name}'...")
             _run([sys.executable, "-m", "pip", "install", "--upgrade", pip_name])
-        else:
-            print(f"[ok] Python package available: {module_name}")
+        try:
+            imported_module = importlib.import_module(module_name)
+            version = getattr(imported_module, "__version__", "unknown")
+            print(f"[ok] Python package available: {module_name} (version: {version})")
+        except Exception as exc:  # noqa: BLE001 - show import failure details in launcher logs
+            print(f"[warn] Package '{module_name}' is installed but failed to import: {exc}")
+            print(f"[info] Attempting to reinstall '{pip_name}'...")
+            _run([sys.executable, "-m", "pip", "install", "--upgrade", pip_name])
 
 
 def run_main() -> None:
@@ -112,6 +120,8 @@ def main() -> int:
         return 0
     except Exception as exc:  # noqa: BLE001 - launcher should show a friendly one-line failure
         print(f"\n[error] {exc}")
+        print("[debug] Full traceback:")
+        print(traceback.format_exc())
         return 1
 
 
