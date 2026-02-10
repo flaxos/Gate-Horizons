@@ -395,13 +395,19 @@ class FleetScreen(Screen):
         menu.open()
 
     def _execute_action(self, ship_id, action):
-        """Delegate to galaxy map's action handler."""
-        from kivy.app import App
-        app = App.get_running_app()
-        if app and hasattr(app, "galaxy_map_screen"):
-            app.galaxy_map_screen._execute_action(ship_id, action)
-            self.top_bar.update(self.game_state)
-            self._update_list()
+        """Execute ship action through shared game-state dispatcher."""
+        if not self.game_state:
+            return
+        result = self.game_state.dispatch_ship_context_action(
+            ship_id,
+            action.name,
+            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+        )
+        if result.get("requires_ui") == "destination":
+            btn = type("_ShipBtn", (), {"ship_id": ship_id})()
+            self._on_move(btn)
+        self.top_bar.update(self.game_state)
+        self._update_list()
 
     def _go_back(self, *args):
         from kivy.app import App

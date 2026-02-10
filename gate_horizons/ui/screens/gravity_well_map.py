@@ -1815,14 +1815,17 @@ class GravityWellScreen(Screen):
         menu.open()
 
     def _execute_ship_action(self, ship_id, action):
-        """Delegate to GalaxyMapScreen's action handler."""
-        from kivy.app import App
-        app = App.get_running_app()
-        if app and hasattr(app, "galaxy_map_screen"):
-            app.galaxy_map_screen._execute_action(ship_id, action)
-            # Refresh our view
-            if self.game_state:
-                self.set_game_state(self.game_state)
+        """Execute ship action through shared game-state dispatcher."""
+        if not self.game_state:
+            return
+
+        self.game_state.dispatch_ship_context_action(
+            ship_id,
+            action.name,
+            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+        )
+        # Refresh our view
+        self.set_game_state(self.game_state)
 
     def _on_view_colony(self, *args):
         from kivy.app import App

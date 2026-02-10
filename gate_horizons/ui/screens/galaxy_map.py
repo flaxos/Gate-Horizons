@@ -1042,109 +1042,24 @@ class GalaxyMapScreen(Screen):
 
     def _execute_action(self, ship_id, action):
         """Execute a ship action."""
-        ship = self.game_state.fleet.ships.get(ship_id)
-        if not ship:
+        result = self.game_state.dispatch_ship_context_action(
+            ship_id,
+            action.name,
+            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+        )
+        required_ui = result.get("requires_ui")
+        if required_ui == "destination":
+            self._show_destination_menu(ship_id)
+            self.refresh()
+            return
+        if required_ui == "escort_target":
+            self._show_escort_target_menu(ship_id)
+            self.refresh()
             return
 
-        if action.name in ("Move To", "Reroute"):
-            self._show_destination_menu(ship_id)
-        elif action.name == "Reposition (Local)":
-            success, message = self.game_state.execute_local_move(ship_id, ship.location)
-            if not success:
-                self._show_notice(message)
-            self.refresh()
-        elif action.name == "Continue":
-            self.refresh()
-        elif action.name in {
-            "Scan System",
-            "Deploy Probe",
-            "Patrol",
-            "Blockade",
-            "Investigate Anomaly",
-            "Establish Colony",
-            "Repair",
-            "Refuel",
-            "Intercept",
-            "Engage",
-            "Retreat",
-            "Hail",
-        }:
-            params = {}
-            if action.name == "Deploy Probe":
-                params = {"credits": action.cost.get("credits", 5)}
-            self.game_state.issue_ship_order(ship_id, action.name, params=params)
-            self.refresh()
-        elif action.name == "Escort":
-            self._show_escort_target_menu(ship_id)
-        elif action.name == "Begin Mining":
-            self.game_state.issue_ship_order(ship_id, "Begin Mining")
-            self.refresh()
-        elif action.name == "Unload Cargo":
-            self.game_state.unload_ship_cargo_to_colony(ship_id)
-            self.refresh()
-        elif action.name == "Load Cargo":
-            self.game_state.load_ship_cargo_from_colony(ship_id)
-            self.refresh()
-        elif action.name == "Load Colonists":
-            self.game_state.load_colonists_to_ship(ship_id)
-            self.refresh()
-        elif action.name == "Unload Colonists":
-            self.game_state.unload_colonists_to_colony(ship_id)
-            self.refresh()
-        elif action.name == "Emergency Jettison":
-            ship.cargo.clear()
-            self.refresh()
-        elif action.name == "Deliver Cargo":
-            if ship.cargo_used == 0:
-                return
-            colony_systems = list(self.game_state.colonies.colonies.keys())
-            if ship.location in colony_systems:
-                self.game_state.unload_ship_cargo_to_colony(ship_id)
-                self.refresh()
-                return
-            shortest_path = None
-            nearest_system = None
-            for system_id in colony_systems:
-                path = self.game_state.galaxy.get_path(ship.location, system_id)
-                if not path:
-                    continue
-                if shortest_path is None or len(path) < len(shortest_path):
-                    shortest_path = path
-                    nearest_system = system_id
-            if nearest_system:
-                self.game_state.fleet.move_ship(
-                    ship_id,
-                    nearest_system,
-                    self.game_state.galaxy,
-                )
-                self.refresh()
-        elif action.name == "Emergency Stop":
-            self.game_state.issue_ship_order(ship_id, "Emergency Stop")
-            self.refresh()
-        elif action.name == "Return Home":
-            colony_systems = list(self.game_state.colonies.colonies.keys())
-            shortest_path = None
-            nearest_system = None
-            for system_id in colony_systems:
-                path = self.game_state.galaxy.get_path(ship.location, system_id)
-                if not path:
-                    continue
-                if shortest_path is None or len(path) < len(shortest_path):
-                    shortest_path = path
-                    nearest_system = system_id
-            if nearest_system:
-                self.game_state.fleet.move_ship(
-                    ship_id,
-                    nearest_system,
-                    self.game_state.galaxy,
-                )
-            else:
-                self.game_state.log.append(
-                    f"{ship.name} cannot return home: no reachable colony."
-                )
-            self.refresh()
-        else:
-            self._show_notice(f"{action.name} is not available yet.")
+        if not result.get("success"):
+            self._show_notice(result.get("message", "Action failed."))
+        self.refresh()
 
     def _show_destination_menu(self, ship_id):
         """Show destination selection menu."""
