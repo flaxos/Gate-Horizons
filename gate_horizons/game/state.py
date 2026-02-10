@@ -1102,10 +1102,6 @@ class GameState:
         if missing_colonists > 0:
             return False, f"Colony ship lacks colonists: {missing_colonists} POP required"
 
-        missing_colonists = self.get_missing_colonists(ship)
-        if missing_colonists > 0:
-            return False, f"Colony ship lacks colonists: {missing_colonists} POP required"
-
         return True, "OK"
 
     def get_missing_starter_cargo(self, ship) -> dict:

@@ -252,7 +252,7 @@ class FleetScreen(Screen):
                     deliver_btn.bind(on_release=self._deliver_cargo)
                     top_row.add_widget(deliver_btn)
 
-            elif ship.ship_class == "freighter":
+            elif ship.ship_class in {"freighter", "small_freighter", "medium_freighter", "large_freighter"} or "freighter" in (ship.ship_class or ""):
                 if ship.trade_route:
                     route_btn = Button(
                         text="Unassign",

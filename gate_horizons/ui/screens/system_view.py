@@ -790,9 +790,7 @@ class SystemViewScreen(Screen):
     def _on_activate_gate(self, *args):
         if not self.game_state or not self.system_id:
             return
-        result = self.game_state.galaxy.activate_gate(
-            self.system_id, self.game_state.resources
-        )
+        result = self.game_state.activate_gate(self.system_id)
         if result:
             self.top_bar.update(self.game_state)
             self._update_info()
