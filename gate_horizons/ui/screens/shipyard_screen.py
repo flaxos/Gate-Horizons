@@ -435,7 +435,7 @@ class ShipyardScreen(Screen):
         build_cost = facility_config.get("build_cost", {})
         for res, amount in build_cost.items():
             if res == "credits":
-                have = colony.stockpiles.get("credits", 0)
+                have = self.game_state.resources.global_resources.get("credits", 0)
                 if have < amount:
                     return False, f"Need {amount - have} more credits"
             else:
@@ -479,7 +479,7 @@ class ShipyardScreen(Screen):
 
         credit_cost = blueprint.get("credits", 0)
         if credit_cost > 0:
-            have_credits = colony.stockpiles.get("credits", 0)
+            have_credits = self.game_state.resources.global_resources.get("credits", 0)
             if have_credits < credit_cost:
                 return False, f"Need {credit_cost - have_credits} more credits"
 
