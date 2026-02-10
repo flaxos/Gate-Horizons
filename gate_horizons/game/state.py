@@ -1530,6 +1530,20 @@ class GameState:
             cost_reduction=cost_reduction,
         )
 
+    def find_nearest_colony_system(self, from_system: str) -> str | None:
+        """Return the system_id of the nearest reachable colony, or None."""
+        colony_systems = list(self.colonies.colonies.keys())
+        shortest_path = None
+        nearest = None
+        for system_id in colony_systems:
+            path = self.galaxy.get_path(from_system, system_id)
+            if not path:
+                continue
+            if shortest_path is None or len(path) < len(shortest_path):
+                shortest_path = path
+                nearest = system_id
+        return nearest
+
     def _get_colony_ship(self, system_id: str, ship_id: str = None):
         ship = None
         if ship_id:

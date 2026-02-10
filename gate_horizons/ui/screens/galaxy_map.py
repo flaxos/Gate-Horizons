@@ -1099,56 +1099,26 @@ class GalaxyMapScreen(Screen):
         elif action.name == "Deliver Cargo":
             if ship.cargo_used == 0:
                 return
-            colony_systems = list(self.game_state.colonies.colonies.keys())
-            if ship.location in colony_systems:
+            if ship.location in self.game_state.colonies.colonies:
                 self.game_state.unload_ship_cargo_to_colony(ship_id)
                 self.refresh()
                 return
-            shortest_path = None
-            nearest_system = None
-            for system_id in colony_systems:
-                path = self.game_state.galaxy.get_path(ship.location, system_id)
-                if not path:
-                    continue
-                if shortest_path is None or len(path) < len(shortest_path):
-                    shortest_path = path
-                    nearest_system = system_id
-            if nearest_system:
-                self.game_state.fleet.move_ship(
-                    ship_id,
-                    nearest_system,
-                    self.game_state.galaxy,
-                )
+            nearest = self.game_state.find_nearest_colony_system(ship.location)
+            if nearest:
+                self.game_state.fleet.move_ship(ship_id, nearest, self.game_state.galaxy)
                 self.refresh()
         elif action.name == "Emergency Stop":
             self.game_state.issue_ship_order(ship_id, "Emergency Stop")
             self.refresh()
         elif action.name == "Return Home":
-            colony_systems = list(self.game_state.colonies.colonies.keys())
-            shortest_path = None
-            nearest_system = None
-            for system_id in colony_systems:
-                path = self.game_state.galaxy.get_path(ship.location, system_id)
-                if not path:
-                    continue
-                if shortest_path is None or len(path) < len(shortest_path):
-                    shortest_path = path
-                    nearest_system = system_id
-            if nearest_system:
-                self.game_state.fleet.move_ship(
-                    ship_id,
-                    nearest_system,
-                    self.game_state.galaxy,
-                )
+            nearest = self.game_state.find_nearest_colony_system(ship.location)
+            if nearest:
+                self.game_state.fleet.move_ship(ship_id, nearest, self.game_state.galaxy)
             else:
                 self.game_state.log.append(
                     f"{ship.name} cannot return home: no reachable colony."
                 )
             self.refresh()
-        elif action.name in {"Set Trade Route", "Prospect", "Set Auto-Mine"}:
-            self._show_notice(
-                f"{action.name} is not implemented yet. Check other menus for updates."
-            )
         else:
             self._show_notice(f"{action.name} is not available yet.")
 
