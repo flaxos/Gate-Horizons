@@ -539,3 +539,13 @@ Centralize gameplay execution for ship context actions behind a public API on `G
 
 ### Validation
 - New tests verify the same action (`Emergency Jettison`) has identical cargo outcomes through Galaxy, Fleet, and Gravity Well screen entrypoints.
+
+## PR: Explicit numeric validation feedback for trade/logistics route editors
+
+### Goal
+Replace silent numeric coercion in trade/logistics route creation popups with explicit user-facing validation errors, and add regression coverage for invalid manifest paths.
+
+### Steps
+1. Add manifest parsing validation in `CreateRoutePopup._on_create` that collects invalid resource fields, shows a clear expected-format message, and blocks route creation.
+2. Add explicit status feedback for invalid logistics numeric entries (wait turns and cargo rule integer fields) instead of silently coercing invalid values to zero.
+3. Add tests covering invalid manifest input handling and logistics numeric validation behavior.
