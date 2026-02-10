@@ -27,6 +27,10 @@ PYTHON_PACKAGES = {
     "kivy": "kivy",
 }
 
+# Pydroid's stable channel commonly ships Python 3.10.x.
+# Keep launcher compatibility aligned with supported runtime syntax.
+MIN_PYTHON_VERSION = (3, 10)
+
 
 def _run(cmd: list[str], *, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
     printable = " ".join(cmd)
@@ -35,9 +39,10 @@ def _run(cmd: list[str], *, cwd: Path | None = None, check: bool = True) -> subp
 
 
 def check_python_version() -> None:
-    if sys.version_info < (3, 11):
+    if sys.version_info < MIN_PYTHON_VERSION:
+        minimum = ".".join(str(part) for part in MIN_PYTHON_VERSION)
         raise RuntimeError(
-            "Python 3.11+ is required. "
+            f"Python {minimum}+ is required. "
             f"Current version: {sys.version.split()[0]}",
         )
     print(f"[ok] Python version: {sys.version.split()[0]}")
