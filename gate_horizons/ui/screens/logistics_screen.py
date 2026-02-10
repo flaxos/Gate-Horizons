@@ -28,6 +28,7 @@ class CreateFreightRoutePopup(Popup):
         self.create_callback = on_create
         self.selected_ship_id = None
         self.selected_waypoint_index = 0
+        self.input_error_message = None
         self.waypoints = [
             self._new_waypoint(default_action="load"),
             self._new_waypoint(default_action="unload"),
@@ -513,11 +514,25 @@ class CreateFreightRoutePopup(Popup):
 
     def _update_wait_turns(self, *args):
         waypoint = self.waypoints[self.selected_waypoint_index]
+        raw_value = (self.wait_turns_input.text or "").strip()
+        if raw_value == "":
+            self.input_error_message = "Invalid wait turns: expected non-negative integer (e.g., 0, 2)."
+            self._update_status()
+            return
         try:
-            waypoint["wait_turns"] = max(0, int(self.wait_turns_input.text))
+            parsed = int(raw_value)
         except ValueError:
-            waypoint["wait_turns"] = 0
+            self.input_error_message = f"Invalid wait turns '{self.wait_turns_input.text}': expected non-negative integer (e.g., 0, 2)."
+            self._update_status()
+            return
+        if parsed < 0:
+            self.input_error_message = "Invalid wait turns: expected non-negative integer (e.g., 0, 2)."
+            self._update_status()
+            return
+        waypoint["wait_turns"] = parsed
+        self.input_error_message = None
         self._refresh_waypoint_list()
+        self._update_status()
 
     def _add_cargo_rule(self, *args):
         waypoint = self.waypoints[self.selected_waypoint_index]
@@ -538,12 +553,37 @@ class CreateFreightRoutePopup(Popup):
         rule[field] = value.strip()
 
     def _update_rule_int(self, rule, field, value):
+        text = (value or "").strip()
+        label = field.replace("_", " ")
+        if text == "":
+            self.input_error_message = (
+                f"Invalid {label}: expected non-negative integer (e.g., 0, 5)."
+            )
+            self._update_status()
+            return
         try:
-            rule[field] = max(0, int(value))
+            parsed = int(text)
         except ValueError:
-            rule[field] = 0
+            self.input_error_message = (
+                f"Invalid {label} '{value}': expected non-negative integer (e.g., 0, 5)."
+            )
+            self._update_status()
+            return
+        if parsed < 0:
+            self.input_error_message = (
+                f"Invalid {label}: expected non-negative integer (e.g., 0, 5)."
+            )
+            self._update_status()
+            return
+        rule[field] = parsed
+        self.input_error_message = None
+        self._update_status()
 
     def _update_status(self):
+        if self.input_error_message:
+            self.status_label.text = self.input_error_message
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
         parts = []
         missing_systems = [i + 1 for i, wp in enumerate(self.waypoints) if not wp.get("system_id")]
         if missing_systems:
@@ -565,6 +605,10 @@ class CreateFreightRoutePopup(Popup):
             return
         if not self.selected_ship_id:
             self.status_label.text = "Assign a freighter"
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
+        if self.input_error_message:
+            self.status_label.text = self.input_error_message
             self.status_label.color = (1, 0.3, 0.2, 1)
             return
 
@@ -614,17 +658,69 @@ class CreateFreightRoutePopup(Popup):
                     self.status_label.color = (1, 0.3, 0.2, 1)
                     return
                 has_cargo_resource = True
+                int_fields = [
+                    ("amount", "amount"),
+                    ("min_threshold", "min threshold"),
+                    ("max_threshold", "max threshold"),
+                ]
+                parsed_values = {}
+                for field_name, label in int_fields:
+                    raw_value = str(rule.get(field_name, "")).strip()
+                    if raw_value == "":
+                        self.status_label.text = (
+                            f"Invalid {label} for resource '{resource_id}': expected non-negative integer (e.g., 0, 5)."
+                        )
+                        self.status_label.color = (1, 0.3, 0.2, 1)
+                        return
+                    try:
+                        parsed = int(raw_value)
+                    except ValueError:
+                        self.status_label.text = (
+                            f"Invalid {label} for resource '{resource_id}': expected non-negative integer (e.g., 0, 5)."
+                        )
+                        self.status_label.color = (1, 0.3, 0.2, 1)
+                        return
+                    if parsed < 0:
+                        self.status_label.text = (
+                            f"Invalid {label} for resource '{resource_id}': expected non-negative integer (e.g., 0, 5)."
+                        )
+                        self.status_label.color = (1, 0.3, 0.2, 1)
+                        return
+                    parsed_values[field_name] = parsed
+
                 rules.append({
                     "resource_id": resource_id,
                     "action": action,
-                    "amount": max(0, int(rule.get("amount", 0) or 0)),
-                    "min_threshold": max(0, int(rule.get("min_threshold", 0) or 0)),
-                    "max_threshold": max(0, int(rule.get("max_threshold", 0) or 0)),
+                    "amount": parsed_values["amount"],
+                    "min_threshold": parsed_values["min_threshold"],
+                    "max_threshold": parsed_values["max_threshold"],
                 })
+
+            raw_wait_turns = str(wp.get("wait_turns", "")).strip()
+            if raw_wait_turns == "":
+                self.status_label.text = (
+                    f"Invalid wait turns for waypoint {len(waypoint_dicts) + 1}: expected non-negative integer (e.g., 0, 2)."
+                )
+                self.status_label.color = (1, 0.3, 0.2, 1)
+                return
+            try:
+                wait_turns = int(raw_wait_turns)
+            except ValueError:
+                self.status_label.text = (
+                    f"Invalid wait turns for waypoint {len(waypoint_dicts) + 1}: expected non-negative integer (e.g., 0, 2)."
+                )
+                self.status_label.color = (1, 0.3, 0.2, 1)
+                return
+            if wait_turns < 0:
+                self.status_label.text = (
+                    f"Invalid wait turns for waypoint {len(waypoint_dicts) + 1}: expected non-negative integer (e.g., 0, 2)."
+                )
+                self.status_label.color = (1, 0.3, 0.2, 1)
+                return
 
             waypoint_dicts.append({
                 "system_id": system_id,
-                "wait_turns": max(0, int(wp.get("wait_turns", 0) or 0)),
+                "wait_turns": wait_turns,
                 "cargo_rules": rules,
             })
 

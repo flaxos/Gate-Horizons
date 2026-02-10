@@ -336,13 +336,28 @@ class CreateRoutePopup(Popup):
         auto_allowlist = []
         auto_max_per_resource = {}
         manifest = {"outbound": {}, "inbound": {}}
+        invalid_manifest_fields = []
+
+        def _parse_manifest_int(resource_id, raw_value):
+            text = (raw_value or "").strip()
+            if text == "":
+                invalid_manifest_fields.append(resource_id)
+                return None
+            try:
+                value = int(text)
+            except ValueError:
+                invalid_manifest_fields.append(resource_id)
+                return None
+            if value < 0:
+                invalid_manifest_fields.append(resource_id)
+                return None
+            return value
 
         if self.auto_policy != "manual":
             for res, inp in self.manifest_inputs.items():
-                try:
-                    val = int(inp.text)
-                except ValueError:
-                    val = 0
+                val = _parse_manifest_int(res, inp.text)
+                if val is None:
+                    continue
                 if val > 0:
                     auto_allowlist.append(res)
                     auto_max_per_resource[res] = val
@@ -351,13 +366,21 @@ class CreateRoutePopup(Popup):
         else:
             outbound = {}
             for res, inp in self.manifest_inputs.items():
-                try:
-                    val = int(inp.text)
-                    if val > 0:
-                        outbound[res] = val
-                except ValueError:
-                    pass
+                val = _parse_manifest_int(res, inp.text)
+                if val is None:
+                    continue
+                if val > 0:
+                    outbound[res] = val
             manifest = {"outbound": outbound, "inbound": {}}
+
+        if invalid_manifest_fields:
+            labels = ", ".join(field.title() for field in sorted(set(invalid_manifest_fields)))
+            self.status_label.text = (
+                "Invalid manifest input for "
+                f"{labels}. Expected non-negative integer per resource (e.g., 0, 5)."
+            )
+            self.status_label.color = (1, 0.3, 0.2, 1)
+            return
 
         route, message = self.game_state.create_trade_route(
             source=self.selected_source,
