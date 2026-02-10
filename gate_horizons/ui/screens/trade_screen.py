@@ -350,13 +350,22 @@ class CreateRoutePopup(Popup):
                 auto_allowlist = list(self.manifest_inputs.keys())
         else:
             outbound = {}
+            invalid_fields = []
             for res, inp in self.manifest_inputs.items():
                 try:
                     val = int(inp.text)
                     if val > 0:
                         outbound[res] = val
                 except ValueError:
-                    pass
+                    if inp.text.strip():
+                        invalid_fields.append(res)
+            if invalid_fields:
+                self.status_label.text = (
+                    f"Invalid number for: {', '.join(invalid_fields)}. "
+                    "Use whole numbers only."
+                )
+                self.status_label.color = (1, 0.3, 0.2, 1)
+                return
             manifest = {"outbound": outbound, "inbound": {}}
 
         route, message = self.game_state.create_trade_route(
