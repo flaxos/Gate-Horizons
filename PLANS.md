@@ -1,5 +1,15 @@
 # ExecPlans
 
+## PR: Prevent diplomacy actions before unlock_diplomacy
+
+### Goal
+Block diplomacy branches/actions until the unlock_diplomacy tech is researched, add UI lock messaging, and cover with tests.
+
+### Steps
+1. Gate diplomacy branches and relation actions on unlock_diplomacy in game state logic.
+2. Show a diplomacy lock state in the relations screen and hide diplomacy buttons until unlocked.
+3. Add regression coverage for locked relations UI and encounter branch omission.
+
 ## PR: Persist combat/diplomacy resource deltas across colony sync
 
 ### Goal

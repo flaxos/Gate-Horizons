@@ -104,10 +104,12 @@ class RelationsScreen(Screen):
         if not diplomacy:
             self.list_container.add_widget(self._placeholder("Diplomacy system unavailable."))
             return
-        tech_effects = {}
-        if hasattr(self.game_state, "tech"):
-            tech_effects = self.game_state.tech.get_effects()
-        if not tech_effects.get("unlock_diplomacy", False):
+        diplomacy_unlocked = False
+        if hasattr(self.game_state, "_is_diplomacy_unlocked"):
+            diplomacy_unlocked = self.game_state._is_diplomacy_unlocked()
+        elif hasattr(self.game_state, "tech"):
+            diplomacy_unlocked = bool(self.game_state.tech.get_effects().get("unlock_diplomacy", False))
+        if not diplomacy_unlocked:
             lock_message = "Diplomacy locked. Research Signal Decryption to unlock."
             self.status_label.text = lock_message
             self.status_label.color = (0.85, 0.7, 0.45, 1)
