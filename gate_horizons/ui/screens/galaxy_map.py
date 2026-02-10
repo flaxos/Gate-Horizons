@@ -1077,8 +1077,7 @@ class GalaxyMapScreen(Screen):
         elif action.name == "Escort":
             self._show_escort_target_menu(ship_id)
         elif action.name == "Begin Mining":
-            ship.mining = True
-            ship.mission = "mining"
+            self.game_state.issue_ship_order(ship_id, "Begin Mining")
             self.refresh()
         elif action.name == "Continue Mining":
             self._show_notice(f"{ship.name} continues mining in {ship.location}.")
@@ -1122,9 +1121,7 @@ class GalaxyMapScreen(Screen):
                 )
                 self.refresh()
         elif action.name == "Emergency Stop":
-            ship.path.clear()
-            ship.destination = None
-            ship.mission = None
+            self.game_state.issue_ship_order(ship_id, "Emergency Stop")
             self.refresh()
         elif action.name == "Return Home":
             colony_systems = list(self.game_state.colonies.colonies.keys())

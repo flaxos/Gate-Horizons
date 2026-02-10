@@ -777,13 +777,7 @@ class SystemViewScreen(Screen):
     def _on_build_ship(self, btn):
         if not self.game_state:
             return
-        template = self.game_state.fleet._ship_templates.get(btn.ship_class, {})
-        cost = template.get("build_cost", {})
-        if cost:
-            if not self.game_state.resources.can_afford(cost):
-                return
-            self.game_state.resources.spend_dict(cost)
-        self.game_state.fleet.create_ship(btn.ship_class, self.system_id)
+        self.game_state.build_ship(self.system_id, btn.ship_class)
         self.top_bar.update(self.game_state)
         self._update_info()
 
