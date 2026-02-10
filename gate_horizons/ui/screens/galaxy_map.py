@@ -1079,8 +1079,6 @@ class GalaxyMapScreen(Screen):
         elif action.name == "Begin Mining":
             self.game_state.issue_ship_order(ship_id, "Begin Mining")
             self.refresh()
-        elif action.name == "Continue Mining":
-            self._show_notice(f"{ship.name} continues mining in {ship.location}.")
         elif action.name == "Unload Cargo":
             self.game_state.unload_ship_cargo_to_colony(ship_id)
             self.refresh()
@@ -1145,10 +1143,6 @@ class GalaxyMapScreen(Screen):
                     f"{ship.name} cannot return home: no reachable colony."
                 )
             self.refresh()
-        elif action.name in {"Set Trade Route", "Prospect", "Set Auto-Mine"}:
-            self._show_notice(
-                f"{action.name} is not implemented yet. Check other menus for updates."
-            )
         else:
             self._show_notice(f"{action.name} is not available yet.")
 
