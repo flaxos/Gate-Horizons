@@ -906,6 +906,169 @@ class GameState:
             self.log.append(report_entry.get("summary", message))
         return success, message
 
+    def dispatch_ship_context_action(
+        self,
+        ship_id: str,
+        action_name: str,
+        params: Optional[dict] = None,
+    ) -> dict:
+        """Public dispatcher for UI ship-context actions.
+
+        Returns a structured result so screens can keep local UI concerns (menus,
+        popups, refresh behavior) while gameplay action execution remains centralized.
+        """
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return {
+                "success": False,
+                "message": "Ship not found",
+                "requires_ui": None,
+                "changed": False,
+            }
+
+        normalized_action = (action_name or "").strip()
+        if normalized_action in {"Move To", "Reroute"}:
+            return {
+                "success": True,
+                "message": "Destination selection required",
+                "requires_ui": "destination",
+                "changed": False,
+            }
+        if normalized_action == "Escort":
+            return {
+                "success": True,
+                "message": "Escort target selection required",
+                "requires_ui": "escort_target",
+                "changed": False,
+            }
+        if normalized_action == "Continue":
+            return {
+                "success": True,
+                "message": "No action taken",
+                "requires_ui": None,
+                "changed": False,
+            }
+
+        if normalized_action == "Reposition (Local)":
+            success, message = self.execute_local_move(ship_id, ship.location)
+            return {
+                "success": success,
+                "message": message,
+                "requires_ui": None,
+                "changed": bool(success),
+            }
+
+        if normalized_action in {
+            "Scan System",
+            "Deploy Probe",
+            "Patrol",
+            "Blockade",
+            "Investigate Anomaly",
+            "Establish Colony",
+            "Repair",
+            "Refuel",
+            "Intercept",
+            "Engage",
+            "Retreat",
+            "Hail",
+            "Emergency Stop",
+            "Begin Mining",
+        }:
+            order_params = dict(params or {})
+            if normalized_action == "Deploy Probe":
+                order_params.setdefault("credits", 5)
+            success, message, _ = self.issue_ship_order(ship_id, normalized_action, params=order_params)
+            return {
+                "success": success,
+                "message": message,
+                "requires_ui": None,
+                "changed": bool(success),
+            }
+
+        if normalized_action == "Unload Cargo":
+            self.unload_ship_cargo_to_colony(ship_id)
+            return {"success": True, "message": "Cargo unloaded", "requires_ui": None, "changed": True}
+        if normalized_action == "Load Cargo":
+            self.load_ship_cargo_from_colony(ship_id)
+            return {"success": True, "message": "Cargo loaded", "requires_ui": None, "changed": True}
+        if normalized_action == "Load Colonists":
+            self.load_colonists_to_ship(ship_id)
+            return {"success": True, "message": "Colonists loaded", "requires_ui": None, "changed": True}
+        if normalized_action == "Unload Colonists":
+            self.unload_colonists_to_colony(ship_id)
+            return {"success": True, "message": "Colonists unloaded", "requires_ui": None, "changed": True}
+        if normalized_action == "Emergency Jettison":
+            ship.cargo.clear()
+            return {"success": True, "message": "Cargo jettisoned", "requires_ui": None, "changed": True}
+        if normalized_action == "Deliver Cargo":
+            return self._dispatch_deliver_cargo_action(ship)
+        if normalized_action == "Return Home":
+            return self._dispatch_return_home_action(ship)
+
+        return {
+            "success": False,
+            "message": f"{normalized_action} is not available yet.",
+            "requires_ui": None,
+            "changed": False,
+        }
+
+    def _dispatch_deliver_cargo_action(self, ship) -> dict:
+        if ship.cargo_used == 0:
+            return {"success": True, "message": "No cargo to deliver", "requires_ui": None, "changed": False}
+
+        colony_systems = list(self.colonies.colonies.keys())
+        if ship.location in colony_systems:
+            self.unload_ship_cargo_to_colony(ship.id)
+            return {"success": True, "message": "Cargo delivered", "requires_ui": None, "changed": True}
+
+        nearest_system = self._get_nearest_colony_system(ship.location, colony_systems)
+        if nearest_system:
+            self.fleet.move_ship(ship.id, nearest_system, self.galaxy)
+            return {
+                "success": True,
+                "message": f"{ship.name} en route to nearest colony",
+                "requires_ui": None,
+                "changed": True,
+            }
+        return {
+            "success": False,
+            "message": "No reachable colony found",
+            "requires_ui": None,
+            "changed": False,
+        }
+
+    def _dispatch_return_home_action(self, ship) -> dict:
+        colony_systems = list(self.colonies.colonies.keys())
+        nearest_system = self._get_nearest_colony_system(ship.location, colony_systems)
+        if nearest_system:
+            self.fleet.move_ship(ship.id, nearest_system, self.galaxy)
+            return {
+                "success": True,
+                "message": f"{ship.name} returning home",
+                "requires_ui": None,
+                "changed": True,
+            }
+        message = f"{ship.name} cannot return home: no reachable colony."
+        self.log.append(message)
+        return {
+            "success": False,
+            "message": message,
+            "requires_ui": None,
+            "changed": False,
+        }
+
+    def _get_nearest_colony_system(self, source_system_id: str, colony_systems: list[str]) -> Optional[str]:
+        shortest_path = None
+        nearest_system = None
+        for system_id in colony_systems:
+            path = self.galaxy.get_path(source_system_id, system_id)
+            if not path:
+                continue
+            if shortest_path is None or len(path) < len(shortest_path):
+                shortest_path = path
+                nearest_system = system_id
+        return nearest_system
+
     def issue_ship_order(
         self,
         ship_id: str,

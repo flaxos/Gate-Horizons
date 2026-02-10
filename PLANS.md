@@ -525,3 +525,17 @@ Require an in-system ship with the `establish_colony` ability to found colonies,
 - Piracy/diplomacy systems beyond minimal encounter consequences.
 - Procedural galaxy generation or large-scale economy rework.
 - Real-time automation loops or factorio-style belts.
+
+## ExecPlan — Centralized ship context action dispatcher (2026-02-10)
+
+### Goal
+Centralize gameplay execution for ship context actions behind a public API on `GameState`, then have all UI screen entrypoints call that API while retaining per-screen menu/popup/refresh behavior.
+
+### Steps
+1. Add a `GameState` dispatcher method for ship context actions with structured outcomes (executed vs UI follow-up needed).
+2. Migrate `galaxy_map.py`, `fleet_screen.py`, and `gravity_well_map.py` to use the dispatcher and keep local UI concerns local.
+3. Add parity tests that run the same action via each screen entrypoint and assert identical resulting game-state effects.
+4. Run focused pytest coverage for the new parity tests.
+
+### Validation
+- New tests verify the same action (`Emergency Jettison`) has identical cargo outcomes through Galaxy, Fleet, and Gravity Well screen entrypoints.
