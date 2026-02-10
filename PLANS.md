@@ -1,5 +1,17 @@
 # ExecPlans
 
+## PR: Fix audited gameplay/blocker issues (A-F)
+
+### Goal
+Implement fixes for the audited playability/shipping issues across population, resources, encounters, trade, diplomacy, missions, and UI feedback.
+
+### Steps
+1. Fix POP export double-decrement by unifying migration bookkeeping across trade/logistics and ship actions; add safeguards in colony processing.
+2. Preserve resource deltas by syncing combat/diplomacy/event rewards into colony stockpiles before global sync; add affordability checks for manual result imports.
+3. Align trade route toggles with runtime checks, prevent export overwrites, and improve manual encounter import/export handling.
+4. Gate diplomacy features behind tech unlocks and refine encounter branching + UI feedback.
+5. Address remaining UX dead-ends (missions discovery counting, mining feedback, gate activation messaging, local move UI entry, retreat penalties).
+
 ## Bug triage and fixes from codebase review
 
 ### Goal

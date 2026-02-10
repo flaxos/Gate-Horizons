@@ -283,7 +283,7 @@ class TradeManager:
     ) -> list[dict]:
         segments: list[dict] = []
         for route in self.routes.values():
-            if not route.enabled:
+            if not route.enabled or not route.active:
                 continue
 
             capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
@@ -436,7 +436,6 @@ class TradeManager:
                         for resource, amount in shipment.resources.items():
                             if resource == "pop":
                                 added = colony.add_population_units(amount)
-                                colony.pending_population_migration += added
                                 report["delivered"][resource] = added
                                 continue
                             if resource in colony.stockpiles:
@@ -487,7 +486,7 @@ class TradeManager:
         reports = []
 
         for route in self.routes.values():
-            if not route.enabled:
+            if not route.enabled or not route.active:
                 continue
 
             capacity = route.get_effective_capacity(fleet=fleet, tech_effects=tech_effects)
@@ -540,7 +539,6 @@ class TradeManager:
                             available = source_colony.get_population_export_available(amount)
                             take = min(amount, available)
                             source_colony.population = source_colony.population_units - take
-                            source_colony.pending_population_migration -= take
                             actual = take
                         elif resource in source_colony.stockpiles:
                             available = source_colony.stockpiles.get(resource, 0)
@@ -596,7 +594,6 @@ class TradeManager:
                             available = dest_colony.get_population_export_available(amount)
                             take = min(amount, available)
                             dest_colony.population = dest_colony.population_units - take
-                            dest_colony.pending_population_migration -= take
                             actual = take
                         elif resource in dest_colony.stockpiles:
                             available = dest_colony.stockpiles.get(resource, 0)

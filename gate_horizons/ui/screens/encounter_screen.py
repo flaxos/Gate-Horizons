@@ -127,7 +127,13 @@ class EncounterScreen(Screen):
         has_diplomacy = bool(diplomacy and faction_id in diplomacy.relations)
         tier = diplomacy.get_tier(faction_id) if has_diplomacy else "neutral"
         score = diplomacy.get_score(faction_id) if has_diplomacy else 0
+        diplomacy_unlocked = False
+        if hasattr(self.game_state, "tech"):
+            tech_effects = self.game_state.tech.get_effects()
+            diplomacy_unlocked = bool(tech_effects.get("unlock_diplomacy", False))
         branches = entry.get("branch_options", ["tactical"])
+        if not diplomacy_unlocked and "diplomacy" in branches:
+            branches = [branch for branch in branches if branch != "diplomacy"]
         system_id = entry.get("system_id", "")
         title = f"{defender.get('type', 'encounter').title()} @ {system_id}"
         card.add_widget(Label(
@@ -230,6 +236,7 @@ class EncounterScreen(Screen):
             background_color=(0.3, 0.2, 0.4, 0.9),
             color=(0.9, 0.85, 1, 1),
         )
+        import_btn.encounter_id = encounter_id
         import_btn.bind(on_release=self._import_result_spec)
         utility_row.add_widget(import_btn)
         utility_row.add_widget(Widget())
@@ -255,13 +262,17 @@ class EncounterScreen(Screen):
     def _start_diplomacy(self, btn):
         if not self.game_state:
             return
-        self.game_state.resolve_diplomacy_action(btn.encounter_id, btn.action_name)
+        success, message = self.game_state.resolve_diplomacy_action(
+            btn.encounter_id, btn.action_name
+        )
+        self._set_status(message, success=success)
         self.refresh()
 
     def _start_evasion(self, btn):
         if not self.game_state:
             return
-        self.game_state.resolve_evasion(btn.encounter_id)
+        success, message = self.game_state.resolve_evasion(btn.encounter_id)
+        self._set_status(message, success=success)
         self.refresh()
 
     def _export_encounter_spec(self, btn):
@@ -279,12 +290,19 @@ class EncounterScreen(Screen):
         if not self.game_state:
             self._set_status("No game state available to import result spec.", success=False)
             return
-        success, message = self.game_state.import_result_spec()
-        if success:
-            self._set_status(f"Result spec imported: {message}", success=True)
-            self.refresh()
-        else:
-            self._set_status(f"Import failed: {message}", success=False)
+        encounter_id = getattr(_args[0], "encounter_id", "") if _args else ""
+        filenames = ["ResultSpec.json"]
+        if encounter_id:
+            filenames.insert(0, f"ResultSpec_{encounter_id}.json")
+        last_message = ""
+        for filename in filenames:
+            success, message = self.game_state.import_result_spec(filename=filename)
+            last_message = message
+            if success:
+                self._set_status(f"Result spec imported: {message}", success=True)
+                self.refresh()
+                return
+        self._set_status(f"Import failed: {last_message}", success=False)
 
     def _go_back(self, *args):
         from kivy.app import App
