@@ -395,13 +395,153 @@ class FleetScreen(Screen):
         menu.open()
 
     def _execute_action(self, ship_id, action):
-        """Delegate to galaxy map's action handler."""
-        from kivy.app import App
-        app = App.get_running_app()
-        if app and hasattr(app, "galaxy_map_screen"):
-            app.galaxy_map_screen._execute_action(ship_id, action)
-            self.top_bar.update(self.game_state)
-            self._update_list()
+        """Execute a ship action through GameState, independent of other screens."""
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(ship_id)
+        if not ship:
+            return
+
+        # Actions dispatched through the central order system
+        order_actions = {
+            "Scan System", "Deploy Probe", "Patrol", "Blockade",
+            "Investigate Anomaly", "Establish Colony", "Repair", "Refuel",
+            "Intercept", "Engage", "Retreat", "Hail", "Begin Mining",
+            "Emergency Stop",
+        }
+
+        if action.name in order_actions:
+            params = {}
+            if action.name == "Deploy Probe":
+                params = {"credits": action.cost.get("credits", 5)}
+            self.game_state.issue_ship_order(ship_id, action.name, params=params)
+        elif action.name in ("Move To", "Reroute"):
+            self._on_move_for_action(ship_id)
+            return
+        elif action.name == "Escort":
+            self._show_escort_menu(ship_id)
+            return
+        elif action.name == "Reposition (Local)":
+            self.game_state.execute_local_move(ship_id, ship.location)
+        elif action.name == "Continue":
+            pass  # Ship continues on current course
+        elif action.name == "Continue Mining":
+            pass  # Ship is already mining; informational
+        elif action.name == "Unload Cargo":
+            self.game_state.unload_ship_cargo_to_colony(ship_id)
+        elif action.name == "Load Cargo":
+            self.game_state.load_ship_cargo_from_colony(ship_id)
+        elif action.name == "Load Colonists":
+            self.game_state.load_colonists_to_ship(ship_id)
+        elif action.name == "Unload Colonists":
+            self.game_state.unload_colonists_to_colony(ship_id)
+        elif action.name == "Emergency Jettison":
+            ship.cargo.clear()
+        elif action.name == "Deliver Cargo":
+            if ship.cargo_used == 0:
+                return
+            if ship.location in self.game_state.colonies.colonies:
+                self.game_state.unload_ship_cargo_to_colony(ship_id)
+            else:
+                nearest = self.game_state.find_nearest_colony_system(ship.location)
+                if nearest:
+                    self.game_state.fleet.move_ship(ship_id, nearest, self.game_state.galaxy)
+        elif action.name == "Return Home":
+            nearest = self.game_state.find_nearest_colony_system(ship.location)
+            if nearest:
+                self.game_state.fleet.move_ship(ship_id, nearest, self.game_state.galaxy)
+            else:
+                self.game_state.log.append(
+                    f"{ship.name} cannot return home: no reachable colony."
+                )
+
+        self.top_bar.update(self.game_state)
+        self._update_list()
+
+    def _on_move_for_action(self, ship_id):
+        """Show destination menu triggered from context menu action."""
+        ship = self.game_state.fleet.ships.get(ship_id)
+        if not ship:
+            return
+        reachable = []
+        for sid, system in self.game_state.galaxy.systems.items():
+            if sid == ship.location:
+                continue
+            if system.discovered and system.gate_active:
+                path = self.game_state.galaxy.get_path(ship.location, sid)
+                if path:
+                    reachable.append(system)
+        menu = DestinationMenu(
+            systems=reachable,
+            callback=lambda dest_id: self._move_ship(ship_id, dest_id),
+        )
+        menu.open()
+
+    def _show_escort_menu(self, ship_id):
+        """Show escort target selection popup."""
+        from kivy.uix.popup import Popup
+        from kivy.uix.gridlayout import GridLayout
+
+        ship = self.game_state.fleet.ships.get(ship_id)
+        if not ship:
+            return
+        targets = [
+            s for s in self.game_state.fleet.get_ships_at(ship.location)
+            if s.id != ship_id
+        ]
+        if not targets:
+            return
+        targets.sort(key=lambda s: s.name)
+
+        content = BoxLayout(orientation="vertical", spacing=dp(4), padding=dp(8))
+        scroll = ScrollView(size_hint=(1, 1))
+        target_list = GridLayout(cols=1, spacing=dp(4), size_hint_y=None)
+        target_list.bind(minimum_height=target_list.setter("height"))
+
+        popup = Popup(
+            title="Escort Target",
+            content=content,
+            size_hint=(0.45, 0.5),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+        )
+
+        for target in targets:
+            btn = Button(
+                text=target.name,
+                size_hint_y=None,
+                height=dp(36),
+                font_size="12sp",
+                background_color=(0.15, 0.2, 0.35, 0.9),
+                color=(0.85, 0.92, 1, 1),
+            )
+            btn.bind(
+                on_release=lambda b, tid=target.id: self._issue_escort(
+                    ship_id, tid, popup
+                )
+            )
+            target_list.add_widget(btn)
+
+        scroll.add_widget(target_list)
+        content.add_widget(scroll)
+        cancel = Button(
+            text="Cancel", size_hint_y=None, height=dp(32),
+            font_size="12sp",
+            background_color=(0.2, 0.2, 0.25, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        cancel.bind(on_release=lambda b: popup.dismiss())
+        content.add_widget(cancel)
+        popup.open()
+
+    def _issue_escort(self, ship_id, target_id, popup):
+        popup.dismiss()
+        self.game_state.issue_ship_order(
+            ship_id, "Escort", params={"target_ship_id": target_id}
+        )
+        self.top_bar.update(self.game_state)
+        self._update_list()
 
     def _go_back(self, *args):
         from kivy.app import App
