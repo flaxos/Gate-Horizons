@@ -266,8 +266,6 @@ class ShipyardManager:
         build_cost = facility_config.get("build_cost", {})
         for res, amount in build_cost.items():
             if res == "credits":
-                if colony and colony.stockpiles.get("credits", 0) < amount:
-                    return None
                 if resources and resources.global_resources.get("credits", 0) < amount:
                     return None
             else:
@@ -278,10 +276,7 @@ class ShipyardManager:
         for res, amount in build_cost.items():
             if res == "credits":
                 if resources:
-                    if colony:
-                        resources.spend_from_colony("credits", amount, colony)
-                    else:
-                        resources.spend("credits", amount)
+                    resources.spend("credits", amount)
             else:
                 inventory[res] = max(0, inventory.get(res, 0) - amount)
 
@@ -395,8 +390,6 @@ class ShipyardManager:
         # Check credit cost
         credit_cost = blueprint.get("credits", 0)
         if credit_cost > 0 and resources:
-            if colony and colony.stockpiles.get("credits", 0) < credit_cost:
-                return None
             if resources.global_resources.get("credits", 0) < credit_cost:
                 return None
 
@@ -406,10 +399,7 @@ class ShipyardManager:
 
         # Consume credits
         if credit_cost > 0 and resources:
-            if colony:
-                resources.spend_from_colony("credits", credit_cost, colony)
-            else:
-                resources.spend("credits", credit_cost)
+            resources.spend("credits", credit_cost)
 
         total_turns = max(1, blueprint.get("build_turns", 4) - build_time_reduction)
         order = ShipBuildOrder(
