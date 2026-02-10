@@ -34,6 +34,15 @@ class TestDiplomacyUnlockGate(unittest.TestCase):
         self.assertIn(lock_message, source)
         self.assertIn("unlock_diplomacy", source)
 
+    def test_relation_action_is_blocked_when_locked(self):
+        state = GameState.new_game()
+        tech = state.tech.techs.get("signal_decryption")
+        if tech:
+            tech.researched = False
+        success, message = state.resolve_relation_action("alien_patrol", "aid")
+        self.assertFalse(success)
+        self.assertIn("Signal Decryption", message)
+
 
 if __name__ == "__main__":
     unittest.main()
