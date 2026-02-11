@@ -21,7 +21,7 @@
 | Zoom-threshold auto-level switching | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Auto-switch between system and body levels based on zoom thresholds. |
 | Mini-map overlay | `PROJECT_PLAN.md`, `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py` | Shipped | Compact galaxy context overlay when viewing a system. |
 | Turn report summary screen | `docs/ROADMAP.md` | `gate_horizons/ui/screens/turn_report_screen.py`, `gate_horizons/ui/screens/galaxy_map.py` | Shipped | Full-screen summary with section shortcuts replacing the popup. |
-| Fleet group management | `docs/ROADMAP.md` | — | Future | Planned grouping of multiple ships with shared orders. |
+| Fleet group management | `docs/ROADMAP.md`, `docs/RELEASE_PLAN_FLEET_GROUPS.md` | — | Future | Release plan defines phased delivery, parity testing, migration, telemetry, and rollback strategy. |
 | Resource flow visualisation | `docs/ROADMAP.md` | `gate_horizons/game/trade.py`, `gate_horizons/ui/screens/galaxy_map.py`, `gate_horizons/tests/test_trade_flow_overlay.py` | Shipped | Galaxy map flow overlays show active trade route directions and dominant resources. |
 | Planet comparison view | `docs/ROADMAP.md` | `gate_horizons/game/planet_comparison.py`, `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_planet_comparison_view.py` | Shipped | Comparison popup for up to three bodies with key colonisation stats. |
 | Fog of war visualization on system map | `docs/ROADMAP.md` | `gate_horizons/ui/screens/gravity_well_map.py`, `gate_horizons/tests/test_ui_fog_of_war_system_map.py` | Shipped | Unsurveyed bodies render as silhouettes with redacted details. |

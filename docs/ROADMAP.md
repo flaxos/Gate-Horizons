@@ -55,6 +55,7 @@ No P0 items currently pending.
 #### 5. Fleet Group Management
 - **Why:** Late-game fleet management is tedious with many individual ships.
 - **Acceptance criteria:** Select multiple ships and issue group orders (move, patrol). Show fleet strength summary.
+- **Release plan:** `docs/RELEASE_PLAN_FLEET_GROUPS.md`
 - **Effort:** L
 - **Risk:** Medium — requires new data model for fleet groups.
 - **Release bucket:** Next patch.
