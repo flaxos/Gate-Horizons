@@ -400,10 +400,12 @@ class FleetScreen(Screen):
             action.name,
             params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
         )
-        if result.get("requires_ui") == "destination":
+        required_ui = result.get("requires_ui")
+        if required_ui == "destination":
             btn = type("_ShipBtn", (), {"ship_id": ship_id})()
             self._on_move(btn)
-        elif not result.get("success"):
+
+        if not result.get("success"):
             self._show_notice(result.get("message", "Action failed."))
         self.top_bar.update(self.game_state)
         self._update_list()
