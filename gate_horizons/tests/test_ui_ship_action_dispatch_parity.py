@@ -138,6 +138,21 @@ def _run_from_fleet_screen(state, ship_id, action):
     screen._execute_action(ship_id, action)
 
 
+def _run_from_fleet_screen_with_notices(state, ship_id, action):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+
+    notices = []
+    screen = FleetScreen.__new__(FleetScreen)
+    screen.game_state = state
+    screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+    screen._update_list = lambda: None
+    screen._on_move = lambda btn: None
+    screen._show_notice = lambda message, title="Notice": notices.append((message, title))
+    screen._execute_action(ship_id, action)
+    return notices
+
+
 def _run_from_gravity_well_screen(state, ship_id, action):
     _install_kivy_stubs_if_missing()
     from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
@@ -287,3 +302,15 @@ def test_unassign_trade_parity_between_fleet_and_galaxy_dispatch():
     galaxy_snapshot = _trade_unassign_snapshot(galaxy_state, galaxy_ship_id, galaxy_route_id)
 
     assert fleet_snapshot == galaxy_snapshot
+
+
+def test_fleet_screen_shows_notice_when_dispatch_action_fails():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+    ship.path = ["alpha_centauri"]
+    ship.destination = "alpha_centauri"
+
+    notices = _run_from_fleet_screen_with_notices(state, ship.id, Action(name="Refuel"))
+
+    assert notices
+    assert notices[0][0] == f"{ship.name} is currently in transit"
