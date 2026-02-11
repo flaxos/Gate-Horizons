@@ -549,3 +549,13 @@ Replace silent numeric coercion in trade/logistics route creation popups with ex
 1. Add manifest parsing validation in `CreateRoutePopup._on_create` that collects invalid resource fields, shows a clear expected-format message, and blocks route creation.
 2. Add explicit status feedback for invalid logistics numeric entries (wait turns and cargo rule integer fields) instead of silently coercing invalid values to zero.
 3. Add tests covering invalid manifest input handling and logistics numeric validation behavior.
+
+## PR: Fleet mining/trade quick actions use GameState commands
+
+### Goal
+Route Fleet screen mining toggle and trade unassign quick actions through explicit `GameState` commands so invariants, logging, and turn-report entries match centralized action dispatch behavior.
+
+### Steps
+1. Add `GameState` command methods for toggling mining and unassigning a ship from trade routes, including invariant cleanup and action logging/report entries.
+2. Update Fleet screen handlers to call those methods and show notice feedback when a command fails.
+3. Add parity tests that compare Fleet quick-action entrypoints against Galaxy action dispatch for equivalent state transitions.

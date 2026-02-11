@@ -891,10 +891,10 @@ class GameState:
         """Dispatch a ship action and store its outcome for the next turn report."""
         ship = self.fleet.ships.get(ship_id)
         if not ship:
-            return False, "Ship not found"
+            return False, "Ship not found", {}
 
         if ship.path:
-            return False, f"{ship.name} is currently in transit"
+            return False, f"{ship.name} is currently in transit", {}
 
         success, message, report_entry = self._dispatch_ship_action(
             ship,
@@ -1000,6 +1000,12 @@ class GameState:
         if normalized_action == "Emergency Jettison":
             ship.cargo.clear()
             return {"success": True, "message": "Cargo jettisoned", "requires_ui": None, "changed": True}
+        if normalized_action in {"Toggle Mining", "Stop Mining"}:
+            success, message, _ = self.toggle_ship_mining(ship_id)
+            return {"success": success, "message": message, "requires_ui": None, "changed": bool(success)}
+        if normalized_action == "Unassign Trade Route":
+            success, message = self.unassign_ship_from_trade_routes(ship_id)
+            return {"success": success, "message": message, "requires_ui": None, "changed": bool(success)}
         if normalized_action == "Deliver Cargo":
             return self._dispatch_deliver_cargo_action(ship)
         if normalized_action == "Return Home":
@@ -1068,6 +1074,88 @@ class GameState:
                 shortest_path = path
                 nearest_system = system_id
         return nearest_system
+
+    def toggle_ship_mining(
+        self,
+        ship_id: str,
+        enabled: Optional[bool] = None,
+        *,
+        record_action: bool = True,
+    ) -> tuple[bool, str, dict]:
+        """Toggle or set mining state for a miner ship with invariant cleanup + logging."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found", {}
+        if ship.ship_class != "miner":
+            return False, f"{ship.name} is not a miner", {}
+        if ship.path:
+            return False, f"{ship.name} is currently in transit", {}
+
+        target_state = (not ship.mining) if enabled is None else bool(enabled)
+        if target_state == ship.mining:
+            state_text = "already mining" if ship.mining else "already idle"
+            return False, f"{ship.name} is {state_text}", {}
+
+        ship.mining = target_state
+        ship.path.clear()
+        ship.destination = None
+        if target_state:
+            ship.mission = "mining"
+            summary = f"{ship.name} began mining in {ship.location}"
+            action = "Begin Mining"
+            message = "Mining initiated"
+        else:
+            if ship.mission == "mining":
+                ship.mission = None
+            summary = f"{ship.name} stopped mining in {ship.location}"
+            action = "Stop Mining"
+            message = "Mining stopped"
+
+        report_entry = {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": action,
+            "system_id": ship.location,
+            "summary": summary,
+        }
+        if record_action:
+            self.pending_ship_actions.append(report_entry)
+            self.log.append(summary)
+        return True, message, report_entry
+
+    def unassign_ship_from_trade_routes(self, ship_id: str) -> tuple[bool, str]:
+        """Remove a ship from all trade-route assignments and clear route mission state."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found"
+
+        removed_routes = []
+        for route in self.trade.routes.values():
+            if ship.id in route.assigned_ships:
+                route.assigned_ships = [sid for sid in route.assigned_ships if sid != ship.id]
+                removed_routes.append(route.id)
+
+        if not removed_routes and not ship.trade_route:
+            return False, f"{ship.name} is not assigned to a trade route"
+
+        ship.trade_route = None
+        ship.path.clear()
+        ship.destination = None
+        if ship.mission in {"trade", "freight"}:
+            ship.mission = None
+
+        summary = f"{ship.name} unassigned from trade routes"
+        report_entry = {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": "Unassign Trade Route",
+            "system_id": ship.location,
+            "summary": summary,
+            "route_ids": removed_routes,
+        }
+        self.pending_ship_actions.append(report_entry)
+        self.log.append(summary)
+        return True, "Ship unassigned from trade route"
 
     def issue_ship_order(
         self,
@@ -1554,17 +1642,14 @@ class GameState:
         }
 
     def _handle_begin_mining(self, ship, params: dict) -> tuple[bool, str, dict]:
-        if ship.mining:
-            return False, f"{ship.name} is already mining", {}
-        ship.mining = True
-        ship.mission = "mining"
-        return True, "Mining initiated", {
-            "ship_id": ship.id,
-            "ship_name": ship.name,
-            "action": "Begin Mining",
-            "system_id": ship.location,
-            "summary": f"{ship.name} began mining in {ship.location}",
-        }
+        success, message, report_entry = self.toggle_ship_mining(
+            ship.id,
+            enabled=True,
+            record_action=False,
+        )
+        if not success:
+            return False, message, {}
+        return True, message, report_entry
 
     def _handle_emergency_stop(self, ship, params: dict) -> tuple[bool, str, dict]:
         ship.path.clear()

@@ -148,6 +148,104 @@ def _run_from_gravity_well_screen(state, ship_id, action):
     screen._execute_ship_action(ship_id, action)
 
 
+
+
+def _run_toggle_mining_from_fleet(state, ship_id):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+
+    screen = FleetScreen.__new__(FleetScreen)
+    screen.game_state = state
+    screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+    screen._update_list = lambda: None
+    screen._show_notice = lambda message, title="Notice": None
+    btn = SimpleNamespace(ship_id=ship_id)
+    screen._toggle_mining(btn)
+
+
+def _run_unassign_trade_from_fleet(state, ship_id):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+
+    screen = FleetScreen.__new__(FleetScreen)
+    screen.game_state = state
+    screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+    screen._update_list = lambda: None
+    screen._show_notice = lambda message, title="Notice": None
+    btn = SimpleNamespace(ship_id=ship_id)
+    screen._unassign_trade(btn)
+
+
+def _build_state_with_miner():
+    state = GameState.new_game()
+    miner = next(ship for ship in state.fleet.ships.values() if ship.ship_class == "miner")
+    miner.mining = False
+    miner.mission = None
+    miner.path = []
+    miner.destination = None
+    return state, miner.id
+
+
+def _build_state_with_trade_assignment():
+    state = GameState.new_game()
+    freighter = next(
+        ship for ship in state.fleet.ships.values()
+        if ship.ship_class in {"freighter", "small_freighter", "medium_freighter", "large_freighter"}
+        or "freighter" in (ship.ship_class or "")
+    )
+
+    systems = list(state.galaxy.systems.keys())
+    route = None
+    for source_id in systems:
+        for dest_id in systems:
+            if source_id == dest_id:
+                continue
+            route = state.trade.create_route(
+                source=source_id,
+                dest=dest_id,
+                capacity_per_turn=10,
+                latency_turns=1,
+                manifest={"outbound": {}, "inbound": {}},
+                galaxy=state.galaxy,
+                ships=[freighter.id],
+            )
+            if route:
+                break
+        if route:
+            break
+    assert route is not None
+
+    freighter.trade_route = route.id
+    freighter.mission = "trade"
+    freighter.path = [route.destination_system]
+    freighter.destination = route.destination_system
+    return state, freighter.id, route.id
+
+
+def _mining_snapshot(state, ship_id):
+    ship = state.fleet.ships[ship_id]
+    return {
+        "mining": ship.mining,
+        "mission": ship.mission,
+        "path": list(ship.path),
+        "destination": ship.destination,
+        "pending_last_action": state.pending_ship_actions[-1]["action"] if state.pending_ship_actions else None,
+        "log_last": state.log[-1] if state.log else None,
+    }
+
+
+def _trade_unassign_snapshot(state, ship_id, route_id):
+    ship = state.fleet.ships[ship_id]
+    route = state.trade.routes[route_id]
+    return {
+        "trade_route": ship.trade_route,
+        "mission": ship.mission,
+        "path": list(ship.path),
+        "destination": ship.destination,
+        "assigned_ships": list(route.assigned_ships),
+        "pending_last_action": state.pending_ship_actions[-1]["action"] if state.pending_ship_actions else None,
+        "log_last": state.log[-1] if state.log else None,
+    }
 def test_ship_action_dispatch_parity_across_screen_entrypoints():
     action = Action(name="Emergency Jettison")
 
@@ -164,3 +262,28 @@ def test_ship_action_dispatch_parity_across_screen_entrypoints():
 
     assert outcomes[0] == outcomes[1] == outcomes[2]
     assert outcomes[0] == ({}, 0, 0)
+
+
+
+def test_toggle_mining_parity_between_fleet_and_galaxy_dispatch():
+    fleet_state, fleet_ship_id = _build_state_with_miner()
+    _run_toggle_mining_from_fleet(fleet_state, fleet_ship_id)
+    fleet_snapshot = _mining_snapshot(fleet_state, fleet_ship_id)
+
+    galaxy_state, galaxy_ship_id = _build_state_with_miner()
+    _run_from_galaxy_screen(galaxy_state, galaxy_ship_id, Action(name="Toggle Mining"))
+    galaxy_snapshot = _mining_snapshot(galaxy_state, galaxy_ship_id)
+
+    assert fleet_snapshot == galaxy_snapshot
+
+
+def test_unassign_trade_parity_between_fleet_and_galaxy_dispatch():
+    fleet_state, fleet_ship_id, fleet_route_id = _build_state_with_trade_assignment()
+    _run_unassign_trade_from_fleet(fleet_state, fleet_ship_id)
+    fleet_snapshot = _trade_unassign_snapshot(fleet_state, fleet_ship_id, fleet_route_id)
+
+    galaxy_state, galaxy_ship_id, galaxy_route_id = _build_state_with_trade_assignment()
+    _run_from_galaxy_screen(galaxy_state, galaxy_ship_id, Action(name="Unassign Trade Route"))
+    galaxy_snapshot = _trade_unassign_snapshot(galaxy_state, galaxy_ship_id, galaxy_route_id)
+
+    assert fleet_snapshot == galaxy_snapshot
