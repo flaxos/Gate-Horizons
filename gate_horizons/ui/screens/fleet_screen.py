@@ -9,6 +9,7 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.progressbar import ProgressBar
+from kivy.uix.popup import Popup
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
@@ -308,11 +309,11 @@ class FleetScreen(Screen):
     def _toggle_mining(self, btn):
         if not self.game_state:
             return
-        ship = self.game_state.fleet.ships.get(btn.ship_id)
-        if ship and ship.ship_class == "miner":
-            ship.mining = not ship.mining
-            ship.mission = "mining" if ship.mining else None
-            self._update_list()
+        success, message, _ = self.game_state.toggle_ship_mining(btn.ship_id)
+        if not success:
+            self._show_notice(message)
+        self.top_bar.update(self.game_state)
+        self._update_list()
 
     def _deliver_cargo(self, btn):
         """Deliver mined cargo to colony stockpiles."""
@@ -334,14 +335,10 @@ class FleetScreen(Screen):
         """Unassign ship from trade route."""
         if not self.game_state:
             return
-        ship = self.game_state.fleet.ships.get(btn.ship_id)
-        if not ship:
-            return
-        for route in self.game_state.trade.routes.values():
-            if ship.id in route.assigned_ships:
-                route.assigned_ships.remove(ship.id)
-        ship.trade_route = None
-        ship.mission = None
+        success, message = self.game_state.unassign_ship_from_trade_routes(btn.ship_id)
+        if not success:
+            self._show_notice(message)
+        self.top_bar.update(self.game_state)
         self._update_list()
 
     def _on_move(self, btn):
@@ -406,8 +403,41 @@ class FleetScreen(Screen):
         if result.get("requires_ui") == "destination":
             btn = type("_ShipBtn", (), {"ship_id": ship_id})()
             self._on_move(btn)
+        elif not result.get("success"):
+            self._show_notice(result.get("message", "Action failed."))
         self.top_bar.update(self.game_state)
         self._update_list()
+
+    def _show_notice(self, message: str, title: str = "Notice") -> None:
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
+        content.add_widget(Label(
+            text=message,
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(56),
+            halign="center",
+            valign="middle",
+        ))
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.15, 0.2, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        popup = Popup(
+            title=title,
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+        )
+        ok_btn.bind(on_release=lambda x: popup.dismiss())
+        content.add_widget(ok_btn)
+        popup.open()
 
     def _go_back(self, *args):
         from kivy.app import App
