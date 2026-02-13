@@ -18,6 +18,7 @@ class Planet:
     type: str  # rocky, gas_giant, ice, volcanic, oceanic, barren, desert, toxic, garden, moon
     body_type: str = ""  # terrestrial, gas_giant, moon, asteroid_belt
     orbit_index: float = 0.0
+    semi_major_axis_au: float = 0.0
     resources: dict = field(default_factory=dict)
     colonizable: bool = False
     description: str = ""
@@ -33,6 +34,7 @@ class Planet:
             "type": self.type,
             "body_type": self.body_type,
             "orbit_index": self.orbit_index,
+            "semi_major_axis_au": self.semi_major_axis_au,
             "resources": dict(self.resources),
             "colonizable": self.colonizable,
             "description": self.description,

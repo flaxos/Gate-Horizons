@@ -2,7 +2,10 @@
   "id": "sol",
   "name": "Sol",
   "stars": [
-    {"name": "Sol", "spectral": "G"}
+    {
+      "name": "Sol",
+      "spectral": "G"
+    }
   ],
   "planets": [
     {
@@ -14,10 +17,19 @@
       "colonizable": false,
       "habitability": 0.1,
       "gravity": 0.38,
-      "traits": ["mineral_rich"],
-      "resources": {"metals": 5, "energy": 2},
-      "baseline_output": {"metals": 5, "energy": 2},
-      "description": "A scorched, metal-rich world close to Sol."
+      "traits": [
+        "mineral_rich"
+      ],
+      "resources": {
+        "metals": 5,
+        "energy": 2
+      },
+      "baseline_output": {
+        "metals": 5,
+        "energy": 2
+      },
+      "description": "A scorched, metal-rich world close to Sol.",
+      "semi_major_axis_au": 0.387
     },
     {
       "id": "sol_venus",
@@ -28,10 +40,19 @@
       "colonizable": false,
       "habitability": 0.05,
       "gravity": 0.9,
-      "traits": ["volatile"],
-      "resources": {"energy": 4, "metals": 3},
-      "baseline_output": {"energy": 4, "metals": 3},
-      "description": "A toxic greenhouse world with crushing pressure and heat."
+      "traits": [
+        "volatile"
+      ],
+      "resources": {
+        "energy": 4,
+        "metals": 3
+      },
+      "baseline_output": {
+        "energy": 4,
+        "metals": 3
+      },
+      "description": "A toxic greenhouse world with crushing pressure and heat.",
+      "semi_major_axis_au": 0.723
     },
     {
       "id": "sol_earth",
@@ -42,10 +63,21 @@
       "colonizable": true,
       "habitability": 1.0,
       "gravity": 1.0,
-      "traits": ["hub"],
-      "resources": {"energy": 10, "metals": 8, "exotics": 2},
-      "baseline_output": {"energy": 10, "metals": 8, "exotics": 2},
-      "description": "Cradle of humanity and the heart of the gate network."
+      "traits": [
+        "hub"
+      ],
+      "resources": {
+        "energy": 10,
+        "metals": 8,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 10,
+        "metals": 8,
+        "exotics": 2
+      },
+      "description": "Cradle of humanity and the heart of the gate network.",
+      "semi_major_axis_au": 1.0
     },
     {
       "id": "sol_moon",
@@ -56,10 +88,19 @@
       "colonizable": true,
       "habitability": 0.25,
       "gravity": 0.16,
-      "traits": ["mineral_rich"],
-      "resources": {"metals": 4, "energy": 1},
-      "baseline_output": {"metals": 4, "energy": 1},
-      "description": "Earth's natural satellite, rich in accessible regolith."
+      "traits": [
+        "mineral_rich"
+      ],
+      "resources": {
+        "metals": 4,
+        "energy": 1
+      },
+      "baseline_output": {
+        "metals": 4,
+        "energy": 1
+      },
+      "description": "Earth's natural satellite, rich in accessible regolith.",
+      "semi_major_axis_au": 1.001
     },
     {
       "id": "sol_mars",
@@ -70,10 +111,19 @@
       "colonizable": true,
       "habitability": 0.45,
       "gravity": 0.38,
-      "traits": ["frontier"],
-      "resources": {"metals": 6, "energy": 3},
-      "baseline_output": {"metals": 6, "energy": 3},
-      "description": "A cold desert world with ongoing terraforming efforts."
+      "traits": [
+        "frontier"
+      ],
+      "resources": {
+        "metals": 6,
+        "energy": 3
+      },
+      "baseline_output": {
+        "metals": 6,
+        "energy": 3
+      },
+      "description": "A cold desert world with ongoing terraforming efforts.",
+      "semi_major_axis_au": 1.524
     },
     {
       "id": "sol_asteroid_belt",
@@ -84,10 +134,19 @@
       "colonizable": false,
       "habitability": 0.0,
       "gravity": 0.01,
-      "traits": ["mineral_rich"],
-      "resources": {"metals": 12, "exotics": 2},
-      "baseline_output": {"metals": 12, "exotics": 2},
-      "description": "A dense ring of mining-rich asteroid clusters."
+      "traits": [
+        "mineral_rich"
+      ],
+      "resources": {
+        "metals": 12,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "metals": 12,
+        "exotics": 2
+      },
+      "description": "A dense ring of mining-rich asteroid clusters.",
+      "semi_major_axis_au": 2.8
     },
     {
       "id": "sol_jupiter",
@@ -99,9 +158,16 @@
       "habitability": 0.0,
       "gravity": 2.5,
       "traits": [],
-      "resources": {"energy": 8, "exotics": 3},
-      "baseline_output": {"energy": 8, "exotics": 3},
-      "description": "A massive gas giant with fierce storms and radiation belts."
+      "resources": {
+        "energy": 8,
+        "exotics": 3
+      },
+      "baseline_output": {
+        "energy": 8,
+        "exotics": 3
+      },
+      "description": "A massive gas giant with fierce storms and radiation belts.",
+      "semi_major_axis_au": 5.203
     },
     {
       "id": "sol_io",
@@ -112,10 +178,19 @@
       "colonizable": false,
       "habitability": 0.1,
       "gravity": 0.18,
-      "traits": ["volatile"],
-      "resources": {"energy": 4, "metals": 2},
-      "baseline_output": {"energy": 4, "metals": 2},
-      "description": "Volcanic moon with intense tidal heating."
+      "traits": [
+        "volatile"
+      ],
+      "resources": {
+        "energy": 4,
+        "metals": 2
+      },
+      "baseline_output": {
+        "energy": 4,
+        "metals": 2
+      },
+      "description": "Volcanic moon with intense tidal heating.",
+      "semi_major_axis_au": 5.204
     },
     {
       "id": "sol_europa",
@@ -126,10 +201,19 @@
       "colonizable": true,
       "habitability": 0.4,
       "gravity": 0.13,
-      "traits": ["frontier"],
-      "resources": {"energy": 3, "exotics": 2},
-      "baseline_output": {"energy": 3, "exotics": 2},
-      "description": "Ice-covered ocean moon with subsurface seas."
+      "traits": [
+        "frontier"
+      ],
+      "resources": {
+        "energy": 3,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 3,
+        "exotics": 2
+      },
+      "description": "Ice-covered ocean moon with subsurface seas.",
+      "semi_major_axis_au": 5.205
     },
     {
       "id": "sol_ganymede",
@@ -140,10 +224,19 @@
       "colonizable": true,
       "habitability": 0.35,
       "gravity": 0.15,
-      "traits": ["mineral_rich"],
-      "resources": {"metals": 4, "energy": 2},
-      "baseline_output": {"metals": 4, "energy": 2},
-      "description": "Largest moon in the Sol system, with metallic deposits."
+      "traits": [
+        "mineral_rich"
+      ],
+      "resources": {
+        "metals": 4,
+        "energy": 2
+      },
+      "baseline_output": {
+        "metals": 4,
+        "energy": 2
+      },
+      "description": "Largest moon in the Sol system, with metallic deposits.",
+      "semi_major_axis_au": 5.206
     },
     {
       "id": "sol_callisto",
@@ -155,9 +248,16 @@
       "habitability": 0.32,
       "gravity": 0.13,
       "traits": [],
-      "resources": {"metals": 3, "energy": 2},
-      "baseline_output": {"metals": 3, "energy": 2},
-      "description": "Heavily cratered moon with a stable orbital environment."
+      "resources": {
+        "metals": 3,
+        "energy": 2
+      },
+      "baseline_output": {
+        "metals": 3,
+        "energy": 2
+      },
+      "description": "Heavily cratered moon with a stable orbital environment.",
+      "semi_major_axis_au": 5.207
     },
     {
       "id": "sol_saturn",
@@ -169,9 +269,16 @@
       "habitability": 0.0,
       "gravity": 1.1,
       "traits": [],
-      "resources": {"energy": 7, "exotics": 3},
-      "baseline_output": {"energy": 7, "exotics": 3},
-      "description": "Ringed gas giant with complex moon systems."
+      "resources": {
+        "energy": 7,
+        "exotics": 3
+      },
+      "baseline_output": {
+        "energy": 7,
+        "exotics": 3
+      },
+      "description": "Ringed gas giant with complex moon systems.",
+      "semi_major_axis_au": 9.537
     },
     {
       "id": "sol_titan",
@@ -182,10 +289,19 @@
       "colonizable": true,
       "habitability": 0.3,
       "gravity": 0.14,
-      "traits": ["frontier"],
-      "resources": {"energy": 3, "exotics": 2},
-      "baseline_output": {"energy": 3, "exotics": 2},
-      "description": "Thick-atmosphere moon with hydrocarbon seas."
+      "traits": [
+        "frontier"
+      ],
+      "resources": {
+        "energy": 3,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 3,
+        "exotics": 2
+      },
+      "description": "Thick-atmosphere moon with hydrocarbon seas.",
+      "semi_major_axis_au": 9.538
     },
     {
       "id": "sol_enceladus",
@@ -197,9 +313,16 @@
       "habitability": 0.28,
       "gravity": 0.11,
       "traits": [],
-      "resources": {"energy": 2, "exotics": 2},
-      "baseline_output": {"energy": 2, "exotics": 2},
-      "description": "Cryovolcanic moon with active geysers."
+      "resources": {
+        "energy": 2,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 2,
+        "exotics": 2
+      },
+      "description": "Cryovolcanic moon with active geysers.",
+      "semi_major_axis_au": 9.539
     },
     {
       "id": "sol_uranus",
@@ -211,9 +334,16 @@
       "habitability": 0.0,
       "gravity": 0.9,
       "traits": [],
-      "resources": {"energy": 6, "exotics": 2},
-      "baseline_output": {"energy": 6, "exotics": 2},
-      "description": "An ice giant with extreme axial tilt."
+      "resources": {
+        "energy": 6,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 6,
+        "exotics": 2
+      },
+      "description": "An ice giant with extreme axial tilt.",
+      "semi_major_axis_au": 19.191
     },
     {
       "id": "sol_neptune",
@@ -225,9 +355,16 @@
       "habitability": 0.0,
       "gravity": 1.1,
       "traits": [],
-      "resources": {"energy": 6, "exotics": 2},
-      "baseline_output": {"energy": 6, "exotics": 2},
-      "description": "Distant ice giant with powerful storms."
+      "resources": {
+        "energy": 6,
+        "exotics": 2
+      },
+      "baseline_output": {
+        "energy": 6,
+        "exotics": 2
+      },
+      "description": "Distant ice giant with powerful storms.",
+      "semi_major_axis_au": 30.07
     }
   ]
 }
