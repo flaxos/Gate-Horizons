@@ -1,5 +1,16 @@
 # ExecPlans
 
+## PR: Colony ship build queue active/pending progression
+
+### Goal
+Separate colony ship build queue ordering from active execution so only intended active builds progress each turn, with explicit queue/concurrency limits and regression coverage.
+
+### Steps
+1. Define colony shipyard queue semantics (ordered queue, active concurrency, optional max queue cap) and expose summary status for active vs pending entries.
+2. Refactor `can_build_ship`, `start_ship_build`, and `process_turn` to enforce queue/concurrency rules and prevent unintended progress for pending orders.
+3. Add regression tests for multi-queue same-turn behavior, 2–3 turn progression, and completion order/count per turn.
+4. Verify/cover queue summary status reporting so UI consumers can distinguish active and pending orders.
+
 ## PR: Body-level intra-system ship movement
 
 ### Goal

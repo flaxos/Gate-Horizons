@@ -545,12 +545,36 @@ class Colony:
 
     # ---- Ship construction (shipyard) ----
 
-    def can_build_ship(self, ship_class: str, templates: dict) -> bool:
-        """Check if colony can queue a ship build (spaceport exists, slot open)."""
+    def get_ship_build_concurrency(self) -> int:
+        """Get number of concurrent active colony ship builds."""
         spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
-        if spaceport_level < 1:
+        return max(0, int(spaceport_level))
+
+    def get_ship_build_queue_limit(self) -> int:
+        """Get maximum queued colony ship orders (active + pending)."""
+        concurrency = self.get_ship_build_concurrency()
+        if concurrency <= 0:
+            return 0
+        return max(concurrency, concurrency * 3)
+
+    def get_shipyard_queue_summary(self) -> list[dict]:
+        """Return ordered ship build queue entries with active/pending status."""
+        active_slots = self.get_ship_build_concurrency()
+        summary = []
+        for index, item in enumerate(self.shipyard_queue):
+            summary.append({
+                "ship_class": item.get("ship_class"),
+                "name": item.get("name"),
+                "turns_remaining": item.get("turns_remaining", 0),
+                "status": "active" if index < active_slots else "pending",
+            })
+        return summary
+
+    def can_build_ship(self, ship_class: str, templates: dict) -> bool:
+        """Check if colony can queue a ship build (spaceport exists, queue slot open)."""
+        if self.get_ship_build_concurrency() < 1:
             return False
-        if len(self.shipyard_queue) >= spaceport_level:
+        if len(self.shipyard_queue) >= self.get_ship_build_queue_limit():
             return False
         if ship_class not in templates:
             return False
@@ -568,10 +592,9 @@ class Colony:
         build_turns: int,
         build_time_reduction: int = 0,
     ) -> bool:
-        spaceport_level = self.infrastructure.get("spaceport", {}).get("level", 0)
-        if spaceport_level < 1:
+        if self.get_ship_build_concurrency() < 1:
             return False
-        if len(self.shipyard_queue) >= spaceport_level:
+        if len(self.shipyard_queue) >= self.get_ship_build_queue_limit():
             return False
         turns = max(1, build_turns - build_time_reduction)
         self.shipyard_queue.append({
@@ -645,15 +668,21 @@ class Colony:
                             self.build_queue.pop(i)
                             break
 
-        # Advance shipyard queue
-        for item in list(self.shipyard_queue):
+        # Advance active shipyard builds only; pending orders wait in queue.
+        active_builds = min(self.get_ship_build_concurrency(), len(self.shipyard_queue))
+        completed_indices = []
+        for idx in range(active_builds):
+            item = self.shipyard_queue[idx]
             item["turns_remaining"] -= 1
             if item["turns_remaining"] <= 0:
                 report["ships_completed"].append({
                     "ship_class": item["ship_class"],
                     "name": item["name"],
                 })
-                self.shipyard_queue.remove(item)
+                completed_indices.append(idx)
+
+        for idx in reversed(completed_indices):
+            self.shipyard_queue.pop(idx)
 
         # Population dynamics
         PopulationSimulator.update_indices(self, tech_effects=tech_effects)
