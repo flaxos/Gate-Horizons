@@ -142,6 +142,25 @@ This creates a Hub world + Frontier outpost, sets up a trade route with latency,
 runs 30 turns, and prints the per-turn stockpile progression. Also runs the full
 test suite for the logistics system.
 
+### Running the Game App
+Use one of the following entry points from the repository root:
+
+```bash
+python -m gate_horizons
+```
+
+```bash
+python main.py
+```
+
+On Android/Pydroid, you can also run:
+
+```bash
+python update.py
+```
+
+`update.py` now checks both `gate_horizons/main.py` and root-level `main.py` so older launch flows keep working.
+
 ### What is Implemented vs Future
 **Implemented now**: Colony levels, stockpiles, storage caps, trade routes with
 latency/capacity, shortage penalties, stability system, world traits (hub/frontier),

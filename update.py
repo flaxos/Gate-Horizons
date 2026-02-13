@@ -6,7 +6,7 @@ It will:
 1) verify core prerequisites,
 2) update the current git checkout to latest remote changes,
 3) ensure Python package prerequisites are installed,
-4) run gate_horizons/main.py.
+4) run the Gate Horizons entry point.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
 MAIN_PATH = REPO_ROOT / "gate_horizons" / "main.py"
+LEGACY_MAIN_PATH = REPO_ROOT / "main.py"
 
 # Minimal runtime deps for the app entrypoint.
 PYTHON_PACKAGES = {
@@ -96,14 +97,22 @@ def ensure_packages() -> None:
 
 
 def run_main() -> None:
-    if not MAIN_PATH.exists():
-        raise FileNotFoundError(f"main.py not found at expected path: {MAIN_PATH}")
+    if MAIN_PATH.exists():
+        run_target = [sys.executable, str(MAIN_PATH)]
+    elif LEGACY_MAIN_PATH.exists():
+        run_target = [sys.executable, str(LEGACY_MAIN_PATH)]
+    else:
+        raise FileNotFoundError(
+            "No runnable entry point found. Expected one of:\n"
+            f"- {MAIN_PATH}\n"
+            f"- {LEGACY_MAIN_PATH}",
+        )
 
     env = os.environ.copy()
     env.setdefault("PYTHONPATH", str(REPO_ROOT))
 
     print("\n[launch] Starting Gate Horizons...")
-    subprocess.run([sys.executable, str(MAIN_PATH)], cwd=REPO_ROOT, env=env, check=True)
+    subprocess.run(run_target, cwd=REPO_ROOT, env=env, check=True)
 
 
 def main() -> int:
