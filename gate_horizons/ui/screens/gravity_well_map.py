@@ -139,6 +139,12 @@ def _draw_station_icon(canvas, cx, cy, size, color=(0.3, 0.85, 0.9, 0.9)):
 class SystemMapWidget(MapCameraWidget):
     """Renders a star system: star at centre, planets in orbits, ships."""
 
+    ORBIT_COMPRESSION_MODE = "log"
+    ORBIT_MIN_RADIUS_FRAC = 0.18
+    ORBIT_MAX_RADIUS_FRAC = 0.98
+    ORBIT_LOG_STEEPNESS = 4.5
+    ORBIT_MIN_VISUAL_SEPARATION_FRAC = 0.035
+
     def __init__(self, game_state=None, system_id=None,
                  on_body_tap=None, on_ship_tap=None, **kwargs):
         super().__init__(**kwargs)
@@ -173,29 +179,64 @@ class SystemMapWidget(MapCameraWidget):
     # Orbital spacing helpers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _log_orbit_radius(index, total, max_radius):
-        """Compute orbital radius using logarithmic spacing.
+    @classmethod
+    def _distance_to_orbit_radius(cls, distance_au, max_radius, min_au, max_au):
+        """Transform AU orbit distance into map radius with playable compression."""
+        if max_radius <= 0:
+            return 0.0
 
-        Inner planets are packed closer together while outer planets
-        get progressively more room — mimicking Titius-Bode spacing.
-        """
-        if total <= 1:
-            return max_radius * 0.5
-        # Map index [0..total-1] to a log-spaced value in [0.18 .. 1.0]
-        t = index / (total - 1)  # 0 → 1
-        # Use a logarithmic curve: log(1 + t*k) / log(1 + k)
-        k = 6.0  # Controls how compressed the inner orbits are
-        norm = math.log(1 + t * k) / math.log(1 + k)
-        return max_radius * (0.18 + 0.80 * norm)
+        min_orbit = max_radius * cls.ORBIT_MIN_RADIUS_FRAC
+        max_orbit = max_radius * cls.ORBIT_MAX_RADIUS_FRAC
+
+        if max_au <= min_au:
+            t = 0.5
+        else:
+            t = max(0.0, min(1.0, (distance_au - min_au) / (max_au - min_au)))
+
+        if cls.ORBIT_COMPRESSION_MODE == "piecewise":
+            # Extra resolution for inner-system bodies while preserving outer spread.
+            if t <= 0.5:
+                compressed = 0.65 * (t / 0.5)
+            else:
+                compressed = 0.65 + 0.35 * ((t - 0.5) / 0.5)
+        else:  # default logarithmic compression
+            k = cls.ORBIT_LOG_STEEPNESS
+            compressed = math.log1p(t * k) / math.log1p(k)
+
+        return min_orbit + (max_orbit - min_orbit) * compressed
+
+    @classmethod
+    def _build_orbit_layout(cls, planets, max_radius):
+        """Compute per-body orbit radii using AU geometry and stable separation."""
+        if not planets:
+            return []
+
+        distances = []
+        for idx, planet in enumerate(planets, start=1):
+            au = getattr(planet, "semi_major_axis_au", 0.0) or 0.0
+            if au <= 0:
+                fallback = getattr(planet, "orbit_index", idx) or idx
+                au = float(max(fallback, 0.05))
+            distances.append(float(au))
+
+        min_au = min(distances)
+        max_au = max(distances)
+        min_sep = max_radius * cls.ORBIT_MIN_VISUAL_SEPARATION_FRAC
+
+        orbit_radii = []
+        prev_r = None
+        for distance_au in distances:
+            r = cls._distance_to_orbit_radius(distance_au, max_radius, min_au, max_au)
+            if prev_r is not None and r < prev_r + min_sep:
+                r = prev_r + min_sep
+            orbit_radii.append(min(r, max_radius))
+            prev_r = orbit_radii[-1]
+
+        return orbit_radii
 
     @staticmethod
     def _classify_planet_zone(index, total):
-        """Return 'inner', 'habitable', or 'outer' zone for a planet.
-
-        Uses a simple heuristic: first ~30% inner, next ~20% habitable,
-        rest outer.  Gas giants are always outer regardless of index.
-        """
+        """Return 'inner', 'habitable', or 'outer' zone for a planet."""
         if total <= 1:
             return "habitable"
         frac = index / (total - 1)
@@ -228,10 +269,8 @@ class SystemMapWidget(MapCameraWidget):
         ring_cx, ring_cy = self._apply_transform(cx_base, cy_base)
         num_planets = len(system.planets)
 
-        # Pre-compute orbit radii (log-spaced)
-        orbit_radii = []
-        for i in range(num_planets):
-            orbit_radii.append(self._log_orbit_radius(i, num_planets, max_radius))
+        # Pre-compute orbit radii from AU distances with compression.
+        orbit_radii = self._build_orbit_layout(system.planets, max_radius)
 
         # Determine zone boundaries for habitable zone band
         hab_inner_r = None

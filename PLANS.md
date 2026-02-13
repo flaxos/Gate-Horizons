@@ -1,5 +1,15 @@
 # ExecPlans
 
+## PR: AU-based system map orbit geometry
+
+### Goal
+Carry semi-major axis distances from known/procedural system data into runtime planet objects and use AU-aware orbit layout in the gravity well map with configurable compression.
+
+### Steps
+1. Extend astronomy body schema and procedural generation to emit `semi_major_axis_au` for planets and moons.
+2. Ensure galaxy/runtime planet parsing/serialization retains the AU field and treats `orbit_index` as fallback ordering metadata.
+3. Replace index-only UI orbit spacing with AU-to-screen transform helpers (configurable compression + minimum visual separation) and add focused regression tests.
+
 ## PR: Prevent diplomacy actions before unlock_diplomacy
 
 ### Goal

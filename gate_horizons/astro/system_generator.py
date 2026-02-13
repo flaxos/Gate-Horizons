@@ -37,6 +37,10 @@ RESOURCE_BASELINES = {
     "asteroid_belt": {"metals": 8, "exotics": 2},
 }
 
+INNER_ORBIT_AU_RANGE = (0.25, 1.8)
+HABITABLE_ORBIT_AU_RANGE = (0.8, 4.5)
+OUTER_ORBIT_AU_RANGE = (3.0, 30.0)
+
 
 @dataclass
 class GeneratedSystem:
@@ -65,6 +69,29 @@ class SystemGenerator:
         if index <= max(3, total // 2):
             return "habitable"
         return "outer"
+
+    @staticmethod
+    def _orbit_distance_au(index: int, total: int, zone: str, rng) -> float:
+        if total <= 1:
+            return 1.0
+
+        if zone == "inner":
+            min_au, max_au = INNER_ORBIT_AU_RANGE
+        elif zone == "habitable":
+            min_au, max_au = HABITABLE_ORBIT_AU_RANGE
+        else:
+            min_au, max_au = OUTER_ORBIT_AU_RANGE
+
+        # Blend deterministic orbit index progression with small variance.
+        t = max(0.0, min(1.0, (index - 1) / max(1, total - 1)))
+        base = min_au + (max_au - min_au) * t
+        jitter = 1.0 + rng.uniform(-0.08, 0.08)
+        return round(max(0.05, base * jitter), 3)
+
+    @staticmethod
+    def _moon_orbit_distance_au(parent_au: float, moon_index: int) -> float:
+        # Keep moons close to host orbit while preserving ordering.
+        return round(parent_au + 0.001 * moon_index, 3)
 
     def generate_system(self, system_id: str, name: str, rng, use_known: bool = True) -> GeneratedSystem:
         known = self.known_registry.get_system_data(system_id) if use_known else None
@@ -114,6 +141,7 @@ class SystemGenerator:
                 "type": p_type,
                 "body_type": body_type,
                 "orbit_index": idx,
+                "semi_major_axis_au": self._orbit_distance_au(idx, planet_count, zone, rng),
                 "resources": resources,
                 "baseline_output": baseline_output,
                 "colonizable": colonizable,
@@ -129,6 +157,8 @@ class SystemGenerator:
             elif p_type in {"rocky", "oceanic", "garden", "desert"}:
                 moon_count = rng.randint(0, 2)
 
+            parent_au = planets[-1]["semi_major_axis_au"]
+
             for midx in range(1, moon_count + 1):
                 moon_habitability = rng.uniform(0.1, 0.6)
                 moon_colonizable = moon_habitability >= 0.35
@@ -141,6 +171,7 @@ class SystemGenerator:
                     "type": "moon",
                     "body_type": "moon",
                     "orbit_index": idx + midx / 10,
+                    "semi_major_axis_au": self._moon_orbit_distance_au(parent_au, midx),
                     "resources": dict(RESOURCE_BASELINES.get("moon", {})),
                     "baseline_output": dict(RESOURCE_BASELINES.get("moon", {})),
                     "colonizable": moon_colonizable,
