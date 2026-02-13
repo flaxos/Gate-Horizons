@@ -2018,13 +2018,163 @@ class GravityWellScreen(Screen):
         if not self.game_state:
             return
 
-        self.game_state.dispatch_ship_context_action(
+        result = self.game_state.dispatch_ship_context_action(
             ship_id,
             action.name,
             params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
         )
-        # Refresh our view
+
+        required_ui = result.get("requires_ui")
+        if required_ui == "destination":
+            self._show_destination_menu(ship_id)
+        elif required_ui == "escort_target":
+            self._show_escort_target_menu(ship_id)
+
+        if not result.get("success"):
+            self._show_notice(result.get("message", "Action failed."))
+
         self.set_game_state(self.game_state)
+
+    def _show_destination_menu(self, ship_id):
+        """Show destination selection menu for a ship."""
+        from ..widgets.context_menu import DestinationMenu
+
+        ship = self.game_state.fleet.ships.get(ship_id)
+        if not ship:
+            return
+
+        reachable = []
+        for sid, system in self.game_state.galaxy.systems.items():
+            if sid == ship.location:
+                continue
+            if system.discovered and system.gate_active:
+                path = self.game_state.galaxy.get_path(ship.location, sid)
+                if path:
+                    reachable.append(system)
+
+        menu = DestinationMenu(
+            systems=reachable,
+            callback=lambda dest_id: self._move_ship_to(ship_id, dest_id),
+        )
+        menu.open()
+
+    def _move_ship_to(self, ship_id, dest_id):
+        self.game_state.fleet.move_ship(ship_id, dest_id, self.game_state.galaxy)
+        self.set_game_state(self.game_state)
+
+    def _show_escort_target_menu(self, ship_id):
+        """Show a popup menu for selecting an escort target."""
+        ship = self.game_state.fleet.ships.get(ship_id)
+        if not ship:
+            return
+
+        escort_targets = [
+            escort_ship
+            for escort_ship in self.game_state.fleet.get_ships_at(ship.location)
+            if escort_ship.id != ship_id
+        ]
+        if not escort_targets:
+            self._show_notice("No escort targets available in this system.")
+            return
+
+        escort_targets.sort(key=lambda escort_ship: escort_ship.name)
+
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(10))
+        content.add_widget(Label(
+            text="Select a target ship to escort:",
+            size_hint_y=None,
+            height=dp(24),
+            color=(0.8, 0.9, 1, 1),
+            font_size="12sp",
+        ))
+
+        scroll = ScrollView(size_hint=(1, 1))
+        target_list = GridLayout(cols=1, spacing=dp(6), size_hint_y=None)
+        target_list.bind(minimum_height=target_list.setter("height"))
+
+        popup = Popup(
+            title="Escort Target",
+            content=content,
+            size_hint=(0.45, 0.5),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+        )
+
+        for target in escort_targets:
+            target_btn = Button(
+                text=target.name,
+                size_hint_y=None,
+                height=dp(36),
+                font_size="12sp",
+                background_color=(0.15, 0.2, 0.35, 0.9),
+                color=(0.85, 0.92, 1, 1),
+            )
+            target_btn.bind(
+                on_release=lambda btn, target_id=target.id: self._issue_escort_order(
+                    ship_id,
+                    target_id,
+                    popup,
+                )
+            )
+            target_list.add_widget(target_btn)
+
+        scroll.add_widget(target_list)
+        content.add_widget(scroll)
+
+        cancel_btn = Button(
+            text="Cancel",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.2, 0.2, 0.25, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        cancel_btn.bind(on_release=lambda btn: popup.dismiss())
+        content.add_widget(cancel_btn)
+        popup.open()
+
+    def _issue_escort_order(self, ship_id, target_id, popup):
+        popup.dismiss()
+        success, message, _ = self.game_state.issue_ship_order(
+            ship_id,
+            "Escort",
+            params={"target_ship_id": target_id},
+        )
+        if not success:
+            self._show_notice(message)
+        self.set_game_state(self.game_state)
+
+    def _show_notice(self, message, title="Notice"):
+        content = BoxLayout(orientation="vertical", spacing=dp(8), padding=dp(12))
+        content.add_widget(Label(
+            text=message,
+            font_size="12sp",
+            color=(0.7, 0.85, 1, 0.9),
+            size_hint_y=None,
+            height=dp(56),
+            halign="center",
+            valign="middle",
+        ))
+        ok_btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(36),
+            font_size="12sp",
+            background_color=(0.15, 0.2, 0.35, 0.9),
+            color=(0.8, 0.9, 1, 1),
+        )
+        popup = Popup(
+            title=title,
+            content=content,
+            size_hint=(0.4, 0.35),
+            title_color=(0.3, 0.85, 1, 1),
+            separator_color=(0.15, 0.6, 0.8, 0.6),
+            background_color=(0.04, 0.06, 0.12, 0.95),
+        )
+        ok_btn.bind(on_release=lambda x: popup.dismiss())
+        content.add_widget(ok_btn)
+        popup.open()
 
     def _on_view_colony(self, *args):
         from kivy.app import App

@@ -53,6 +53,7 @@ def _install_kivy_stubs_if_missing():
         "kivy.graphics",
         "kivy.core",
         "kivy.core.window",
+        "kivy.core.text",
         "kivy.uix",
         "kivy.uix.screenmanager",
         "kivy.uix.floatlayout",
@@ -87,6 +88,7 @@ def _install_kivy_stubs_if_missing():
     graphics.RoundedRectangle = _DummyWidget
     graphics.Triangle = _DummyWidget
     sys.modules["kivy.core.window"].Window = SimpleNamespace(bind=lambda **kwargs: None, unbind=lambda **kwargs: None)
+    sys.modules["kivy.core.text"].Label = _DummyWidget
 
     for module_name, attr in (
         ("kivy.uix.screenmanager", "Screen"),
@@ -161,6 +163,28 @@ def _run_from_gravity_well_screen(state, ship_id, action):
     screen.game_state = state
     screen.set_game_state = lambda game_state: None
     screen._execute_ship_action(ship_id, action)
+
+
+def _run_from_gravity_well_with_ui_spies(state, ship_id, action):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
+
+    screen = GravityWellScreen.__new__(GravityWellScreen)
+    screen.game_state = state
+
+    called = {
+        "destination": 0,
+        "escort_target": 0,
+        "notice": [],
+        "refresh": 0,
+    }
+    screen._show_destination_menu = lambda sid: called.__setitem__("destination", called["destination"] + 1)
+    screen._show_escort_target_menu = lambda sid: called.__setitem__("escort_target", called["escort_target"] + 1)
+    screen._show_notice = lambda message, title="Notice": called["notice"].append((message, title))
+    screen.set_game_state = lambda game_state: called.__setitem__("refresh", called["refresh"] + 1)
+
+    screen._execute_ship_action(ship_id, action)
+    return called
 
 
 
@@ -314,3 +338,21 @@ def test_fleet_screen_shows_notice_when_dispatch_action_fails():
 
     assert notices
     assert notices[0][0] == f"{ship.name} is currently in transit"
+
+
+def test_gravity_well_dispatch_invokes_move_and_escort_follow_up_ui_paths():
+    move_state, move_ship_id = _build_state_with_cargo()
+    move_calls = _run_from_gravity_well_with_ui_spies(move_state, move_ship_id, Action(name="Move To"))
+
+    escort_state, escort_ship_id = _build_state_with_cargo()
+    escort_calls = _run_from_gravity_well_with_ui_spies(escort_state, escort_ship_id, Action(name="Escort"))
+
+    assert move_calls["destination"] == 1
+    assert move_calls["escort_target"] == 0
+    assert move_calls["notice"] == []
+    assert move_calls["refresh"] == 1
+
+    assert escort_calls["destination"] == 0
+    assert escort_calls["escort_target"] == 1
+    assert escort_calls["notice"] == []
+    assert escort_calls["refresh"] == 1
