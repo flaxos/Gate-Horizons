@@ -16,6 +16,7 @@ from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
+from gate_horizons.game.feature_flags import fleet_groups_enabled
 
 
 class FleetScreen(Screen):
@@ -24,6 +25,18 @@ class FleetScreen(Screen):
         self.name = "fleet_screen"
         self.game_state = None
         self._build_ui()
+
+    def fleet_group_actions_available(self) -> bool:
+        from kivy.app import App
+
+        app = App.get_running_app()
+        settings = getattr(app, "settings", None) if app else None
+        return fleet_groups_enabled(settings)
+
+    def fleet_group_actions(self) -> list[str]:
+        if not self.fleet_group_actions_available():
+            return []
+        return ["create_fleet_group", "dispatch_group_order"]
 
     def _build_ui(self):
         root = BoxLayout(orientation="vertical")

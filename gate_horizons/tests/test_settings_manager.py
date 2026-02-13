@@ -17,24 +17,31 @@ class TestSettingsManager(unittest.TestCase):
             self.assertEqual(settings.music_volume, 0.7)
             self.assertEqual(settings.sfx_volume, 0.7)
             self.assertTrue(settings.autosave_enabled)
+            self.assertFalse(settings.enable_fleet_groups)
 
     def test_save_and_reload(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "settings.json")
             manager = SettingsManager(path)
-            settings = GameSettings(music_volume=0.2, sfx_volume=0.4, autosave_enabled=False)
+            settings = GameSettings(
+                music_volume=0.2,
+                sfx_volume=0.4,
+                autosave_enabled=False,
+                enable_fleet_groups=True,
+            )
             manager.save(settings)
             loaded = manager.load()
             self.assertAlmostEqual(loaded.music_volume, 0.2, places=2)
             self.assertAlmostEqual(loaded.sfx_volume, 0.4, places=2)
             self.assertFalse(loaded.autosave_enabled)
+            self.assertTrue(loaded.enable_fleet_groups)
 
     def test_clamps_invalid_values(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "settings.json")
             with open(path, "w", encoding="utf-8") as handle:
                 json.dump(
-                    {"music_volume": 2.5, "sfx_volume": -1, "autosave_enabled": "yes"},
+                    {"music_volume": 2.5, "sfx_volume": -1, "autosave_enabled": "yes", "enable_fleet_groups": 1},
                     handle,
                 )
             manager = SettingsManager(path)
@@ -42,3 +49,4 @@ class TestSettingsManager(unittest.TestCase):
             self.assertEqual(loaded.music_volume, 1.0)
             self.assertEqual(loaded.sfx_volume, 0.0)
             self.assertTrue(loaded.autosave_enabled)
+            self.assertTrue(loaded.enable_fleet_groups)
