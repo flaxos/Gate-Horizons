@@ -4,6 +4,7 @@ import unittest
 
 from gate_horizons.game.state import GameState
 from gate_horizons.game.colonies import (
+    Colony,
     HOUSING_BASE_CAP,
     HOUSING_PER_LEVEL,
 )
@@ -203,6 +204,56 @@ class TestBuildTimeReductionAppliesToShipyard(unittest.TestCase):
         initial_count = len(gs.fleet.ships)
         gs.process_turn()
         self.assertEqual(len(gs.fleet.ships), initial_count + 1)
+
+
+class TestColonyShipyardQueueProgression(unittest.TestCase):
+    def _new_colony(self, spaceport_level: int = 1) -> Colony:
+        colony = Colony(system_id="sol", planet_id="earth")
+        colony.infrastructure["spaceport"]["level"] = spaceport_level
+        return colony
+
+    def test_queue_multiple_ships_same_turn_pending_waits(self):
+        colony = self._new_colony(spaceport_level=1)
+
+        self.assertTrue(colony.start_ship_build("scout", "ISS A", build_turns=2))
+        self.assertTrue(colony.start_ship_build("scout", "ISS B", build_turns=2))
+        self.assertTrue(colony.start_ship_build("scout", "ISS C", build_turns=2))
+
+        summary = colony.get_shipyard_queue_summary()
+        self.assertEqual([entry["status"] for entry in summary], ["active", "pending", "pending"])
+
+        colony.process_turn()
+        turns = [item["turns_remaining"] for item in colony.shipyard_queue]
+        self.assertEqual(turns, [1, 2, 2])
+
+    def test_end_turn_progression_and_completion_order(self):
+        colony = self._new_colony(spaceport_level=1)
+        colony.start_ship_build("scout", "ISS A", build_turns=1)
+        colony.start_ship_build("scout", "ISS B", build_turns=1)
+        colony.start_ship_build("scout", "ISS C", build_turns=1)
+
+        report_1 = colony.process_turn()
+        self.assertEqual([ship["name"] for ship in report_1["ships_completed"]], ["ISS A"])
+
+        report_2 = colony.process_turn()
+        self.assertEqual([ship["name"] for ship in report_2["ships_completed"]], ["ISS B"])
+
+        report_3 = colony.process_turn()
+        self.assertEqual([ship["name"] for ship in report_3["ships_completed"]], ["ISS C"])
+        self.assertEqual(colony.shipyard_queue, [])
+
+    def test_can_build_ship_respects_queue_limit(self):
+        colony = self._new_colony(spaceport_level=1)
+        templates = {"scout": {"build_cost": {"credits": 10}}}
+
+        self.assertEqual(colony.get_ship_build_queue_limit(), 3)
+        self.assertTrue(colony.can_build_ship("scout", templates))
+        self.assertTrue(colony.start_ship_build("scout", "ISS 1", build_turns=2))
+        self.assertTrue(colony.start_ship_build("scout", "ISS 2", build_turns=2))
+        self.assertTrue(colony.start_ship_build("scout", "ISS 3", build_turns=2))
+
+        self.assertFalse(colony.can_build_ship("scout", templates))
+        self.assertFalse(colony.start_ship_build("scout", "ISS 4", build_turns=2))
 
 
 if __name__ == "__main__":
