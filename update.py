@@ -97,22 +97,48 @@ def ensure_packages() -> None:
 
 
 def run_main() -> None:
-    if MAIN_PATH.exists():
-        run_target = [sys.executable, str(MAIN_PATH)]
-    elif LEGACY_MAIN_PATH.exists():
-        run_target = [sys.executable, str(LEGACY_MAIN_PATH)]
-    else:
+    if not MAIN_PATH.exists() and not LEGACY_MAIN_PATH.exists():
         raise FileNotFoundError(
             "No runnable entry point found. Expected one of:\n"
             f"- {MAIN_PATH}\n"
             f"- {LEGACY_MAIN_PATH}",
         )
 
+    run_candidates: list[list[str]] = [
+        [sys.executable, "-m", "gate_horizons"],
+    ]
+    if LEGACY_MAIN_PATH.exists():
+        run_candidates.append([sys.executable, str(LEGACY_MAIN_PATH)])
+    if MAIN_PATH.exists():
+        run_candidates.append([sys.executable, str(MAIN_PATH)])
+
     env = os.environ.copy()
     env.setdefault("PYTHONPATH", str(REPO_ROOT))
 
     print("\n[launch] Starting Gate Horizons...")
-    subprocess.run(run_target, cwd=REPO_ROOT, env=env, check=True)
+    failures: list[tuple[list[str], subprocess.CalledProcessError]] = []
+    for run_target in run_candidates:
+        print(f"[launch] Trying: {' '.join(run_target)}")
+        try:
+            subprocess.run(
+                run_target,
+                cwd=REPO_ROOT,
+                env=env,
+                check=True,
+                stdout=sys.stdout,
+                stderr=sys.stderr,
+            )
+            return
+        except subprocess.CalledProcessError as exc:
+            failures.append((run_target, exc))
+            print(
+                f"[warn] Launch failed (exit code {exc.returncode}) for: {' '.join(run_target)}",
+            )
+
+    cmd_text = "\n".join(
+        f"- {' '.join(cmd)} (exit code {exc.returncode})" for cmd, exc in failures
+    )
+    raise RuntimeError(f"All launch attempts failed:\n{cmd_text}")
 
 
 def main() -> int:
