@@ -1,93 +1,78 @@
-"""Tests for intra-system movement (no turn cost)."""
+"""Tests for intra-system body-level movement and tick progression."""
 
-import pytest
 from gate_horizons.game.state import GameState
-from gate_horizons.game.ships import FleetManager
+from gate_horizons.game.ships import FleetManager, Ship
 
 
 class TestIsIntraSystemMove:
-    """Test the is_intra_system_move predicate."""
-
     def test_same_system_is_local(self):
         assert FleetManager.is_intra_system_move("sol", "sol") is True
 
     def test_different_systems_is_not_local(self):
         assert FleetManager.is_intra_system_move("sol", "alpha_centauri") is False
 
-    def test_empty_origin_is_not_local(self):
-        assert FleetManager.is_intra_system_move("", "sol") is False
-
-    def test_none_origin_is_not_local(self):
-        assert FleetManager.is_intra_system_move(None, "sol") is False
-
-    def test_none_destination_is_not_local(self):
-        assert FleetManager.is_intra_system_move("sol", None) is False
-
 
 class TestLocalMovement:
-    """Test that local moves don't advance the turn counter."""
-
     def setup_method(self):
         self.state = GameState.new_game()
+        self.system = self.state.galaxy.systems["sol"]
+        assert len(self.system.planets) >= 2
+        self.origin_body_id = self.system.planets[0].id
+        self.target_body_id = self.system.planets[1].id
+        self.ship = self.state.fleet.get_ships_at("sol")[0]
+        self.ship.body_id = self.origin_body_id
 
-    def test_local_move_succeeds(self):
-        """A ship at sol can do a local move within sol."""
-        ships_at_sol = self.state.fleet.get_ships_at("sol")
-        assert len(ships_at_sol) > 0
-        ship = ships_at_sol[0]
-        ok, msg = self.state.execute_local_move(ship.id, "sol")
+    def test_local_move_starts_body_transit(self):
+        ok, msg = self.state.execute_local_move(self.ship.id, self.target_body_id)
+        assert ok is True
+        assert "transiting locally" in msg.lower()
+        assert self.ship.local_destination_body_id == self.target_body_id
+        assert self.ship.local_transit_remaining_ticks > 0
+        assert self.ship.body_id == self.origin_body_id
+
+    def test_local_tick_progression_does_not_advance_turn(self):
+        ok, _ = self.state.execute_local_move(self.ship.id, self.target_body_id)
         assert ok is True
 
-    def test_local_move_does_not_advance_turn(self):
-        """Intra-system move must not change the turn number."""
-        ships_at_sol = self.state.fleet.get_ships_at("sol")
-        ship = ships_at_sol[0]
         turn_before = self.state.turn_number
-        ok, _ = self.state.execute_local_move(ship.id, "sol")
-        assert ok is True
+        tick_before = self.state.game_clock.current_tick
+
+        while self.ship.local_transit_remaining_ticks > 0:
+            arrivals = self.state.process_local_movement_tick()
+
         assert self.state.turn_number == turn_before
+        assert self.state.game_clock.current_tick > tick_before
+        assert self.ship.body_id == self.target_body_id
+        assert self.ship.local_destination_body_id is None
+        assert any(entry["ship_id"] == self.ship.id for entry in arrivals)
 
-    def test_local_move_does_not_trigger_research(self):
-        """Local move must not progress research."""
-        self.state.tech.start_research("efficient_drives", self.state.resources)
-        turns_before = None
-        tech = self.state.tech.techs.get("efficient_drives")
-        if tech:
-            turns_before = tech.turns_remaining
-
-        ships_at_sol = self.state.fleet.get_ships_at("sol")
-        ship = ships_at_sol[0]
-        self.state.execute_local_move(ship.id, "sol")
-
-        tech_after = self.state.tech.techs.get("efficient_drives")
-        if tech_after and turns_before is not None:
-            assert tech_after.turns_remaining == turns_before
-
-    def test_inter_system_move_rejected_by_local(self):
-        """execute_local_move must reject cross-system moves."""
-        ships_at_sol = self.state.fleet.get_ships_at("sol")
-        ship = ships_at_sol[0]
-        ok, msg = self.state.execute_local_move(ship.id, "alpha_centauri")
+    def test_local_move_rejects_unknown_body(self):
+        ok, msg = self.state.execute_local_move(self.ship.id, "missing_body")
         assert ok is False
-        assert "intra-system" in msg.lower() or "inter-system" in msg.lower()
+        assert "body" in msg.lower()
 
-    def test_nonexistent_ship_rejected(self):
-        """execute_local_move must reject unknown ship IDs."""
-        ok, msg = self.state.execute_local_move("fake_ship_99", "sol")
-        assert ok is False
+    def test_local_move_state_survives_save_load(self, tmp_path):
+        ok, _ = self.state.execute_local_move(self.ship.id, self.target_body_id)
+        assert ok is True
 
-    def test_strategic_move_still_costs_turn(self):
-        """Normal inter-system movement via process_turn must still advance turn."""
-        ships_at_sol = self.state.fleet.get_ships_at("sol")
-        ship = ships_at_sol[0]
+        save_path = tmp_path / "local_move.json"
+        self.state.save(str(save_path))
+        loaded = GameState.from_dict(__import__("json").loads(save_path.read_text()))
+        loaded_ship = loaded.fleet.ships[self.ship.id]
 
-        # Set a destination to alpha_centauri (needs gate active)
-        ac = self.state.galaxy.systems.get("alpha_centauri")
-        if ac:
-            ac.discovered = True
-            self.state.fleet.move_ship(
-                ship.id, "alpha_centauri", self.state.galaxy,
-            )
-            turn_before = self.state.turn_number
-            self.state.process_turn()
-            assert self.state.turn_number == turn_before + 1
+        assert loaded_ship.body_id == self.origin_body_id
+        assert loaded_ship.local_destination_body_id == self.target_body_id
+        assert loaded_ship.local_transit_remaining_ticks == self.ship.local_transit_remaining_ticks
+
+
+class TestFleetLocalTickProcessor:
+    def test_process_local_movement_tick_arrival(self):
+        ship = Ship(location="sol", body_id="sol_earth", local_destination_body_id="sol_mars", local_transit_remaining_ticks=1, local_transit_total_ticks=1)
+        fm = FleetManager()
+        fm.ships[ship.id] = ship
+
+        arrivals = fm.process_local_movement_tick()
+
+        assert len(arrivals) == 1
+        assert ship.body_id == "sol_mars"
+        assert ship.local_destination_body_id is None

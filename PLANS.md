@@ -1,5 +1,17 @@
 # ExecPlans
 
+## PR: Body-level intra-system ship movement
+
+### Goal
+Track ship anchors/transit at celestial body granularity, process local movement on non-turn ticks, persist the new movement state, and render ship placement from body/transit status in the gravity well map.
+
+### Steps
+1. Extend ship state + serialization with body anchor and local transit progress fields.
+2. Refactor local movement execution to validate body targets and start tick-based local transit instead of same-system no-op moves.
+3. Add local movement tick processing tied to the game clock and wire it into game flow.
+4. Update gravity well ship placement to derive icon positions from body anchors and in-progress local transit.
+5. Add regression tests for local body-to-body movement, persistence, and non-turn tick progression.
+
 ## PR: AU-based system map orbit geometry
 
 ### Goal
