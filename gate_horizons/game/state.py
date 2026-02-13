@@ -28,7 +28,7 @@ from .missions import MissionManager
 from .shipyard import ShipyardManager, OrbitalFacility
 
 
-CURRENT_SCHEMA_VERSION = 11
+CURRENT_SCHEMA_VERSION = 12
 
 
 # Default data paths (relative to gate_horizons package)
@@ -206,6 +206,11 @@ class GameState:
         freighter = state.fleet.create_ship("freighter", starting_system_id, "ISS Hauler")
         colony_ship = state.fleet.create_ship("colony_ship", starting_system_id, "ISS Ark")
         miner = state.fleet.create_ship("miner", starting_system_id, "ISS Prospector")
+
+        starter_body_id = colony.planet_id if colony else None
+        for starter_ship in (scout, corvette, freighter, colony_ship, miner):
+            if starter_ship and starter_body_id:
+                starter_ship.body_id = starter_body_id
 
         if colony_ship:
             starter_cargo = state.colonies.get_starter_cargo_requirement()
@@ -950,7 +955,7 @@ class GameState:
             }
 
         if normalized_action == "Reposition (Local)":
-            success, message = self.execute_local_move(ship_id, ship.location)
+            success, message = self.execute_local_move(ship_id, params.get("body_id") if isinstance(params, dict) else None)
             return {
                 "success": success,
                 "message": message,
@@ -1747,26 +1752,54 @@ class GameState:
 
         return newly_discovered
 
-    def execute_local_move(self, ship_id: str, target_system_id: str) -> tuple[bool, str]:
-        """Move a ship within the same star system without advancing the turn.
-
-        Intra-system moves resolve immediately and do not trigger any
-        turn processing (research, production, etc. remain unchanged).
-
-        Returns (success, message).
-        """
+    def execute_local_move(self, ship_id: str, target_body_id: str | None) -> tuple[bool, str]:
+        """Start body-level local movement without advancing the strategic turn."""
         ship = self.fleet.ships.get(ship_id)
         if not ship:
             return False, "Ship not found"
 
-        if not self.fleet.is_intra_system_move(ship.location, target_system_id):
-            return False, "Not an intra-system move — use normal movement for inter-system travel"
+        system = self.galaxy.systems.get(ship.location)
+        if not system:
+            return False, "Ship is not in a valid system"
 
-        ok = self.fleet.move_ship_local(ship_id, target_system_id)
+        available_body_ids = {planet.id for planet in system.planets}
+        if not available_body_ids:
+            return False, "No local bodies available in this system"
+
+        destination_body_id = target_body_id or ship.body_id or next(iter(available_body_ids))
+        if destination_body_id not in available_body_ids:
+            return False, "Target body not found in current system"
+
+        if not ship.body_id or ship.body_id not in available_body_ids:
+            ship.body_id = next(iter(available_body_ids))
+
+        if ship.path:
+            return False, "Cannot start local transit while on an inter-system course"
+
+        if ship.body_id == destination_body_id and ship.local_transit_remaining_ticks <= 0:
+            return True, f"{ship.name} already anchored at {destination_body_id}"
+
+        transit_ticks = max(1, 4 - min(3, int(ship.stats.speed or 1)))
+        ok = self.fleet.move_ship_local(ship_id, destination_body_id, transit_ticks=transit_ticks)
         if ok:
-            self.log.append(f"{ship.name} repositioned within {ship.location}")
-            return True, f"{ship.name} repositioned within system"
+            self.log.append(
+                f"{ship.name} local transit: {ship.body_id} -> {destination_body_id} "
+                f"({transit_ticks} ticks)"
+            )
+            return True, f"{ship.name} transiting locally to {destination_body_id}"
         return False, "Local move failed"
+
+    def process_local_movement_tick(self) -> list[dict]:
+        """Advance local ship transit by one non-turn clock tick."""
+        self.game_clock.current_tick += 1
+        arrivals = self.fleet.process_local_movement_tick()
+        entries = []
+        for ship in arrivals:
+            msg = f"{ship.name} arrived at {ship.body_id}"
+            self.log.append(msg)
+            entries.append({"ship_id": ship.id, "body_id": ship.body_id, "message": msg})
+        return entries
+
 
     def activate_gate(self, system_id: str) -> bool:
         """Activate a dormant gate, applying any tech-based cost reduction."""

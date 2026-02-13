@@ -489,27 +489,37 @@ class SystemMapWidget(MapCameraWidget):
                 "corvette": (1, 0.3, 0.3, 0.9),
             }
 
-            # Group ships by context: mining ships near colony planet,
-            # travelling ships near the gate, idle ships orbit the star.
+            body_ship_groups: dict[str, list] = {}
             gate_ships = []
-            orbit_ships = []
-            colony_planet_id = None
-            if self.system_id in self.game_state.colonies.colonies:
-                colony_planet_id = self.game_state.colonies.colonies[self.system_id].planet_id
+
+            def _append_body_ship(body_id, ship_obj):
+                body_ship_groups.setdefault(body_id, []).append(ship_obj)
 
             for ship in ships:
                 if ship.path or ship.destination:
                     gate_ships.append(ship)
-                elif ship.mining and colony_planet_id and colony_planet_id in planet_positions:
-                    orbit_ships.append((ship, colony_planet_id))
-                elif colony_planet_id and colony_planet_id in planet_positions:
-                    orbit_ships.append((ship, colony_planet_id))
+                    continue
+
+                anchor_body_id = ship.body_id
+                if ship.local_transit_remaining_ticks > 0 and ship.local_destination_body_id:
+                    origin = planet_positions.get(anchor_body_id)
+                    dest = planet_positions.get(ship.local_destination_body_id)
+                    if origin and dest:
+                        total = max(1, int(ship.local_transit_total_ticks or ship.local_transit_remaining_ticks))
+                        progress = 1.0 - (ship.local_transit_remaining_ticks / total)
+                        bx_base = origin[0] + (dest[0] - origin[0]) * progress
+                        by_base = origin[1] + (dest[1] - origin[1]) * progress
+                        sx, sy = self._apply_transform(bx_base, by_base)
+                        self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
+                        continue
+
+                if anchor_body_id in planet_positions:
+                    _append_body_ship(anchor_body_id, ship)
                 else:
                     gate_ships.append(ship)
 
-            # Draw ships near gate
+            # Draw ships near gate (fallback/inter-system transit)
             for idx, ship in enumerate(gate_ships):
-                # Fan out around the gate in a small arc
                 spread_angle = (idx - len(gate_ships) / 2.0) * 25 * math.pi / 180
                 offset_r = dp(28 + idx * 6)
                 gx_base = cx_base + max_radius * 0.95 - offset_r * math.cos(
@@ -519,16 +529,16 @@ class SystemMapWidget(MapCameraWidget):
                 sx, sy = self._apply_transform(gx_base, gy_base)
                 self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
 
-            # Draw ships orbiting a body
-            for idx, (ship, body_id) in enumerate(orbit_ships):
+            # Draw ships anchored at each body
+            for body_id, anchored_ships in body_ship_groups.items():
                 bx_base, by_base = planet_positions[body_id]
-                # Small orbit around the planet
-                orbit_angle = (idx * 90 + 45) * math.pi / 180
-                offset_r = dp(20 + idx * 5)
-                ox_base = bx_base + offset_r * math.cos(orbit_angle)
-                oy_base = by_base + offset_r * math.sin(orbit_angle)
-                sx, sy = self._apply_transform(ox_base, oy_base)
-                self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
+                for idx, ship in enumerate(anchored_ships):
+                    orbit_angle = (idx * 90 + 45) * math.pi / 180
+                    offset_r = dp(20 + idx * 5)
+                    ox_base = bx_base + offset_r * math.cos(orbit_angle)
+                    oy_base = by_base + offset_r * math.sin(orbit_angle)
+                    sx, sy = self._apply_transform(ox_base, oy_base)
+                    self._draw_ship(ship, sx, sy, gate_anchor, class_colors)
 
     def _draw_ship(self, ship, sx, sy, gate_anchor, class_colors):
         """Draw a single ship icon at screen position (sx, sy)."""

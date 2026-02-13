@@ -106,6 +106,10 @@ class Ship:
         mission_target: str = None,
         trade_route: dict = None,
         mining: bool = False,
+        body_id: str = None,
+        local_destination_body_id: str = None,
+        local_transit_remaining_ticks: int = 0,
+        local_transit_total_ticks: int = 0,
     ):
         self.id = id or str(uuid.uuid4())[:8]
         self.name = name
@@ -126,6 +130,10 @@ class Ship:
             else trade_route
         )
         self.mining = mining
+        self.body_id = body_id
+        self.local_destination_body_id = local_destination_body_id
+        self.local_transit_remaining_ticks = max(0, int(local_transit_remaining_ticks or 0))
+        self.local_transit_total_ticks = max(0, int(local_transit_total_ticks or 0))
 
     def to_dict(self) -> dict:
         return {
@@ -144,12 +152,18 @@ class Ship:
             "mission_target": self.mission_target,
             "trade_route": self.trade_route.to_dict() if isinstance(self.trade_route, TradeRoute) else self.trade_route,
             "mining": self.mining,
+            "body_id": self.body_id,
+            "local_destination_body_id": self.local_destination_body_id,
+            "local_transit_remaining_ticks": self.local_transit_remaining_ticks,
+            "local_transit_total_ticks": self.local_transit_total_ticks,
         }
 
     _INIT_FIELDS = {
         "id", "name", "ship_class", "location", "destination", "path",
         "stats", "cargo", "fuel", "hull", "morale", "mission",
         "mission_target", "trade_route", "mining",
+        "body_id", "local_destination_body_id", "local_transit_remaining_ticks",
+        "local_transit_total_ticks",
     }
 
     @classmethod
@@ -321,28 +335,43 @@ class FleetManager:
             return False
         return origin_system_id == destination_system_id
 
-    def move_ship_local(self, ship_id: str, destination_system_id: str) -> bool:
-        """Move a ship within the same system instantly (no turn cost).
-
-        This represents intra-system repositioning — e.g. moving from
-        one planet to another within the same star system. The ship's
-        location stays the same system_id since the game model tracks
-        ships by system. This method validates the move is local and
-        clears any existing path/mission.
-
-        Returns True if the ship was already at the system (local move).
-        """
+    def move_ship_local(self, ship_id: str, destination_body_id: str, transit_ticks: int = 3) -> bool:
+        """Start body-to-body intra-system transit for a ship."""
         ship = self.ships.get(ship_id)
         if not ship:
             return False
-        if not self.is_intra_system_move(ship.location, destination_system_id):
+        if not destination_body_id:
             return False
-        # Ship is already at this system — clear movement state
+        if ship.path:
+            return False
+
+        if ship.body_id == destination_body_id and ship.local_transit_remaining_ticks <= 0:
+            return True
+
+        ship.local_destination_body_id = destination_body_id
+        ship.local_transit_total_ticks = max(1, int(transit_ticks or 1))
+        ship.local_transit_remaining_ticks = ship.local_transit_total_ticks
         ship.path.clear()
         ship.destination = None
-        ship.mission = None
+        ship.mission = "local_transit"
         ship.mining = False
         return True
+
+    def process_local_movement_tick(self) -> list[Ship]:
+        """Advance active local transits by one clock tick."""
+        arrivals: list[Ship] = []
+        for ship in self.ships.values():
+            if ship.local_transit_remaining_ticks <= 0 or not ship.local_destination_body_id:
+                continue
+            ship.local_transit_remaining_ticks = max(0, ship.local_transit_remaining_ticks - 1)
+            if ship.local_transit_remaining_ticks == 0:
+                ship.body_id = ship.local_destination_body_id
+                ship.local_destination_body_id = None
+                ship.local_transit_total_ticks = 0
+                if ship.mission == "local_transit":
+                    ship.mission = None
+                arrivals.append(ship)
+        return arrivals
 
     @staticmethod
     def _pending_encounter_matches_system(entry: dict, system_id: str) -> bool:
