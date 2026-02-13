@@ -25,6 +25,7 @@ from kivy.uix.popup import Popup
 from kivy.graphics import Color, Ellipse, Line, Rectangle, Triangle
 from kivy.clock import Clock
 from kivy.metrics import dp
+from kivy.core.text import Label as CoreLabel
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.map_camera import MapCameraWidget
@@ -144,6 +145,10 @@ class SystemMapWidget(MapCameraWidget):
     ORBIT_MAX_RADIUS_FRAC = 0.98
     ORBIT_LOG_STEEPNESS = 4.5
     ORBIT_MIN_VISUAL_SEPARATION_FRAC = 0.035
+    MOON_ORBIT_RADIUS_FRAC = 0.52
+    MOON_ORBIT_MIN_RADIUS_DP = 14
+    ZOOM_PLANET_ONLY_MAX = 0.75
+    ZOOM_SHOW_LABELS_MIN = 1.25
 
     def __init__(self, game_state=None, system_id=None,
                  on_body_tap=None, on_ship_tap=None, **kwargs):
@@ -155,6 +160,7 @@ class SystemMapWidget(MapCameraWidget):
         self.selected_body_id = None
         self.selected_ship_id = None
         self._body_positions = {}  # body_id -> (sx, sy, size)
+        self._interactive_body_positions = {}  # body_id -> (sx, sy, hit_radius)
         self._ship_positions = {}  # ship_id -> (sx, sy)
         self._min_scale = 0.4
         self._max_scale = 3.5
@@ -246,6 +252,82 @@ class SystemMapWidget(MapCameraWidget):
             return "habitable"
         return "outer"
 
+    @staticmethod
+    def _prepare_body_hierarchy(planets):
+        """Split star-orbiting planets and parent-attached moons."""
+        primaries = []
+        moons_by_parent = {}
+
+        for body in planets:
+            if getattr(body, "body_type", "") == "moon":
+                continue
+            primaries.append(body)
+
+        sorted_primaries = sorted(
+            primaries,
+            key=lambda body: getattr(body, "orbit_index", 0.0) or 0.0,
+        )
+
+        primary_by_index = {
+            int(getattr(body, "orbit_index", 0.0) or 0): body
+            for body in sorted_primaries
+        }
+
+        for body in planets:
+            if getattr(body, "body_type", "") != "moon":
+                continue
+            orbit_index = getattr(body, "orbit_index", 0.0) or 0.0
+            parent_idx = int(math.floor(orbit_index))
+            parent = primary_by_index.get(parent_idx)
+            if not parent and sorted_primaries:
+                parent = min(
+                    sorted_primaries,
+                    key=lambda planet: abs((getattr(planet, "orbit_index", 0.0) or 0.0) - orbit_index),
+                )
+            if parent:
+                moons_by_parent.setdefault(parent.id, []).append(body)
+
+        for moon_list in moons_by_parent.values():
+            moon_list.sort(key=lambda body: getattr(body, "orbit_index", 0.0) or 0.0)
+
+        return sorted_primaries, moons_by_parent
+
+    def _detail_level(self):
+        if self._scale < self.ZOOM_PLANET_ONLY_MAX:
+            return "far"
+        if self._scale < self.ZOOM_SHOW_LABELS_MIN:
+            return "medium"
+        return "near"
+
+    @staticmethod
+    def _bounds_overlap(a, b):
+        return not (
+            a[0] + a[2] <= b[0]
+            or b[0] + b[2] <= a[0]
+            or a[1] + a[3] <= b[1]
+            or b[1] + b[3] <= a[1]
+        )
+
+    def _claim_bounds(self, claimed_bounds, candidate_bounds):
+        for existing in claimed_bounds:
+            if self._bounds_overlap(existing, candidate_bounds):
+                return False
+        claimed_bounds.append(candidate_bounds)
+        return True
+
+    def _draw_body_label(self, text, px, py, radius, claimed_bounds):
+        label = CoreLabel(text=text, font_size=dp(12))
+        label.refresh()
+        texture = label.texture
+        texture_size = texture.size
+        lx = px + radius + dp(6)
+        ly = py + radius + dp(2)
+        label_bounds = (lx, ly, texture_size[0], texture_size[1])
+        if not self._claim_bounds(claimed_bounds, label_bounds):
+            return
+        Color(0.85, 0.92, 1.0, 0.92)
+        Rectangle(pos=(lx, ly), size=texture_size, texture=texture)
+
     # ------------------------------------------------------------------
     # Main draw
     # ------------------------------------------------------------------
@@ -260,6 +342,7 @@ class SystemMapWidget(MapCameraWidget):
             return
 
         self._body_positions.clear()
+        self._interactive_body_positions.clear()
         self._ship_positions.clear()
 
         cx_base = self.center_x
@@ -267,10 +350,14 @@ class SystemMapWidget(MapCameraWidget):
         max_radius = min(self.width, self.height) * 0.40
         is_surveyed = bool(system.surveyed)
         ring_cx, ring_cy = self._apply_transform(cx_base, cy_base)
-        num_planets = len(system.planets)
+        primary_planets, moons_by_parent = self._prepare_body_hierarchy(system.planets)
+        num_planets = len(primary_planets)
+        detail_level = self._detail_level()
+        show_moons = detail_level in {"medium", "near"}
+        show_labels = detail_level == "near"
 
         # Pre-compute orbit radii from AU distances with compression.
-        orbit_radii = self._build_orbit_layout(system.planets, max_radius)
+        orbit_radii = self._build_orbit_layout(primary_planets, max_radius)
 
         # Determine zone boundaries for habitable zone band
         hab_inner_r = None
@@ -367,7 +454,10 @@ class SystemMapWidget(MapCameraWidget):
             # ============================================================
             planet_positions = {}  # planet.id -> (px, py) base coords
 
-            for i, planet in enumerate(system.planets):
+            planet_label_claims = []
+            moon_icon_claims = []
+
+            for i, planet in enumerate(primary_planets):
                 orbit_r = orbit_radii[i]
                 orbit_r_scaled = orbit_r * self._scale
 
@@ -435,6 +525,16 @@ class SystemMapWidget(MapCameraWidget):
                                           has_atmosphere=has_atmo)
 
                 self._body_positions[planet.id] = (px, py, p_size)
+                self._interactive_body_positions[planet.id] = (px, py, max(dp(24), p_size))
+
+                # Reserve planet icon area so moon icons can be suppressed when colliding.
+                self._claim_bounds(
+                    moon_icon_claims,
+                    (px - p_size * 0.65, py - p_size * 0.65, p_size * 1.3, p_size * 1.3),
+                )
+
+                if show_labels:
+                    self._draw_body_label(planet.name, px, py, p_size * 0.5, planet_label_claims)
 
                 # Selection highlight
                 if planet.id == self.selected_body_id:
@@ -453,6 +553,51 @@ class SystemMapWidget(MapCameraWidget):
                         c_s = dp(7) * self._scale
                         Ellipse(pos=(px - c_s / 2, py + p_size * 0.5),
                                 size=(c_s, c_s))
+
+                if not show_moons:
+                    continue
+
+                moons = moons_by_parent.get(planet.id, [])
+                if not moons:
+                    continue
+
+                moon_orbit_r = max(
+                    p_size * self.MOON_ORBIT_RADIUS_FRAC,
+                    dp(self.MOON_ORBIT_MIN_RADIUS_DP) * self._scale,
+                )
+                Color(0.45, 0.52, 0.65, 0.18)
+                Line(circle=(px, py, moon_orbit_r), width=0.7)
+
+                for moon_idx, moon in enumerate(moons):
+                    moon_angle = (moon_idx * (360.0 / max(1, len(moons))) + 25) * math.pi / 180
+                    mx = px + moon_orbit_r * math.cos(moon_angle)
+                    my = py + moon_orbit_r * math.sin(moon_angle)
+                    moon_size = dp(10) * self._scale
+                    moon_bounds = (
+                        mx - moon_size * 0.55,
+                        my - moon_size * 0.55,
+                        moon_size * 1.1,
+                        moon_size * 1.1,
+                    )
+
+                    show_moon_icon = self._claim_bounds(moon_icon_claims, moon_bounds)
+                    if show_moon_icon:
+                        if is_surveyed:
+                            _draw_moon_icon(self.canvas, mx, my, moon_size)
+                        else:
+                            _draw_moon_icon(
+                                self.canvas,
+                                mx,
+                                my,
+                                moon_size,
+                                color=(0.2, 0.24, 0.33, 0.9),
+                            )
+                    self._interactive_body_positions[moon.id] = (mx, my, max(dp(20), moon_size))
+                    if show_moon_icon:
+                        self._body_positions[moon.id] = (mx, my, moon_size)
+
+                    if show_labels and show_moon_icon:
+                        self._draw_body_label(moon.name, mx, my, moon_size * 0.45, planet_label_claims)
 
             # ============================================================
             # Layer 4: Gate indicator (edge of system)
@@ -477,6 +622,11 @@ class SystemMapWidget(MapCameraWidget):
                 _draw_station_icon(self.canvas, gate_x, gate_y, gate_size,
                                    color=(0.9, 0.4, 0.2, 0.7))
             self._body_positions["__gate__"] = (gate_x, gate_y, gate_size)
+            self._interactive_body_positions["__gate__"] = (
+                gate_x,
+                gate_y,
+                max(dp(22), gate_size),
+            )
 
             # ============================================================
             # Layer 5: Ships — positioned near their context
@@ -601,9 +751,9 @@ class SystemMapWidget(MapCameraWidget):
                 return True
 
         # Check body taps
-        for body_id, (bx, by, bsize) in self._body_positions.items():
+        for body_id, (bx, by, hit_radius) in self._interactive_body_positions.items():
             dist = ((touch.x - bx) ** 2 + (touch.y - by) ** 2) ** 0.5
-            if dist < max(dp(24), bsize):
+            if dist < hit_radius:
                 self.selected_body_id = body_id
                 self.selected_ship_id = None
                 self._redraw()

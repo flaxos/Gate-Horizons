@@ -581,3 +581,14 @@ Route Fleet screen mining toggle and trade unassign quick actions through explic
 1. Add `GameState` command methods for toggling mining and unassigning a ship from trade routes, including invariant cleanup and action logging/report entries.
 2. Update Fleet screen handlers to call those methods and show notice feedback when a command fails.
 3. Add parity tests that compare Fleet quick-action entrypoints against Galaxy action dispatch for equivalent state transitions.
+
+## PR: Hierarchical system-map body rendering and declutter
+
+### Goal
+Render system bodies with explicit planet→moon hierarchy, draw moons as local sub-orbits, add zoom/collision decluttering while preserving accurate tap hitboxes, and cover with targeted UI tests.
+
+### Steps
+1. Add render-prep helpers in `SystemMapWidget` that split star orbiters vs moons and attach moons to parent planets via `body_type`/`orbit_index` rules.
+2. Refactor `SystemMapWidget._redraw` to render parent planets on star orbits and moons on local parent-centric sub-orbits, while tracking hitboxes for all rendered bodies.
+3. Add declutter helpers for zoom-level detail and collision-aware icon/label suppression without breaking interaction selection.
+4. Add focused tests for hierarchy mapping assumptions and declutter-safe tap hitbox behavior.
