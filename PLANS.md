@@ -592,3 +592,16 @@ Render system bodies with explicit planet→moon hierarchy, draw moons as local 
 2. Refactor `SystemMapWidget._redraw` to render parent planets on star orbits and moons on local parent-centric sub-orbits, while tracking hitboxes for all rendered bodies.
 3. Add declutter helpers for zoom-level detail and collision-aware icon/label suppression without breaking interaction selection.
 4. Add focused tests for hierarchy mapping assumptions and declutter-safe tap hitbox behavior.
+
+## PR: Fleet-group release-readiness foundation
+
+### Goal
+Add a default-off runtime feature flag surface for fleet groups, a typed telemetry adapter with roadmap-stable event schemas, safe no-op command behavior when disabled, release-check documentation, and regression tests for the flag/telemetry contract.
+
+### Steps
+1. Extend settings/config to include a runtime-loadable `enable_fleet_groups` flag and wire app startup initialization for global query access in UI/gameplay paths.
+2. Add centralized telemetry event definitions and a typed adapter that validates required payload keys before dispatch.
+3. Introduce fleet-group foundation command helpers that gate create/dispatch via the feature flag and fail safely when disabled.
+4. Document local release checks for schema compatibility, flag-off behavior, and telemetry payload validation under `docs/`.
+5. Add tests proving default-off behavior, fleet-group UI/action suppression when off, and required telemetry keys for emitted roadmap events.
+

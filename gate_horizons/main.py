@@ -33,6 +33,7 @@ from kivy.metrics import dp
 from gate_horizons.game.state import GameState
 from gate_horizons.game.save_load import SaveManager
 from gate_horizons.game.settings import SettingsManager, GameSettings
+from gate_horizons.game.feature_flags import initialize_runtime_flags
 
 from gate_horizons.ui.screens.main_menu import MainMenuScreen
 from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
@@ -166,6 +167,7 @@ class GateHorizonsApp(App):
         self.save_manager = SaveManager(os.path.join(save_dir, "saves.db"))
         self.settings_manager = SettingsManager(os.path.join(save_dir, "settings.json"))
         self.settings = self.settings_manager.load()
+        initialize_runtime_flags(self.settings)
 
         # Screen manager
         self.sm = ScreenManager(transition=FadeTransition(duration=0.2))
@@ -367,6 +369,7 @@ class GateHorizonsApp(App):
     def apply_settings(self, settings: GameSettings):
         """Persist updated settings from the UI."""
         self.settings = settings
+        initialize_runtime_flags(settings)
         if self.settings_manager:
             self.settings_manager.save(settings)
 

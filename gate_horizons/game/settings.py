@@ -12,12 +12,14 @@ class GameSettings:
     music_volume: float = 0.7
     sfx_volume: float = 0.7
     autosave_enabled: bool = True
+    enable_fleet_groups: bool = False
 
     def clamp(self) -> "GameSettings":
         """Clamp numeric settings to valid ranges."""
         self.music_volume = _clamp_volume(self.music_volume, 0.7)
         self.sfx_volume = _clamp_volume(self.sfx_volume, 0.7)
         self.autosave_enabled = bool(self.autosave_enabled)
+        self.enable_fleet_groups = bool(self.enable_fleet_groups)
         return self
 
 
@@ -42,6 +44,7 @@ class SettingsManager:
             music_volume=_clamp_volume(data.get("music_volume"), 0.7),
             sfx_volume=_clamp_volume(data.get("sfx_volume"), 0.7),
             autosave_enabled=_coerce_bool(data.get("autosave_enabled"), True),
+            enable_fleet_groups=_coerce_bool(data.get("enable_fleet_groups"), False),
         )
         return settings.clamp()
 
