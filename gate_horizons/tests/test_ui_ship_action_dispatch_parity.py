@@ -155,6 +155,29 @@ def _run_from_fleet_screen_with_notices(state, ship_id, action):
     return notices
 
 
+def _run_from_fleet_screen_with_ui_spies(state, ship_id, action):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+
+    screen = FleetScreen.__new__(FleetScreen)
+    screen.game_state = state
+
+    called = {
+        "destination": 0,
+        "escort_target": 0,
+        "notice": [],
+        "refresh": 0,
+    }
+    screen._on_move = lambda btn: called.__setitem__("destination", called["destination"] + 1)
+    screen._show_escort_target_menu = lambda sid: called.__setitem__("escort_target", called["escort_target"] + 1)
+    screen._show_notice = lambda message, title="Notice": called["notice"].append((message, title))
+    screen.top_bar = SimpleNamespace(update=lambda game_state: called.__setitem__("refresh", called["refresh"] + 1))
+    screen._update_list = lambda: None
+
+    screen._execute_action(ship_id, action)
+    return called
+
+
 def _run_from_gravity_well_screen(state, ship_id, action):
     _install_kivy_stubs_if_missing()
     from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
@@ -346,6 +369,24 @@ def test_gravity_well_dispatch_invokes_move_and_escort_follow_up_ui_paths():
 
     escort_state, escort_ship_id = _build_state_with_cargo()
     escort_calls = _run_from_gravity_well_with_ui_spies(escort_state, escort_ship_id, Action(name="Escort"))
+
+    assert move_calls["destination"] == 1
+    assert move_calls["escort_target"] == 0
+    assert move_calls["notice"] == []
+    assert move_calls["refresh"] == 1
+
+    assert escort_calls["destination"] == 0
+    assert escort_calls["escort_target"] == 1
+    assert escort_calls["notice"] == []
+    assert escort_calls["refresh"] == 1
+
+
+def test_fleet_dispatch_invokes_move_and_escort_follow_up_ui_paths():
+    move_state, move_ship_id = _build_state_with_cargo()
+    move_calls = _run_from_fleet_screen_with_ui_spies(move_state, move_ship_id, Action(name="Move To"))
+
+    escort_state, escort_ship_id = _build_state_with_cargo()
+    escort_calls = _run_from_fleet_screen_with_ui_spies(escort_state, escort_ship_id, Action(name="Escort"))
 
     assert move_calls["destination"] == 1
     assert move_calls["escort_target"] == 0
