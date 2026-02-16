@@ -650,17 +650,21 @@ class SystemViewScreen(Screen):
 
             for ship_class in ["scout", "freighter", "miner", "corvette"]:
                 template = self.game_state.fleet._ship_templates.get(ship_class, {})
-                cost = template.get("build_cost", {})
+                can_build, can_afford, cost = self._get_ship_build_button_state(
+                    colony,
+                    ship_class,
+                    self.game_state.fleet._ship_templates,
+                )
                 cost_text = ", ".join(f"{v} {k}" for k, v in cost.items()) if cost else "free"
-                can_afford = self.game_state.resources.can_afford(cost) if cost else True
+                can_queue_build = can_build and can_afford
                 build_btn = Button(
                     text=f"{template.get('name', ship_class)} ({cost_text})",
                     size_hint_y=None,
                     height=dp(36),
                     font_size="11sp",
-                    background_color=(0.12, 0.25, 0.4, 0.8) if can_afford else (0.15, 0.15, 0.2, 0.5),
-                    color=(0.85, 0.95, 1, 1) if can_afford else (0.4, 0.4, 0.5, 0.5),
-                    disabled=not can_afford,
+                    background_color=(0.12, 0.25, 0.4, 0.8) if can_queue_build else (0.15, 0.15, 0.2, 0.5),
+                    color=(0.85, 0.95, 1, 1) if can_queue_build else (0.4, 0.4, 0.5, 0.5),
+                    disabled=not can_queue_build,
                 )
                 build_btn.ship_class = ship_class
                 build_btn.bind(on_release=self._on_build_ship)
@@ -785,9 +789,37 @@ class SystemViewScreen(Screen):
     def _on_build_ship(self, btn):
         if not self.game_state:
             return
-        self.game_state.build_ship(self.system_id, btn.ship_class)
+        success = self.game_state.build_ship(self.system_id, btn.ship_class)
+        if not success:
+            reason = self._get_ship_build_failure_reason(btn.ship_class)
+            NoticePopup(title="Ship Construction Blocked", message=reason).open()
+            return
         self.top_bar.update(self.game_state)
         self._update_info()
+
+    def _get_ship_build_button_state(self, colony, ship_class, templates):
+        can_build = colony.can_build_ship(ship_class, templates)
+        cost = colony.get_ship_build_cost(ship_class, templates)
+        can_afford = self.game_state.resources.can_afford(cost) if cost else True
+        return can_build, can_afford, cost
+
+    def _get_ship_build_failure_reason(self, ship_class):
+        colony = self.game_state.colonies.colonies.get(self.system_id)
+        if not colony:
+            return "No colony is established in this system."
+
+        if colony.get_ship_build_concurrency() < 1:
+            return "No spaceport slot is available for ship construction."
+
+        if len(colony.shipyard_queue) >= colony.get_ship_build_queue_limit():
+            return "Shipyard queue is full."
+
+        templates = self.game_state.fleet._ship_templates
+        cost = colony.get_ship_build_cost(ship_class, templates)
+        if cost and not self.game_state.resources.can_afford(cost):
+            return "Insufficient resources to build this ship."
+
+        return "Ship construction is currently unavailable."
 
     def _on_activate_gate(self, *args):
         if not self.game_state or not self.system_id:
