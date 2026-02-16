@@ -464,7 +464,10 @@ class TurnProcessor:
         for ship in ships_to_process:
             if not game_state.game_clock.mark_processed("movements", ship.id):
                 continue
+            starting_location = ship.location
             result = game_state.fleet.process_movement(ship.id, fuel_efficiency=fuel_efficiency)
+            moved_this_tick = result.current_location != starting_location
+            arrived_with_progress = result.arrived and moved_this_tick
             report.ships_moved.append({
                 "ship_id": ship.id,
                 "ship_name": ship.name,
@@ -473,7 +476,7 @@ class TurnProcessor:
                 "fuel_consumed": result.fuel_consumed,
             })
 
-            if result.arrived or result.current_location:
+            if moved_this_tick or arrived_with_progress:
                 system = game_state.galaxy.systems.get(result.current_location)
                 if system and hasattr(game_state, "combat"):
                     gate_capacity = None
