@@ -125,8 +125,6 @@ def run_main() -> None:
                 cwd=REPO_ROOT,
                 env=env,
                 check=True,
-                stdout=sys.stdout,
-                stderr=sys.stderr,
             )
             return
         except subprocess.CalledProcessError as exc:
