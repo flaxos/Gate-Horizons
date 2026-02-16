@@ -402,7 +402,8 @@ class SystemViewScreen(Screen):
         # Gate status
         gate_text = "Gate: Active" if system.gate_active else "Gate: Dormant"
         if not system.gate_active and system.gate_activation_cost:
-            costs = ", ".join(f"{v} {k}" for k, v in system.gate_activation_cost.items())
+            effective_gate_cost, _ = self._get_gate_activation_button_state(system.id)
+            costs = ", ".join(f"{v} {k}" for k, v in effective_gate_cost.items())
             gate_text += f" (Activate: {costs})"
         self.info_panel.add_widget(Label(
             text=gate_text,
@@ -674,14 +675,7 @@ class SystemViewScreen(Screen):
         if not system.gate_active and system.gate_activation_cost:
             planet_list.add_widget(Widget(size_hint_y=None, height=dp(8)))
 
-            tech_effects = self.game_state.tech.get_effects() if self.game_state.tech else {}
-            cost_reduction = tech_effects.get("gate_cost_reduction", 0.0)
-            effective_gate_cost = self.game_state.galaxy.get_gate_activation_cost(
-                self.system_id,
-                cost_reduction=cost_reduction,
-            )
-
-            can_activate = self.game_state.resources.can_afford(effective_gate_cost)
+            effective_gate_cost, can_activate = self._get_gate_activation_button_state(self.system_id)
             costs = ", ".join(f"{v} {k}" for k, v in effective_gate_cost.items())
             activate_btn = Button(
                 text=f"Activate Gate ({costs})",
@@ -789,6 +783,14 @@ class SystemViewScreen(Screen):
     def _on_build_ship(self, btn):
         if not self.game_state:
             return
+        colony = self.game_state.colonies.colonies.get(self.system_id)
+        templates = self.game_state.fleet._ship_templates
+        can_build, can_afford, _ = self._get_ship_build_button_state(colony, btn.ship_class, templates)
+        if not can_build or not can_afford:
+            reason = self._get_ship_build_failure_reason(btn.ship_class)
+            NoticePopup(title="Ship Construction Blocked", message=reason).open()
+            return
+
         success = self.game_state.build_ship(self.system_id, btn.ship_class)
         if not success:
             reason = self._get_ship_build_failure_reason(btn.ship_class)
@@ -798,10 +800,22 @@ class SystemViewScreen(Screen):
         self._update_info()
 
     def _get_ship_build_button_state(self, colony, ship_class, templates):
+        if not colony:
+            return False, False, {}
         can_build = colony.can_build_ship(ship_class, templates)
         cost = colony.get_ship_build_cost(ship_class, templates)
         can_afford = self.game_state.resources.can_afford(cost) if cost else True
         return can_build, can_afford, cost
+
+    def _get_gate_activation_button_state(self, system_id):
+        tech_effects = self.game_state.tech.get_effects() if self.game_state.tech else {}
+        cost_reduction = tech_effects.get("gate_cost_reduction", 0.0)
+        effective_gate_cost = self.game_state.galaxy.get_gate_activation_cost(
+            system_id,
+            cost_reduction=cost_reduction,
+        )
+        can_activate = self.game_state.resources.can_afford(effective_gate_cost)
+        return effective_gate_cost, can_activate
 
     def _get_ship_build_failure_reason(self, ship_class):
         colony = self.game_state.colonies.colonies.get(self.system_id)

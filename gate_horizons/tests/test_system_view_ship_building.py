@@ -195,3 +195,64 @@ class TestSystemViewShipBuilding(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class _TrackingResources:
+    def __init__(self, affordable_cost):
+        self.affordable_cost = affordable_cost
+        self.costs_checked = []
+
+    def can_afford(self, cost):
+        normalized = dict(cost)
+        self.costs_checked.append(normalized)
+        return normalized == self.affordable_cost
+
+
+class TestSystemViewGateAndBuildParity(unittest.TestCase):
+    def test_get_gate_activation_button_state_uses_discounted_cost_for_affordability(self):
+        screen = object.__new__(system_view.SystemViewScreen)
+        resources = _TrackingResources(affordable_cost={"metals": 70, "energy": 35})
+
+        screen.game_state = SimpleNamespace(
+            tech=SimpleNamespace(get_effects=lambda: {"gate_cost_reduction": 0.3}),
+            galaxy=SimpleNamespace(
+                get_gate_activation_cost=lambda system_id, cost_reduction=0.0: {
+                    "metals": int(100 * (1.0 - cost_reduction)),
+                    "energy": int(50 * (1.0 - cost_reduction)),
+                }
+            ),
+            resources=resources,
+        )
+
+        cost, can_activate = screen._get_gate_activation_button_state("sol")
+
+        self.assertEqual(cost, {"metals": 70, "energy": 35})
+        self.assertTrue(can_activate)
+        self.assertEqual(resources.costs_checked, [{"metals": 70, "energy": 35}])
+
+    def test_on_build_ship_shows_notice_without_attempting_build_when_gated(self):
+        colony = _StubColony(can_build=False, queue_len=0, queue_limit=3, concurrency=1)
+        build_attempts = []
+
+        screen = object.__new__(system_view.SystemViewScreen)
+        screen.system_id = "sol"
+        screen.game_state = SimpleNamespace(
+            build_ship=lambda *_: build_attempts.append(True) or True,
+            resources=_StubResources(affordable=True),
+            colonies=SimpleNamespace(colonies={"sol": colony}),
+            fleet=SimpleNamespace(_ship_templates={"scout": {"name": "Scout", "build_cost": {"metals": 10}}}),
+        )
+        screen.top_bar = SimpleNamespace(update=lambda _: None)
+        screen._update_info = lambda: None
+        btn = SimpleNamespace(ship_class="scout")
+
+        with patch.object(system_view, "NoticePopup") as popup_cls:
+            popup = popup_cls.return_value
+            screen._on_build_ship(btn)
+
+            popup_cls.assert_called_once_with(
+                title="Ship Construction Blocked",
+                message="Ship construction is currently unavailable.",
+            )
+            popup.open.assert_called_once()
+            self.assertEqual(build_attempts, [])
