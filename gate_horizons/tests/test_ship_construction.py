@@ -206,6 +206,72 @@ class TestBuildTimeReductionAppliesToShipyard(unittest.TestCase):
         self.assertEqual(len(gs.fleet.ships), initial_count + 1)
 
 
+class TestShipyardRushBuildBehavior(unittest.TestCase):
+    """Rush-build should only charge credits for active/rushable orders."""
+
+    def _setup_two_scout_orders(self):
+        gs = GameState.new_game()
+        gs.shipyard.facilities["sol"].append(OrbitalFacility(facility_type="drydock", level=1))
+        colony = gs.colonies.colonies["sol"]
+        colony.production_inventory.update({
+            "hull_plating": 10,
+            "drive_assemblies": 5,
+            "avionics": 5,
+        })
+        gs.resources.global_resources["credits"] = 500
+
+        self.assertTrue(gs.build_ship_orbital("sol", "scout", "ISS Active"))
+        self.assertTrue(gs.build_ship_orbital("sol", "scout", "ISS Pending"))
+        return gs
+
+    def test_rushing_pending_order_returns_false_and_does_not_spend_credits(self):
+        gs = self._setup_two_scout_orders()
+        summary = gs.shipyard.get_build_queue_summary()
+        pending_order = next(o for o in summary if o["status"] == "queued")
+        starting_credits = gs.resources.global_resources["credits"]
+
+        rushed = gs.shipyard.rush_build(
+            pending_order["id"],
+            gs.production.config.to_dict(),
+            resources=gs.resources,
+            turns=1,
+        )
+
+        self.assertFalse(rushed)
+        self.assertEqual(gs.resources.global_resources["credits"], starting_credits)
+
+    def test_rushing_active_order_spends_credits_and_reduces_turns(self):
+        gs = self._setup_two_scout_orders()
+        summary = gs.shipyard.get_build_queue_summary()
+        active_order = next(o for o in summary if o["status"] == "active")
+        starting_credits = gs.resources.global_resources["credits"]
+        rush_cost_per_turn = gs.production.config.to_dict().get("shipyard_balance", {}).get(
+            "rush_cost_per_turn", 0
+        )
+
+        rushed = gs.shipyard.rush_build(
+            active_order["id"],
+            gs.production.config.to_dict(),
+            resources=gs.resources,
+            turns=1,
+        )
+
+        self.assertTrue(rushed)
+        self.assertEqual(
+            gs.resources.global_resources["credits"],
+            starting_credits - rush_cost_per_turn,
+        )
+
+        updated_summary = gs.shipyard.get_build_queue_summary()
+        updated_active_order = next(
+            o for o in updated_summary if o["id"] == active_order["id"]
+        )
+        self.assertEqual(
+            updated_active_order["turns_left"],
+            active_order["turns_left"] - 1,
+        )
+
+
 class TestColonyShipyardQueueProgression(unittest.TestCase):
     def _new_colony(self, spaceport_level: int = 1) -> Colony:
         colony = Colony(system_id="sol", planet_id="earth")
