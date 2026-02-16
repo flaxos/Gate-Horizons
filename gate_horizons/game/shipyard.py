@@ -456,16 +456,24 @@ class ShipyardManager:
         if not queue:
             return False
 
+        # Rush is only valid for currently active orders.
+        if not any(order.id == order_id for order in queue.active):
+            return False
+
         balance = config.get("shipyard_balance", {})
         cost_per_turn = balance.get("rush_cost_per_turn", 0)
         total_cost = max(0, cost_per_turn * max(1, turns))
         if resources and total_cost > 0:
             if resources.global_resources.get("credits", 0) < total_cost:
                 return False
-            resources.spend("credits", total_cost)
 
         order = queue.rush(order_id, turns=turns)
-        return order is not None
+        if not order:
+            return False
+
+        if resources and total_cost > 0:
+            resources.spend("credits", total_cost)
+        return True
 
     def process_tick(self, fleet=None, config: dict = None) -> dict:
         """Process one tick for all facilities and build orders.
