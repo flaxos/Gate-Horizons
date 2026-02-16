@@ -588,3 +588,43 @@ def test_dispatch_cargo_and_colonist_actions_report_transfers_when_changed():
     assert load_colonists_result["success"] is True
     assert load_colonists_result["changed"] is True
     assert load_colonists_result["message"].startswith("Transferred: pop: ")
+
+
+def test_dispatch_transfer_actions_report_noop_messages_for_capacity_or_storage_limits():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+    ship.location = next(iter(state.colonies.colonies.keys()))
+    colony = state.colonies.colonies[ship.location]
+
+    ship.cargo.clear()
+    ship.add_cargo("metals", ship.stats.cargo_capacity)
+    colony.stockpiles["metals"] = 50
+    result = state.dispatch_ship_context_action(ship.id, "Load Cargo")
+    assert result == {
+        "success": False,
+        "message": "No cargo could be loaded (ship is full)",
+        "requires_ui": None,
+        "changed": False,
+    }
+
+    ship.cargo.clear()
+    ship.cargo["pop"] = ship.stats.cargo_capacity
+    result = state.dispatch_ship_context_action(ship.id, "Load Colonists")
+    assert result == {
+        "success": False,
+        "message": "No colonists could be loaded (ship is full)",
+        "requires_ui": None,
+        "changed": False,
+    }
+
+    ship.cargo.clear()
+    ship.cargo["metals"] = 10
+    caps = colony.get_storage_caps()
+    colony.stockpiles["metals"] = caps.get("metals", 0)
+    result = state.dispatch_ship_context_action(ship.id, "Unload Cargo")
+    assert result == {
+        "success": False,
+        "message": "No cargo could be unloaded",
+        "requires_ui": None,
+        "changed": False,
+    }

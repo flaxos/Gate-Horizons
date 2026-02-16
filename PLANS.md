@@ -627,3 +627,14 @@ Route ship strategic movement initiated from Fleet, Galaxy Map, and Gravity Well
 2. Refactor UI movement callbacks in `fleet_screen.py`, `galaxy_map.py`, and `gravity_well_map.py` to call the centralized API and surface result messaging while preserving refresh behavior.
 3. Update parity/regression tests to ensure UI movement entrypoints go through `GameState` movement submission and that invalid transitions (e.g., active local transit) fail consistently.
 4. Run focused pytest coverage for updated movement dispatch tests.
+
+## PR: Targeted gameplay/UI parity fixes for transfer actions and system-view gating
+
+### Goal
+Fix three parity bugs by making ship cargo/colonist context actions report truthful transfer outcomes, aligning gate-activation affordability checks with tech-discounted effective cost, and ensuring ship-build UI affordance/failure feedback matches colony buildability constraints.
+
+### Steps
+1. Update `GameState.dispatch_ship_context_action` transfer branches to derive success/no-op messages from actual transfer results and local preconditions.
+2. Refine `SystemViewScreen` gate activation affordability/cost state to use the same discounted effective cost path as `GameState.activate_gate()`.
+3. Ensure system-view ship build buttons require both affordability and colony buildability and display a notice when `_on_build_ship` fails.
+4. Add/adjust focused tests for each fix and run targeted pytest coverage.
