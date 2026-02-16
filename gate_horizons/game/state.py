@@ -1034,12 +1034,12 @@ class GameState:
 
         nearest_system = self._get_nearest_colony_system(ship.location, colony_systems)
         if nearest_system:
-            self.fleet.move_ship(ship.id, nearest_system, self.galaxy)
+            success, message, _ = self.submit_strategic_movement(ship.id, nearest_system)
             return {
-                "success": True,
-                "message": f"{ship.name} en route to nearest colony",
+                "success": success,
+                "message": message,
                 "requires_ui": None,
-                "changed": True,
+                "changed": bool(success),
             }
         return {
             "success": False,
@@ -1052,12 +1052,12 @@ class GameState:
         colony_systems = list(self.colonies.colonies.keys())
         nearest_system = self._get_nearest_colony_system(ship.location, colony_systems)
         if nearest_system:
-            self.fleet.move_ship(ship.id, nearest_system, self.galaxy)
+            success, message, _ = self.submit_strategic_movement(ship.id, nearest_system)
             return {
-                "success": True,
-                "message": f"{ship.name} returning home",
+                "success": success,
+                "message": message,
                 "requires_ui": None,
-                "changed": True,
+                "changed": bool(success),
             }
         message = f"{ship.name} cannot return home: no reachable colony."
         self.log.append(message)
@@ -1067,6 +1067,54 @@ class GameState:
             "requires_ui": None,
             "changed": False,
         }
+
+    def submit_strategic_movement(
+        self,
+        ship_id: str,
+        destination_id: str,
+        *,
+        action_name: str = "Move To",
+        record_action: bool = True,
+    ) -> tuple[bool, str, dict]:
+        """Validate and submit strategic (inter-system) movement for a ship."""
+        ship = self.fleet.ships.get(ship_id)
+        if not ship:
+            return False, "Ship not found", {}
+
+        destination = self.galaxy.systems.get(destination_id)
+        if not destination:
+            return False, "Destination system not found", {}
+
+        if self.fleet._ship_has_active_local_transit(ship):
+            return False, "Cannot start strategic movement during local transit", {}
+
+        if ship.path:
+            return False, f"{ship.name} is currently in transit", {}
+
+        if destination_id == ship.location:
+            return False, "Ship is already in that system", {}
+
+        path = self.galaxy.get_path(ship.location, destination_id)
+        if not path or len(path) < 2:
+            return False, "No valid strategic path to destination", {}
+
+        moved = self.fleet.move_ship(ship_id, destination_id, self.galaxy)
+        if not moved:
+            return False, "Unable to submit movement", {}
+
+        message = f"{ship.name} en route to {destination.name}"
+        report_entry = {
+            "ship_id": ship.id,
+            "ship_name": ship.name,
+            "action": action_name,
+            "system_id": destination_id,
+            "summary": message,
+            "movement_path": list(ship.path),
+        }
+        if record_action:
+            self.pending_ship_actions.append(report_entry)
+            self.log.append(message)
+        return True, message, report_entry
 
     def _get_nearest_colony_system(self, source_system_id: str, colony_systems: list[str]) -> Optional[str]:
         shortest_path = None

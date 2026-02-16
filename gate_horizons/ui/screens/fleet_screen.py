@@ -381,7 +381,12 @@ class FleetScreen(Screen):
     def _move_ship(self, ship_id, dest_id):
         if not self.game_state:
             return
-        self.game_state.fleet.move_ship(ship_id, dest_id, self.game_state.galaxy)
+        success, message, _ = self.game_state.submit_strategic_movement(ship_id, dest_id)
+        self._show_notice(message)
+        if not success:
+            self.top_bar.update(self.game_state)
+            self._update_list()
+            return
         self._update_list()
 
     def _show_actions(self, btn):
