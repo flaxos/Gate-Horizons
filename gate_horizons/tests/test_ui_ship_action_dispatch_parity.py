@@ -115,6 +115,14 @@ def _build_state_with_cargo():
     return state, ship.id
 
 
+def _first_non_colony_system_id(state):
+    colony_systems = set(state.colonies.colonies.keys())
+    for system_id in state.galaxy.systems:
+        if system_id not in colony_systems:
+            return system_id
+    raise AssertionError("Expected at least one non-colony system")
+
+
 def _run_from_galaxy_screen(state, ship_id, action):
     _install_kivy_stubs_if_missing()
     from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
@@ -509,3 +517,74 @@ def test_ui_move_callbacks_surface_consistent_local_transit_failure_notice():
         ("galaxy", "Cannot start strategic movement during local transit"),
         ("gravity", "Cannot start strategic movement during local transit"),
     ]
+
+
+def test_dispatch_cargo_and_colonist_actions_return_failure_for_no_colony_or_noop():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+
+    ship.location = _first_non_colony_system_id(state)
+    for action_name in ("Unload Cargo", "Load Cargo", "Load Colonists", "Unload Colonists"):
+        result = state.dispatch_ship_context_action(ship.id, action_name)
+        assert result == {
+            "success": False,
+            "message": "No colony present",
+            "requires_ui": None,
+            "changed": False,
+        }
+
+    ship.location = next(iter(state.colonies.colonies.keys()))
+    ship.cargo.clear()
+    colony = state.colonies.colonies[ship.location]
+    colony.stockpiles = {resource: 0 for resource in colony.stockpiles}
+
+    assert state.dispatch_ship_context_action(ship.id, "Unload Cargo") == {
+        "success": False,
+        "message": "No cargo to unload",
+        "requires_ui": None,
+        "changed": False,
+    }
+    assert state.dispatch_ship_context_action(ship.id, "Load Cargo") == {
+        "success": False,
+        "message": "No cargo to load",
+        "requires_ui": None,
+        "changed": False,
+    }
+    assert state.dispatch_ship_context_action(ship.id, "Unload Colonists") == {
+        "success": False,
+        "message": "No colonists to unload",
+        "requires_ui": None,
+        "changed": False,
+    }
+
+
+def test_dispatch_cargo_and_colonist_actions_report_transfers_when_changed():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+    ship.location = next(iter(state.colonies.colonies.keys()))
+
+    colony = state.colonies.colonies[ship.location]
+    colony.stockpiles = {resource: 0 for resource in colony.stockpiles}
+    colony.stockpiles["metals"] = 5
+    ship.cargo.clear()
+
+    load_result = state.dispatch_ship_context_action(ship.id, "Load Cargo")
+    assert load_result["success"] is True
+    assert load_result["changed"] is True
+    assert load_result["message"] == "Transferred: metals: 5"
+
+    unload_result = state.dispatch_ship_context_action(ship.id, "Unload Cargo")
+    assert unload_result["success"] is True
+    assert unload_result["changed"] is True
+    assert unload_result["message"] == "Transferred: metals: 5"
+
+    ship.cargo["pop"] = 7
+    unload_colonists_result = state.dispatch_ship_context_action(ship.id, "Unload Colonists")
+    assert unload_colonists_result["success"] is True
+    assert unload_colonists_result["changed"] is True
+    assert unload_colonists_result["message"] == "Transferred: pop: 7"
+
+    load_colonists_result = state.dispatch_ship_context_action(ship.id, "Load Colonists")
+    assert load_colonists_result["success"] is True
+    assert load_colonists_result["changed"] is True
+    assert load_colonists_result["message"].startswith("Transferred: pop: ")

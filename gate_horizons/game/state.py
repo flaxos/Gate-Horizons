@@ -990,18 +990,57 @@ class GameState:
                 "changed": bool(success),
             }
 
+        def _format_transfer(transfer: dict) -> str:
+            return ", ".join(f"{resource}: {amount}" for resource, amount in sorted(transfer.items()))
+
         if normalized_action == "Unload Cargo":
-            self.unload_ship_cargo_to_colony(ship_id)
-            return {"success": True, "message": "Cargo unloaded", "requires_ui": None, "changed": True}
+            if ship.location not in self.colonies.colonies:
+                return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            transfer = self.unload_ship_cargo_to_colony(ship_id)
+            if not transfer:
+                return {"success": False, "message": "No cargo to unload", "requires_ui": None, "changed": False}
+            return {
+                "success": True,
+                "message": f"Transferred: {_format_transfer(transfer)}",
+                "requires_ui": None,
+                "changed": True,
+            }
         if normalized_action == "Load Cargo":
-            self.load_ship_cargo_from_colony(ship_id)
-            return {"success": True, "message": "Cargo loaded", "requires_ui": None, "changed": True}
+            if ship.location not in self.colonies.colonies:
+                return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            transfer = self.load_ship_cargo_from_colony(ship_id)
+            if not transfer:
+                return {"success": False, "message": "No cargo to load", "requires_ui": None, "changed": False}
+            return {
+                "success": True,
+                "message": f"Transferred: {_format_transfer(transfer)}",
+                "requires_ui": None,
+                "changed": True,
+            }
         if normalized_action == "Load Colonists":
-            self.load_colonists_to_ship(ship_id)
-            return {"success": True, "message": "Colonists loaded", "requires_ui": None, "changed": True}
+            if ship.location not in self.colonies.colonies:
+                return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            transfer = self.load_colonists_to_ship(ship_id)
+            if not transfer:
+                return {"success": False, "message": "No colonists to load", "requires_ui": None, "changed": False}
+            return {
+                "success": True,
+                "message": f"Transferred: {_format_transfer(transfer)}",
+                "requires_ui": None,
+                "changed": True,
+            }
         if normalized_action == "Unload Colonists":
-            self.unload_colonists_to_colony(ship_id)
-            return {"success": True, "message": "Colonists unloaded", "requires_ui": None, "changed": True}
+            if ship.location not in self.colonies.colonies:
+                return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            transfer = self.unload_colonists_to_colony(ship_id)
+            if not transfer:
+                return {"success": False, "message": "No colonists to unload", "requires_ui": None, "changed": False}
+            return {
+                "success": True,
+                "message": f"Transferred: {_format_transfer(transfer)}",
+                "requires_ui": None,
+                "changed": True,
+            }
         if normalized_action == "Emergency Jettison":
             ship.cargo.clear()
             return {"success": True, "message": "Cargo jettisoned", "requires_ui": None, "changed": True}
