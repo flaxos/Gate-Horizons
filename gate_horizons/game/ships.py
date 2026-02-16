@@ -249,6 +249,8 @@ class FleetManager:
         ship = self.ships.get(ship_id)
         if not ship:
             return False
+        if self._ship_has_active_local_transit(ship):
+            return False
         if destination_id == ship.location:
             return False
 
@@ -266,7 +268,14 @@ class FleetManager:
         ship.destination = destination_id
         ship.mission = "moving"
         ship.mining = False
+        ship.local_destination_body_id = None
+        ship.local_transit_remaining_ticks = 0
+        ship.local_transit_total_ticks = 0
         return True
+
+    @staticmethod
+    def _ship_has_active_local_transit(ship: Ship) -> bool:
+        return ship.local_transit_remaining_ticks > 0 or bool(ship.local_destination_body_id)
 
     def process_movement(self, ship_id: str, fuel_efficiency: float = 1.0) -> MovementResult:
         """Advance a ship along its path by its speed stat.
