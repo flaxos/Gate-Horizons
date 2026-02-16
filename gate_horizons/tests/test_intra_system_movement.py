@@ -64,6 +64,31 @@ class TestLocalMovement:
         assert loaded_ship.local_destination_body_id == self.target_body_id
         assert loaded_ship.local_transit_remaining_ticks == self.ship.local_transit_remaining_ticks
 
+    def test_inter_system_move_rejected_during_active_local_transit(self):
+        ok, _ = self.state.execute_local_move(self.ship.id, self.target_body_id)
+        assert ok is True
+
+        moved = self.state.fleet.move_ship(self.ship.id, "alpha_centauri", self.state.galaxy)
+
+        assert moved is False
+        assert self.ship.location == "sol"
+        assert self.ship.local_destination_body_id == self.target_body_id
+        assert self.ship.local_transit_remaining_ticks > 0
+
+    def test_inter_system_move_allowed_without_active_local_transit(self):
+        self.ship.local_destination_body_id = None
+        self.ship.local_transit_remaining_ticks = 0
+        self.ship.local_transit_total_ticks = 3
+
+        moved = self.state.fleet.move_ship(self.ship.id, "alpha_centauri", self.state.galaxy)
+
+        assert moved is True
+        assert self.ship.destination == "alpha_centauri"
+        assert self.ship.path
+        assert self.ship.local_destination_body_id is None
+        assert self.ship.local_transit_remaining_ticks == 0
+        assert self.ship.local_transit_total_ticks == 0
+
 
 class TestFleetLocalTickProcessor:
     def test_process_local_movement_tick_arrival(self):
