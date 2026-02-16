@@ -669,8 +669,16 @@ class SystemViewScreen(Screen):
         # Gate activation
         if not system.gate_active and system.gate_activation_cost:
             planet_list.add_widget(Widget(size_hint_y=None, height=dp(8)))
-            can_activate = self.game_state.resources.can_afford(system.gate_activation_cost)
-            costs = ", ".join(f"{v} {k}" for k, v in system.gate_activation_cost.items())
+
+            tech_effects = self.game_state.tech.get_effects() if self.game_state.tech else {}
+            cost_reduction = tech_effects.get("gate_cost_reduction", 0.0)
+            effective_gate_cost = self.game_state.galaxy.get_gate_activation_cost(
+                self.system_id,
+                cost_reduction=cost_reduction,
+            )
+
+            can_activate = self.game_state.resources.can_afford(effective_gate_cost)
+            costs = ", ".join(f"{v} {k}" for k, v in effective_gate_cost.items())
             activate_btn = Button(
                 text=f"Activate Gate ({costs})",
                 size_hint_y=None,

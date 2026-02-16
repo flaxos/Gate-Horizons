@@ -508,5 +508,24 @@ class Test16NoPlaceholderShipActions(unittest.TestCase):
             self.assertNotIn(action_name, source)
 
 
+class Test17SystemViewGateDiscountContract(unittest.TestCase):
+    """System view gate activation UI should match discounted gameplay cost rules."""
+
+    def test_system_view_uses_effective_gate_activation_cost(self):
+        """Gate activation button should use tech discount for label + affordability."""
+        sv_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "ui", "screens", "system_view.py",
+        )
+        with open(sv_path) as f:
+            source = f.read()
+
+        self.assertIn("tech.get_effects", source)
+        self.assertIn("gate_cost_reduction", source)
+        self.assertIn("get_gate_activation_cost", source)
+        self.assertIn("can_afford(effective_gate_cost)", source)
+        self.assertIn('for k, v in effective_gate_cost.items()', source)
+
+
 if __name__ == "__main__":
     unittest.main()
