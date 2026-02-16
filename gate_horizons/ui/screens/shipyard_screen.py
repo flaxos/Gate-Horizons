@@ -373,8 +373,14 @@ class ShipyardScreen(Screen):
         colony = self.game_state.colonies.colonies.get(self.selected_system_id)
         if not colony:
             return
-        queue = self.game_state.shipyard.get_build_queue_summary()
+        facilities = self.game_state.shipyard.facilities.get(self.selected_system_id, [])
+        facility_ids = {facility.id for facility in facilities}
+        queue = [
+            order for order in self.game_state.shipyard.get_build_queue_summary()
+            if order.get("facility_id") in facility_ids
+        ]
         if not queue:
+            self.status_label.text = "[b]No build orders for selected system.[/b]"
             return
         order_id = queue[0].get("id")
         if not order_id:
@@ -390,11 +396,14 @@ class ShipyardScreen(Screen):
     def _rush_active_build(self, instance):
         if not self.game_state or not self.selected_system_id:
             return
+        facilities = self.game_state.shipyard.facilities.get(self.selected_system_id, [])
+        facility_ids = {facility.id for facility in facilities}
         queue = [
             o for o in self.game_state.shipyard.get_build_queue_summary()
-            if o.get("status") == "active"
+            if o.get("status") == "active" and o.get("facility_id") in facility_ids
         ]
         if not queue:
+            self.status_label.text = "[b]No active build orders for selected system.[/b]"
             return
         order_id = queue[0].get("id")
         if not order_id:
