@@ -616,3 +616,14 @@ Add a default-off runtime feature flag surface for fleet groups, a typed telemet
 4. Document local release checks for schema compatibility, flag-off behavior, and telemetry payload validation under `docs/`.
 5. Add tests proving default-off behavior, fleet-group UI/action suppression when off, and required telemetry keys for emitted roadmap events.
 
+
+## PR: Centralize UI strategic movement through GameState submission API
+
+### Goal
+Route ship strategic movement initiated from Fleet, Galaxy Map, and Gravity Well screens through one validated `GameState` API so preconditions, logs/action hooks, and failure semantics stay consistent.
+
+### Steps
+1. Add/confirm a `GameState` strategic movement submission method that validates ship/destination/path state, blocks local-transit conflicts, and records movement action hooks/messages.
+2. Refactor UI movement callbacks in `fleet_screen.py`, `galaxy_map.py`, and `gravity_well_map.py` to call the centralized API and surface result messaging while preserving refresh behavior.
+3. Update parity/regression tests to ensure UI movement entrypoints go through `GameState` movement submission and that invalid transitions (e.g., active local transit) fail consistently.
+4. Run focused pytest coverage for updated movement dispatch tests.

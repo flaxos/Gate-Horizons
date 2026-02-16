@@ -1084,7 +1084,8 @@ class GalaxyMapScreen(Screen):
         menu.open()
 
     def _move_ship_to(self, ship_id, dest_id):
-        result = self.game_state.fleet.move_ship(ship_id, dest_id, self.game_state.galaxy)
+        _, message, _ = self.game_state.submit_strategic_movement(ship_id, dest_id)
+        self._show_notice(message)
         self.refresh()
 
     def _show_escort_target_menu(self, ship_id):

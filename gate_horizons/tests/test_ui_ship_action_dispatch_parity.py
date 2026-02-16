@@ -397,3 +397,115 @@ def test_fleet_dispatch_invokes_move_and_escort_follow_up_ui_paths():
     assert escort_calls["escort_target"] == 1
     assert escort_calls["notice"] == []
     assert escort_calls["refresh"] == 1
+
+
+def _first_reachable_destination(state, ship_id):
+    ship = state.fleet.ships[ship_id]
+    for sid in state.galaxy.systems.keys():
+        if sid == ship.location:
+            continue
+        if state.galaxy.get_path(ship.location, sid):
+            return sid
+    raise AssertionError("Expected at least one reachable destination")
+
+
+def test_submit_strategic_movement_rejects_active_local_transit():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+    destination = _first_reachable_destination(state, ship.id)
+    ship.local_destination_body_id = "mock-body"
+    ship.local_transit_remaining_ticks = 1
+
+    success, message, _ = state.submit_strategic_movement(ship.id, destination)
+
+    assert success is False
+    assert message == "Cannot start strategic movement during local transit"
+
+
+def test_ui_move_callbacks_route_through_submit_strategic_movement(monkeypatch):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+    from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
+    from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
+
+    call_records = []
+
+    for screen_kind in ("fleet", "galaxy", "gravity"):
+        state = GameState.new_game()
+        ship = next(iter(state.fleet.ships.values()))
+        destination = _first_reachable_destination(state, ship.id)
+
+        def _submit_stub(ship_id, destination_id):
+            call_records.append((screen_kind, ship_id, destination_id))
+            return True, "submitted", {"ship_id": ship_id, "system_id": destination_id}
+
+        monkeypatch.setattr(state, "submit_strategic_movement", _submit_stub)
+
+        if screen_kind == "fleet":
+            screen = FleetScreen.__new__(FleetScreen)
+            notices = []
+            screen.game_state = state
+            screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+            screen._update_list = lambda: None
+            screen._show_notice = lambda message, title="Notice": notices.append(message)
+            screen._move_ship(ship.id, destination)
+            assert notices == ["submitted"]
+        elif screen_kind == "galaxy":
+            screen = GalaxyMapScreen.__new__(GalaxyMapScreen)
+            notices = []
+            screen.game_state = state
+            screen.refresh = lambda: None
+            screen._show_notice = lambda message, title="Notice": notices.append(message)
+            screen._move_ship_to(ship.id, destination)
+            assert notices == ["submitted"]
+        else:
+            screen = GravityWellScreen.__new__(GravityWellScreen)
+            notices = []
+            screen.game_state = state
+            screen.set_game_state = lambda game_state: None
+            screen._show_notice = lambda message, title="Notice": notices.append(message)
+            screen._move_ship_to(ship.id, destination)
+            assert notices == ["submitted"]
+
+    assert [record[0] for record in call_records] == ["fleet", "galaxy", "gravity"]
+
+
+def test_ui_move_callbacks_surface_consistent_local_transit_failure_notice():
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.fleet_screen import FleetScreen
+    from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
+    from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
+
+    notices = []
+    for screen_kind in ("fleet", "galaxy", "gravity"):
+        state = GameState.new_game()
+        ship = next(iter(state.fleet.ships.values()))
+        destination = _first_reachable_destination(state, ship.id)
+        ship.local_destination_body_id = "mock-body"
+        ship.local_transit_remaining_ticks = 1
+
+        if screen_kind == "fleet":
+            screen = FleetScreen.__new__(FleetScreen)
+            screen.game_state = state
+            screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+            screen._update_list = lambda: None
+            screen._show_notice = lambda message, title="Notice": notices.append((screen_kind, message))
+            screen._move_ship(ship.id, destination)
+        elif screen_kind == "galaxy":
+            screen = GalaxyMapScreen.__new__(GalaxyMapScreen)
+            screen.game_state = state
+            screen.refresh = lambda: None
+            screen._show_notice = lambda message, title="Notice": notices.append((screen_kind, message))
+            screen._move_ship_to(ship.id, destination)
+        else:
+            screen = GravityWellScreen.__new__(GravityWellScreen)
+            screen.game_state = state
+            screen.set_game_state = lambda game_state: None
+            screen._show_notice = lambda message, title="Notice": notices.append((screen_kind, message))
+            screen._move_ship_to(ship.id, destination)
+
+    assert notices == [
+        ("fleet", "Cannot start strategic movement during local transit"),
+        ("galaxy", "Cannot start strategic movement during local transit"),
+        ("gravity", "Cannot start strategic movement during local transit"),
+    ]
