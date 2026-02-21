@@ -638,3 +638,14 @@ Fix three parity bugs by making ship cargo/colonist context actions report truth
 2. Refine `SystemViewScreen` gate activation affordability/cost state to use the same discounted effective cost path as `GameState.activate_gate()`.
 3. Ensure system-view ship build buttons require both affordability and colony buildability and display a notice when `_on_build_ship` fails.
 4. Add/adjust focused tests for each fix and run targeted pytest coverage.
+
+## PR: Parameterized transfer manifests across ship action entrypoints
+
+### Goal
+Allow partial cargo/colonist load/unload through parameterized manifests in ship context actions, surface those options consistently in System View/Fleet/Gravity Well UI entrypoints, and add parity tests that verify identical transfer outcomes/messages.
+
+### Steps
+1. Extend `GameState` transfer helpers/dispatcher to accept validated per-resource manifests and colonist amounts for both load and unload actions.
+2. Add shared transfer-parameter popup helpers and wire Fleet, Gravity Well, and System View ship action handlers to pass parameterized manifests into dispatch.
+3. Add/expand parity tests to assert message/state equivalence for transfer actions (default and parameterized) across all ship-action entrypoints.
+4. Run focused pytest coverage for ship action dispatch and transfer regressions.

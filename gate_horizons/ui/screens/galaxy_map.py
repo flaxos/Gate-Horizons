@@ -17,6 +17,7 @@ from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
+from ..widgets.transfer_manifest_popup import TransferManifestPopup
 from ..widgets.save_load import SaveGamePopup, LoadGamePopup
 from ..widgets.nav_menu import build_command_bar
 from gate_horizons.game.resources import RESOURCE_TYPES
@@ -1040,12 +1041,20 @@ class GalaxyMapScreen(Screen):
         content.add_widget(ok_btn)
         popup.open()
 
-    def _execute_action(self, ship_id, action):
+    def _execute_action(self, ship_id, action, params=None):
         """Execute a ship action."""
+        if params is None and action.name in {"Load Cargo", "Unload Cargo", "Load Colonists", "Unload Colonists"}:
+            popup = TransferManifestPopup(
+                action.name,
+                on_submit=lambda transfer_params: self._execute_action(ship_id, action, params=transfer_params),
+            )
+            popup.open()
+            return
+
         result = self.game_state.dispatch_ship_context_action(
             ship_id,
             action.name,
-            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+            params=params or ({"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None),
         )
         required_ui = result.get("requires_ui")
         if required_ui == "destination":

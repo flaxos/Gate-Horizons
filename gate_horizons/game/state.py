@@ -911,6 +911,38 @@ class GameState:
             self.log.append(report_entry.get("summary", message))
         return success, message
 
+    @staticmethod
+    def _parse_transfer_manifest(raw_manifest: Optional[dict]) -> tuple[Optional[dict], Optional[str]]:
+        if raw_manifest is None:
+            return None, None
+        if not isinstance(raw_manifest, dict):
+            return None, "Transfer manifest must be a mapping"
+        parsed = {}
+        for resource, amount in raw_manifest.items():
+            if resource not in RESOURCE_TYPES and resource != "pop":
+                return None, f"Unknown resource in transfer manifest: {resource}"
+            try:
+                amount_int = int(amount)
+            except (TypeError, ValueError):
+                return None, f"Invalid transfer amount for {resource}: {amount}"
+            if amount_int < 0:
+                return None, f"Invalid transfer amount for {resource}: {amount}"
+            if amount_int > 0:
+                parsed[resource] = amount_int
+        return parsed, None
+
+    @staticmethod
+    def _parse_transfer_amount(raw_amount) -> tuple[Optional[int], Optional[str]]:
+        if raw_amount is None:
+            return None, None
+        try:
+            amount = int(raw_amount)
+        except (TypeError, ValueError):
+            return None, f"Invalid transfer amount: {raw_amount}"
+        if amount < 0:
+            return None, f"Invalid transfer amount: {raw_amount}"
+        return amount, None
+
     def dispatch_ship_context_action(
         self,
         ship_id: str,
@@ -1011,6 +1043,9 @@ class GameState:
         if normalized_action == "Unload Cargo":
             if ship.location not in self.colonies.colonies:
                 return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            manifest, manifest_error = self._parse_transfer_manifest((params or {}).get("manifest"))
+            if manifest_error:
+                return {"success": False, "message": manifest_error, "requires_ui": None, "changed": False}
             transferable_resources = [
                 resource for resource, amount in ship.cargo.items()
                 if resource in RESOURCE_TYPES and amount > 0
@@ -1022,11 +1057,14 @@ class GameState:
                     "requires_ui": None,
                     "changed": False,
                 }
-            transfer = self.unload_ship_cargo_to_colony(ship_id)
+            transfer = self.unload_ship_cargo_to_colony(ship_id, manifest=manifest)
             return _transfer_result(transfer, "No cargo could be unloaded")
         if normalized_action == "Load Cargo":
             if ship.location not in self.colonies.colonies:
                 return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            manifest, manifest_error = self._parse_transfer_manifest((params or {}).get("manifest"))
+            if manifest_error:
+                return {"success": False, "message": manifest_error, "requires_ui": None, "changed": False}
             if ship.cargo_free <= 0:
                 return {
                     "success": False,
@@ -1034,11 +1072,14 @@ class GameState:
                     "requires_ui": None,
                     "changed": False,
                 }
-            transfer = self.load_ship_cargo_from_colony(ship_id)
+            transfer = self.load_ship_cargo_from_colony(ship_id, manifest=manifest)
             return _transfer_result(transfer, "No cargo to load")
         if normalized_action == "Load Colonists":
             if ship.location not in self.colonies.colonies:
                 return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            amount, amount_error = self._parse_transfer_amount((params or {}).get("amount"))
+            if amount_error:
+                return {"success": False, "message": amount_error, "requires_ui": None, "changed": False}
             if ship.cargo_free <= 0:
                 return {
                     "success": False,
@@ -1046,11 +1087,14 @@ class GameState:
                     "requires_ui": None,
                     "changed": False,
                 }
-            transfer = self.load_colonists_to_ship(ship_id)
+            transfer = self.load_colonists_to_ship(ship_id, amount=amount)
             return _transfer_result(transfer, "No colonists to load")
         if normalized_action == "Unload Colonists":
             if ship.location not in self.colonies.colonies:
                 return {"success": False, "message": "No colony present", "requires_ui": None, "changed": False}
+            amount, amount_error = self._parse_transfer_amount((params or {}).get("amount"))
+            if amount_error:
+                return {"success": False, "message": amount_error, "requires_ui": None, "changed": False}
             if ship.cargo.get("pop", 0) <= 0:
                 return {
                     "success": False,
@@ -1058,7 +1102,7 @@ class GameState:
                     "requires_ui": None,
                     "changed": False,
                 }
-            transfer = self.unload_colonists_to_colony(ship_id)
+            transfer = self.unload_colonists_to_colony(ship_id, amount=amount)
             return _transfer_result(transfer, "No colonists could be unloaded")
         if normalized_action == "Emergency Jettison":
             ship.cargo.clear()
@@ -2144,7 +2188,7 @@ class GameState:
         ship.add_cargo("pop", removed)
         return {"pop": removed}
 
-    def unload_colonists_to_colony(self, ship_id: str) -> dict:
+    def unload_colonists_to_colony(self, ship_id: str, amount: Optional[int] = None) -> dict:
         """Unload POP units from a ship into the local colony."""
         ship = self.fleet.ships.get(ship_id)
         if not ship:
@@ -2155,6 +2199,8 @@ class GameState:
             return {}
 
         on_ship = ship.cargo.get("pop", 0)
+        if amount is not None:
+            on_ship = min(on_ship, max(0, int(amount)))
         if on_ship <= 0:
             return {}
 
@@ -2165,7 +2211,7 @@ class GameState:
         ship.remove_cargo("pop", added)
         return {"pop": added}
 
-    def unload_ship_cargo_to_colony(self, ship_id: str) -> dict:
+    def unload_ship_cargo_to_colony(self, ship_id: str, manifest: Optional[dict] = None) -> dict:
         """Unload ship cargo into local colony resources."""
         ship = self.fleet.ships.get(ship_id)
         if not ship:
@@ -2177,9 +2223,20 @@ class GameState:
 
         unloaded = {}
         caps = colony.get_storage_caps()
+        unload_limits = {}
+        if manifest:
+            unload_limits = {
+                resource: max(0, int(amount))
+                for resource, amount in manifest.items()
+            }
         for resource, amount in list(ship.cargo.items()):
             if resource not in RESOURCE_TYPES or amount <= 0:
                 continue
+            requested = unload_limits.get(resource)
+            if manifest is not None and requested is None:
+                continue
+            if requested is not None:
+                amount = min(amount, requested)
             current = colony.stockpiles.get(resource, 0)
             cap = caps.get(resource)
             if cap is None:

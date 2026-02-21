@@ -196,6 +196,66 @@ def _run_from_gravity_well_screen(state, ship_id, action):
     screen._execute_ship_action(ship_id, action)
 
 
+def _run_from_system_view_screen(state, ship_id, action):
+    _install_kivy_stubs_if_missing()
+    from gate_horizons.ui.screens.system_view import SystemViewScreen
+
+    screen = SystemViewScreen.__new__(SystemViewScreen)
+    screen.game_state = state
+    screen.system_id = state.fleet.ships[ship_id].location
+    screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+    screen.refresh = lambda: None
+    screen._execute_ship_action(ship_id, action)
+
+
+def _run_ship_action_entrypoint_with_params(entrypoint, state, ship_id, action, params):
+    _install_kivy_stubs_if_missing()
+    if entrypoint == "fleet":
+        from gate_horizons.ui.screens.fleet_screen import FleetScreen
+
+        screen = FleetScreen.__new__(FleetScreen)
+        screen.game_state = state
+        screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+        screen._update_list = lambda: None
+        screen._on_move = lambda btn: None
+        screen._show_notice = lambda *args, **kwargs: None
+        screen._execute_action(ship_id, action, params=params)
+        return
+    if entrypoint == "galaxy":
+        from gate_horizons.ui.screens.galaxy_map import GalaxyMapScreen
+
+        screen = GalaxyMapScreen.__new__(GalaxyMapScreen)
+        screen.game_state = state
+        screen.refresh = lambda: None
+        screen._show_notice = lambda *args, **kwargs: None
+        screen._show_destination_menu = lambda sid: None
+        screen._show_escort_target_menu = lambda sid: None
+        screen._execute_action(ship_id, action, params=params)
+        return
+    if entrypoint == "gravity":
+        from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
+
+        screen = GravityWellScreen.__new__(GravityWellScreen)
+        screen.game_state = state
+        screen.set_game_state = lambda game_state: None
+        screen._show_notice = lambda *args, **kwargs: None
+        screen._show_destination_menu = lambda sid: None
+        screen._show_escort_target_menu = lambda sid: None
+        screen._execute_ship_action(ship_id, action, params=params)
+        return
+    if entrypoint == "system":
+        from gate_horizons.ui.screens.system_view import SystemViewScreen
+
+        screen = SystemViewScreen.__new__(SystemViewScreen)
+        screen.game_state = state
+        screen.system_id = state.fleet.ships[ship_id].location
+        screen.top_bar = SimpleNamespace(update=lambda game_state: None)
+        screen.refresh = lambda: None
+        screen._execute_ship_action(ship_id, action, params=params)
+        return
+    raise AssertionError(f"Unknown entrypoint: {entrypoint}")
+
+
 def _run_from_gravity_well_with_ui_spies(state, ship_id, action):
     _install_kivy_stubs_if_missing()
     from gate_horizons.ui.screens.gravity_well_map import GravityWellScreen
@@ -324,13 +384,14 @@ def test_ship_action_dispatch_parity_across_screen_entrypoints():
         _run_from_galaxy_screen,
         _run_from_fleet_screen,
         _run_from_gravity_well_screen,
+        _run_from_system_view_screen,
     ):
         state, ship_id = _build_state_with_cargo()
         runner(state, ship_id, action)
         ship = state.fleet.ships[ship_id]
         outcomes.append((dict(ship.cargo), ship.cargo_used, len(state.pending_ship_orders)))
 
-    assert outcomes[0] == outcomes[1] == outcomes[2]
+    assert outcomes[0] == outcomes[1] == outcomes[2] == outcomes[3]
     assert outcomes[0] == ({}, 0, 0)
 
 
@@ -625,6 +686,95 @@ def test_dispatch_transfer_actions_report_noop_messages_for_capacity_or_storage_
     assert result == {
         "success": False,
         "message": "No cargo could be unloaded",
+        "requires_ui": None,
+        "changed": False,
+    }
+
+
+def _snapshot_transfer_state(state, ship_id):
+    ship = state.fleet.ships[ship_id]
+    colony = state.colonies.colonies[ship.location]
+    return {
+        "ship_cargo": dict(sorted(ship.cargo.items())),
+        "ship_cargo_used": ship.cargo_used,
+        "colony_stockpiles": dict(sorted(colony.stockpiles.items())),
+        "population": colony.population,
+    }
+
+
+def test_parameterized_transfer_actions_have_entrypoint_parity_for_state_and_messages():
+    entrypoints = ("galaxy", "fleet", "gravity", "system")
+
+    for action, params in (
+        ("Load Cargo", {"manifest": {"metals": 3}}),
+        ("Unload Cargo", {"manifest": {"metals": 2}}),
+        ("Load Colonists", {"amount": 2}),
+        ("Unload Colonists", {"amount": 2}),
+    ):
+        snapshots = []
+        messages = []
+
+        for entrypoint in entrypoints:
+            state = GameState.new_game()
+            ship = next(iter(state.fleet.ships.values()))
+            ship.location = next(iter(state.colonies.colonies.keys()))
+            colony = state.colonies.colonies[ship.location]
+            colony.stockpiles["metals"] = 10
+            ship.cargo.clear()
+            ship.cargo["metals"] = 4
+            ship.cargo["pop"] = 4
+
+            result = state.dispatch_ship_context_action(ship.id, action, params=params)
+            expected_message = result["message"]
+
+            state = GameState.new_game()
+            ship = next(iter(state.fleet.ships.values()))
+            ship.location = next(iter(state.colonies.colonies.keys()))
+            colony = state.colonies.colonies[ship.location]
+            colony.stockpiles["metals"] = 10
+            ship.cargo.clear()
+            ship.cargo["metals"] = 4
+            ship.cargo["pop"] = 4
+
+            captured = {}
+            original_dispatch = state.dispatch_ship_context_action
+
+            def _spy_dispatch(ship_id, action_name, params=None):
+                outcome = original_dispatch(ship_id, action_name, params=params)
+                captured["result"] = outcome
+                return outcome
+
+            state.dispatch_ship_context_action = _spy_dispatch
+            _run_ship_action_entrypoint_with_params(entrypoint, state, ship.id, Action(name=action), params)
+
+            snapshots.append(_snapshot_transfer_state(state, ship.id))
+            messages.append(captured["result"]["message"])
+            assert captured["result"]["message"] == expected_message
+
+        assert snapshots[0] == snapshots[1] == snapshots[2] == snapshots[3]
+        assert messages[0] == messages[1] == messages[2] == messages[3]
+
+
+def test_parameterized_transfer_actions_reject_invalid_manifest_or_amount_consistently():
+    state = GameState.new_game()
+    ship = next(iter(state.fleet.ships.values()))
+    ship.location = next(iter(state.colonies.colonies.keys()))
+
+    assert state.dispatch_ship_context_action(ship.id, "Load Cargo", params={"manifest": "invalid"}) == {
+        "success": False,
+        "message": "Transfer manifest must be a mapping",
+        "requires_ui": None,
+        "changed": False,
+    }
+    assert state.dispatch_ship_context_action(ship.id, "Unload Cargo", params={"manifest": {"metals": -1}}) == {
+        "success": False,
+        "message": "Invalid transfer amount for metals: -1",
+        "requires_ui": None,
+        "changed": False,
+    }
+    assert state.dispatch_ship_context_action(ship.id, "Load Colonists", params={"amount": -2}) == {
+        "success": False,
+        "message": "Invalid transfer amount: -2",
         "requires_ui": None,
         "changed": False,
     }
