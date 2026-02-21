@@ -29,6 +29,7 @@ from kivy.core.text import Label as CoreLabel
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.map_camera import MapCameraWidget
+from ..widgets.transfer_manifest_popup import TransferManifestPopup
 from gate_horizons.game.planet_comparison import build_comparison_data
 
 
@@ -2013,15 +2014,27 @@ class GravityWellScreen(Screen):
         )
         menu.open()
 
-    def _execute_ship_action(self, ship_id, action):
+    def _execute_ship_action(self, ship_id, action, params=None):
         """Execute ship action through shared game-state dispatcher."""
         if not self.game_state:
+            return
+
+        if params is None and action.name in {"Load Cargo", "Unload Cargo", "Load Colonists", "Unload Colonists"}:
+            popup = TransferManifestPopup(
+                action.name,
+                on_submit=lambda transfer_params: self._execute_ship_action(
+                    ship_id,
+                    action,
+                    params=transfer_params,
+                ),
+            )
+            popup.open()
             return
 
         result = self.game_state.dispatch_ship_context_action(
             ship_id,
             action.name,
-            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+            params=params or ({"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None),
         )
 
         required_ui = result.get("requires_ui")

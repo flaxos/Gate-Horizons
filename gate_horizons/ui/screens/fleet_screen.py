@@ -16,6 +16,7 @@ from kivy.metrics import dp
 
 from ..widgets.resource_bar import TopBar
 from ..widgets.context_menu import ContextMenu, DestinationMenu
+from ..widgets.transfer_manifest_popup import TransferManifestPopup
 from gate_horizons.game.feature_flags import fleet_groups_enabled
 
 
@@ -410,14 +411,21 @@ class FleetScreen(Screen):
         )
         menu.open()
 
-    def _execute_action(self, ship_id, action):
+    def _execute_action(self, ship_id, action, params=None):
         """Execute ship action through shared game-state dispatcher."""
         if not self.game_state:
+            return
+        if params is None and action.name in {"Load Cargo", "Unload Cargo", "Load Colonists", "Unload Colonists"}:
+            self._show_transfer_manifest_popup(
+                ship_id,
+                action,
+                lambda transfer_params: self._execute_action(ship_id, action, params=transfer_params),
+            )
             return
         result = self.game_state.dispatch_ship_context_action(
             ship_id,
             action.name,
-            params={"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None,
+            params=params or ({"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None),
         )
         required_ui = result.get("requires_ui")
         if required_ui == "destination":
@@ -430,6 +438,10 @@ class FleetScreen(Screen):
             self._show_notice(result.get("message", "Action failed."))
         self.top_bar.update(self.game_state)
         self._update_list()
+
+    def _show_transfer_manifest_popup(self, ship_id, action, on_submit):
+        popup = TransferManifestPopup(action.name, on_submit=on_submit)
+        popup.open()
 
     def _show_escort_target_menu(self, ship_id):
         """Show a popup menu for selecting an escort target."""

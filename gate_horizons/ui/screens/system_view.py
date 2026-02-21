@@ -14,6 +14,9 @@ from kivy.metrics import dp
 import math
 
 from ..widgets.resource_bar import TopBar
+from ..widgets.context_menu import ContextMenu
+from ..widgets.transfer_manifest_popup import TransferManifestPopup
+from gate_horizons.game.ships import Action
 
 
 class NoticePopup(Popup):
@@ -634,6 +637,8 @@ class SystemViewScreen(Screen):
                     background_color=(0.12, 0.25, 0.4, 0.6),
                     color=(0.85, 0.95, 1, 1),
                 )
+                ship_btn.ship_id = ship.id
+                ship_btn.bind(on_release=self._on_ship_actions)
                 planet_list.add_widget(ship_btn)
 
         # Build ship section
@@ -761,6 +766,51 @@ class SystemViewScreen(Screen):
             ): self._do_colonize(pid, pname, sid),
         )
         popup.open()
+
+    def _on_ship_actions(self, btn):
+        if not self.game_state:
+            return
+        ship = self.game_state.fleet.ships.get(getattr(btn, "ship_id", None))
+        if not ship:
+            return
+        actions = self.game_state.fleet.get_contextual_actions(
+            ship.id,
+            galaxy=self.game_state.galaxy,
+            colonies=self.game_state.colonies,
+            game_state=self.game_state,
+        )
+        menu = ContextMenu(
+            title_text=f"{ship.name} ({ship.ship_class})",
+            actions=actions,
+            callback=lambda action: self._execute_ship_action(ship.id, action),
+        )
+        menu.open()
+
+    def _execute_ship_action(self, ship_id, action: Action, params=None):
+        if not self.game_state:
+            return
+
+        if params is None and action.name in {"Load Cargo", "Unload Cargo", "Load Colonists", "Unload Colonists"}:
+            popup = TransferManifestPopup(
+                action.name,
+                on_submit=lambda transfer_params: self._execute_ship_action(
+                    ship_id,
+                    action,
+                    params=transfer_params,
+                ),
+            )
+            popup.open()
+            return
+
+        result = self.game_state.dispatch_ship_context_action(
+            ship_id,
+            action.name,
+            params=params or ({"credits": action.cost.get("credits", 5)} if action.name == "Deploy Probe" else None),
+        )
+        if not result.get("success"):
+            NoticePopup(title="Ship Action", message=result.get("message", "Action failed.")).open()
+        self.top_bar.update(self.game_state)
+        self.refresh()
 
     def _do_colonize(self, planet_id, planet_name, ship_id):
         if not self.game_state:
