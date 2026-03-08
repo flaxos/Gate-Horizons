@@ -5,6 +5,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Optional, Union
 
+from .telemetry import TelemetryAdapter
+from .telemetry_events import RoadmapTelemetryEvent
 from .types import Traversable
 
 
@@ -106,6 +108,7 @@ class Ship:
         mission_target: str = None,
         trade_route: dict = None,
         mining: bool = False,
+        group_id: str = None,
         body_id: str = None,
         local_destination_body_id: str = None,
         local_transit_remaining_ticks: int = 0,
@@ -130,6 +133,7 @@ class Ship:
             else trade_route
         )
         self.mining = mining
+        self.group_id = group_id
         self.body_id = body_id
         self.local_destination_body_id = local_destination_body_id
         self.local_transit_remaining_ticks = max(0, int(local_transit_remaining_ticks or 0))
@@ -152,6 +156,7 @@ class Ship:
             "mission_target": self.mission_target,
             "trade_route": self.trade_route.to_dict() if isinstance(self.trade_route, TradeRoute) else self.trade_route,
             "mining": self.mining,
+            "group_id": self.group_id,
             "body_id": self.body_id,
             "local_destination_body_id": self.local_destination_body_id,
             "local_transit_remaining_ticks": self.local_transit_remaining_ticks,
@@ -161,7 +166,7 @@ class Ship:
     _INIT_FIELDS = {
         "id", "name", "ship_class", "location", "destination", "path",
         "stats", "cargo", "fuel", "hull", "morale", "mission",
-        "mission_target", "trade_route", "mining",
+        "mission_target", "trade_route", "mining", "group_id",
         "body_id", "local_destination_body_id", "local_transit_remaining_ticks",
         "local_transit_total_ticks",
     }
@@ -203,10 +208,41 @@ class Ship:
         return removed
 
 
+@dataclass
+class FleetGroup:
+    id: str = ""
+    name: str = "Unnamed Group"
+    ship_ids: list = field(default_factory=list)
+    system_id: str = ""  # system where group was created
+    created_turn: int = 0
+
+    def __post_init__(self):
+        if not self.id:
+            self.id = str(uuid.uuid4())[:8]
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "ship_ids": list(self.ship_ids),
+            "system_id": self.system_id,
+            "created_turn": self.created_turn,
+        }
+
+    _INIT_FIELDS = {"id", "name", "ship_ids", "system_id", "created_turn"}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "FleetGroup":
+        return cls(**{k: v for k, v in data.items() if k in cls._INIT_FIELDS})
+
+
 class FleetManager:
     def __init__(self):
         self.ships: dict[str, Ship] = {}
         self._ship_templates: dict[str, dict] = {}
+        self.fleet_groups: dict[str, FleetGroup] = {}
+        self.enable_fleet_groups: bool = False
+        self._telemetry: TelemetryAdapter = TelemetryAdapter()
 
     def load_templates(self, filepath: Union[str, Traversable]) -> None:
         if hasattr(filepath, "read_text"):
@@ -640,6 +676,9 @@ class FleetManager:
 
     def destroy_ship(self, ship_id: str) -> bool:
         if ship_id in self.ships:
+            ship = self.ships[ship_id]
+            if ship.group_id:
+                self.remove_ship_from_group(ship_id)
             del self.ships[ship_id]
             return True
         return False
@@ -654,10 +693,125 @@ class FleetManager:
     def get_total_maintenance(self) -> int:
         return sum(s.stats.maintenance_cost for s in self.ships.values())
 
+    # -- Fleet group management -----------------------------------------
+
+    def create_fleet_group(
+        self,
+        name: str,
+        ship_ids: list[str],
+        system_id: str,
+        turn_number: int,
+    ) -> Optional[FleetGroup]:
+        """Create a fleet group from ships at the same system.
+
+        Returns None if feature is disabled or validation fails.
+        """
+        if not self.enable_fleet_groups:
+            return None
+        if not ship_ids:
+            return None
+
+        for sid in ship_ids:
+            ship = self.ships.get(sid)
+            if not ship:
+                return None
+            if ship.location != system_id:
+                return None
+            if ship.group_id:
+                return None
+
+        group = FleetGroup(
+            name=name,
+            ship_ids=list(ship_ids),
+            system_id=system_id,
+            created_turn=turn_number,
+        )
+        self.fleet_groups[group.id] = group
+
+        for sid in ship_ids:
+            self.ships[sid].group_id = group.id
+
+        self._telemetry.emit(
+            RoadmapTelemetryEvent.FLEET_GROUP_CREATED,
+            {
+                "group_id": group.id,
+                "ship_count": len(ship_ids),
+                "system_id": system_id,
+                "turn_index": turn_number,
+            },
+        )
+        return group
+
+    def disband_fleet_group(self, group_id: str) -> bool:
+        """Remove a fleet group and clear group_id on its ships."""
+        if not self.enable_fleet_groups:
+            return False
+        group = self.fleet_groups.get(group_id)
+        if not group:
+            return False
+
+        for sid in group.ship_ids:
+            ship = self.ships.get(sid)
+            if ship:
+                ship.group_id = None
+
+        del self.fleet_groups[group_id]
+        return True
+
+    def add_ship_to_group(self, ship_id: str, group_id: str) -> bool:
+        """Add a ship to an existing fleet group."""
+        if not self.enable_fleet_groups:
+            return False
+        ship = self.ships.get(ship_id)
+        group = self.fleet_groups.get(group_id)
+        if not ship or not group:
+            return False
+        if ship.group_id:
+            return False
+        if ship.location != group.system_id:
+            return False
+
+        group.ship_ids.append(ship_id)
+        ship.group_id = group_id
+        return True
+
+    def remove_ship_from_group(self, ship_id: str) -> bool:
+        """Remove a ship from its fleet group. Disbands group if empty."""
+        if not self.enable_fleet_groups:
+            return False
+        ship = self.ships.get(ship_id)
+        if not ship or not ship.group_id:
+            return False
+
+        group = self.fleet_groups.get(ship.group_id)
+        if not group:
+            ship.group_id = None
+            return True
+
+        if ship_id in group.ship_ids:
+            group.ship_ids.remove(ship_id)
+        ship.group_id = None
+
+        if not group.ship_ids:
+            del self.fleet_groups[group.id]
+
+        return True
+
+    def get_group_ships(self, group_id: str) -> list[Ship]:
+        """Return ships in a fleet group (read-only, works even when disabled)."""
+        group = self.fleet_groups.get(group_id)
+        if not group:
+            return []
+        return [self.ships[sid] for sid in group.ship_ids if sid in self.ships]
+
+    # -- Serialization --------------------------------------------------
+
     def to_dict(self) -> dict:
         return {
             "ships": {sid: s.to_dict() for sid, s in self.ships.items()},
             "ship_templates": self._ship_templates,
+            "fleet_groups": {gid: g.to_dict() for gid, g in self.fleet_groups.items()},
+            "enable_fleet_groups": self.enable_fleet_groups,
         }
 
     @classmethod
@@ -666,4 +820,7 @@ class FleetManager:
         fm._ship_templates = data.get("ship_templates", {})
         for sid, sdata in data.get("ships", {}).items():
             fm.ships[sid] = Ship.from_dict(sdata)
+        fm.enable_fleet_groups = bool(data.get("enable_fleet_groups", False))
+        for gid, gdata in data.get("fleet_groups", {}).items():
+            fm.fleet_groups[gid] = FleetGroup.from_dict(gdata)
         return fm
