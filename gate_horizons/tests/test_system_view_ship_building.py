@@ -45,6 +45,7 @@ def _install_kivy_stubs():
     widget = types.ModuleType("kivy.uix.widget")
     scrollview = types.ModuleType("kivy.uix.scrollview")
     popup = types.ModuleType("kivy.uix.popup")
+    textinput = types.ModuleType("kivy.uix.textinput")
     graphics = types.ModuleType("kivy.graphics")
     metrics = types.ModuleType("kivy.metrics")
 
@@ -57,6 +58,7 @@ def _install_kivy_stubs():
     widget.Widget = DummyWidget
     scrollview.ScrollView = DummyWidget
     popup.Popup = DummyPopup
+    textinput.TextInput = DummyWidget
 
     graphics.Color = DummyWidget
     graphics.Ellipse = DummyWidget
@@ -76,6 +78,7 @@ def _install_kivy_stubs():
     sys.modules["kivy.uix.widget"] = widget
     sys.modules["kivy.uix.scrollview"] = scrollview
     sys.modules["kivy.uix.popup"] = popup
+    sys.modules["kivy.uix.textinput"] = textinput
     sys.modules["kivy.graphics"] = graphics
     sys.modules["kivy.metrics"] = metrics
 
